@@ -99,9 +99,20 @@ class SocketManager {
         window.auctionManager.clearCurrentAuction();
         showNotification('Auction completed!', 'success');
         
-        // Refresh team data if current user won
+        // Refresh sold items and player display for everyone
+        window.auctionManager.loadSoldItems().then(() => {
+            window.auctionManager.displayPlayers(window.auctionManager.players);
+            window.auctionManager.displayClubs(window.auctionManager.clubs);
+        });
+        
+        // Refresh team data and budget for everyone (budget affects bidding ability)
+        if (window.app && window.app.refreshTeamBudget) {
+            window.app.refreshTeamBudget();
+        }
+        
+        // Refresh team squad if current user won
         const team = JSON.parse(localStorage.getItem('fpl_team') || '{}');
-        if (team.id === data.winnerId) {
+        if (team.id === data.winnerId && window.teamManager) {
             window.teamManager.loadTeamData();
         }
     }

@@ -7,6 +7,8 @@ class AuctionManager {
         this.positions = [];
         this.draftState = null;
         this.chatMessages = [];
+        this.soldPlayers = new Set(); // Track sold players
+        this.soldClubs = new Set(); // Track sold clubs
         this.init();
     }
 
@@ -39,6 +41,7 @@ class AuctionManager {
 
     async loadInitialData() {
         try {
+            await this.loadSoldItems();
             await this.loadPlayers();
             await this.loadClubs();
             await this.loadActiveAuctions();
@@ -69,6 +72,33 @@ class AuctionManager {
             const btn = document.getElementById('syncDataBtn');
             btn.textContent = 'Sync FPL Data';
             btn.disabled = false;
+        }
+    }
+
+    async loadSoldItems() {
+        try {
+            // Load all sold players and clubs from team squads
+            const response = await fetch(`${api.baseURL}/api/teams/all-squads`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('fpl_token')}`
+                }
+            });
+            if (response.ok) {
+                const squads = await response.json();
+                this.soldPlayers.clear();
+                this.soldClubs.clear();
+                
+                squads.forEach(item => {
+                    if (item.player_id) {
+                        this.soldPlayers.add(item.player_id);
+                    }
+                    if (item.club_id) {
+                        this.soldClubs.add(item.club_id);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading sold items:', error);
         }
     }
 
@@ -123,7 +153,13 @@ class AuctionManager {
 
     createPlayerCard(player) {
         const div = document.createElement('div');
-        div.className = 'player-card bg-gray-50 p-2 rounded border hover:shadow-md transition-shadow';
+        const isSold = this.soldPlayers.has(player.id);
+        
+        div.className = `player-card p-2 rounded border transition-shadow ${
+            isSold 
+                ? 'bg-red-50 border-red-200 opacity-60' 
+                : 'bg-gray-50 hover:shadow-md'
+        }`;
         
         const positionNames = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
         const positionClasses = { 
@@ -149,14 +185,19 @@ class AuctionManager {
                             <span class="text-xs ${positionClasses[player.position]} px-1.5 py-0.5 rounded font-medium">${positionNames[player.position]}</span>
                             <span class="text-xs text-gray-500 truncate">${player.team_name || 'Unknown'}</span>
                         </div>
+                        ${isSold ? '<div class="text-xs text-red-600 font-medium">SOLD</div>' : ''}
                     </div>
                 </div>
                 <div class="text-right flex-shrink-0">
                     <div class="text-xs font-medium">£${(player.price / 10).toFixed(1)}m</div>
                     <div class="text-sm font-bold">${player.total_points}pts</div>
                     <button onclick="auctionManager.startPlayerAuction(${player.id})" 
-                            class="start-auction-btn mt-1 bg-green-500 text-white px-2 py-0.5 rounded text-xs hover:bg-green-600 transition-colors">
-                        Auction
+                            class="start-auction-btn mt-1 px-2 py-0.5 rounded text-xs transition-colors ${
+                                isSold 
+                                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed' 
+                                    : 'bg-green-500 text-white hover:bg-green-600'
+                            }" ${isSold ? 'disabled' : ''}>
+                        ${isSold ? 'Sold' : 'Auction'}
                     </button>
                 </div>
             </div>

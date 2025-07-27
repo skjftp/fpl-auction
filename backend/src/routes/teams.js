@@ -3,6 +3,18 @@ const { collections } = require('../models/database');
 
 const router = express.Router();
 
+// Get all squad items (for tracking sold players/clubs)
+router.get('/all-squads', async (req, res) => {
+  try {
+    const squadSnapshot = await collections.teamSquads.get();
+    const squads = squadSnapshot.docs.map(doc => doc.data());
+    res.json(squads);
+  } catch (error) {
+    console.error('Error fetching all squads:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // Get team squad
 router.get('/:teamId/squad', async (req, res) => {
   try {
