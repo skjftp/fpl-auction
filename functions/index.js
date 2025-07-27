@@ -42,7 +42,7 @@ app.use((req, res, next) => {
 });
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
@@ -52,13 +52,13 @@ app.get('/api/health', (req, res) => {
 });
 
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/players', authenticateToken, playersRoutes);
-app.use('/api/auction', authenticateToken, auctionRoutes);
-app.use('/api/teams', authenticateToken, teamsRoutes);
-app.use('/api/scoring', authenticateToken, scoringRoutes);
-app.use('/api/draft', authenticateToken, draftRoutes);
+// Routes - no /api prefix since Firebase Hosting adds it
+app.use('/auth', authRoutes);
+app.use('/players', authenticateToken, playersRoutes);
+app.use('/auction', authenticateToken, auctionRoutes);
+app.use('/teams', authenticateToken, teamsRoutes);
+app.use('/scoring', authenticateToken, scoringRoutes);
+app.use('/draft', authenticateToken, draftRoutes);
 
 // Export the Express app as a Firebase Function with increased timeout
 exports.api = functions
