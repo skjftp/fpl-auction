@@ -497,7 +497,8 @@ class AuctionManager {
             return;
         }
 
-        const isMyTurn = this.draftState.current_team_id === window.currentTeam.id;
+        const currentUser = window.app?.currentUser;
+        const isMyTurn = currentUser && this.draftState.current_team_id === currentUser.id;
         const currentTeamName = this.draftState.current_team_name;
         
         // Generate the snake draft order display
@@ -506,7 +507,7 @@ class AuctionManager {
             draftOrderHtml = this.draftState.draft_order.map((team, index) => {
                 const position = index + 1;
                 const isActive = team.team_id === this.draftState.current_team_id;
-                const isMyTeam = team.team_id === window.currentTeam?.id;
+                const isMyTeam = currentUser && team.team_id === currentUser.id;
                 
                 let teamClass = 'px-2 py-1 rounded text-xs border';
                 if (isActive) {
