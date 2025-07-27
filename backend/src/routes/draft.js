@@ -1,158 +1,198 @@
 const express = require('express');
-const { getDatabase, initializeDraftOrder, startDraft, advanceDraftTurn } = require('../models/database');
+const { collections, initializeDraftOrder, startDraft, advanceDraftTurn } = require('../models/database');
+const admin = require('firebase-admin');
 
 const router = express.Router();
 
 // Get current draft state and order
-router.get('/state', (req, res) => {
-  const db = getDatabase();
-  
-  db.get(
-    `SELECT ds.*, t.name as current_team_name, t.username as current_team_username
-     FROM draft_state ds
-     LEFT JOIN teams t ON ds.current_team_id = t.id
-     WHERE ds.id = 1`,
-    [],
-    (err, state) => {
-      if (err) {
-        return res.status(500).json({ error: 'Database error' });
-      }
+router.get('/state', async (req, res) => {
+  try {
+    // Get draft state
+    const stateDoc = await collections.draftState.doc('current').get();
+    
+    if (!stateDoc.exists) {
+      return res.json({ 
+        is_active: false, 
+        current_team_id: null,
+        current_position: 0,
+        message: 'Draft not initialized' 
+      });
+    }
+    
+    const state = stateDoc.data();
+    
+    // Get current team info if exists
+    if (state.current_team_id) {
+      const teamQuery = await collections.teams
+        .where('id', '==', state.current_team_id)
+        .limit(1)
+        .get();
       
-      if (!state) {
-        return res.json({ 
-          is_active: false, 
-          current_team_id: null,
-          current_position: 0,
-          message: 'Draft not initialized' 
+      if (!teamQuery.empty) {
+        const team = teamQuery.docs[0].data();
+        state.current_team_name = team.name;
+        state.current_team_username = team.username;
+      }
+    }
+    
+    // Get draft order
+    const orderSnapshot = await collections.draftOrder
+      .orderBy('position')
+      .get();
+    
+    const draft_order = [];
+    
+    for (const doc of orderSnapshot.docs) {
+      const orderItem = doc.data();
+      
+      // Get team info
+      const teamQuery = await collections.teams
+        .where('id', '==', orderItem.team_id)
+        .limit(1)
+        .get();
+      
+      if (!teamQuery.empty) {
+        const team = teamQuery.docs[0].data();
+        draft_order.push({
+          position: orderItem.position,
+          team_id: orderItem.team_id,
+          name: team.name,
+          username: team.username
         });
       }
-      
-      // Get draft order
-      db.all(
-        `SELECT do.position, do.team_id, t.name, t.username
-         FROM draft_order do
-         JOIN teams t ON do.team_id = t.id
-         ORDER BY do.position`,
-        [],
-        (err, order) => {
-          if (err) {
-            return res.status(500).json({ error: 'Database error' });
-          }
-          
-          res.json({
-            ...state,
-            draft_order: order
-          });
-        }
-      );
     }
-  );
+    
+    res.json({
+      ...state,
+      draft_order
+    });
+    
+  } catch (error) {
+    console.error('Error fetching draft state:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // Initialize random draft order (admin only)
-router.post('/initialize', (req, res) => {
-  initializeDraftOrder()
-    .then(() => {
-      req.io.emit('draft-initialized');
-      res.json({ success: true, message: 'Draft order initialized' });
-    })
-    .catch(err => {
-      console.error('Initialize draft error:', err);
-      res.status(500).json({ error: 'Failed to initialize draft' });
-    });
+router.post('/initialize', async (req, res) => {
+  try {
+    await initializeDraftOrder();
+    req.io.emit('draft-initialized');
+    res.json({ success: true, message: 'Draft order initialized' });
+  } catch (err) {
+    console.error('Initialize draft error:', err);
+    res.status(500).json({ error: 'Failed to initialize draft' });
+  }
 });
 
 // Start the draft (admin only)
-router.post('/start', (req, res) => {
-  startDraft()
-    .then(() => {
-      req.io.emit('draft-started');
-      res.json({ success: true, message: 'Draft started' });
-    })
-    .catch(err => {
-      console.error('Start draft error:', err);
-      res.status(500).json({ error: 'Failed to start draft' });
-    });
+router.post('/start', async (req, res) => {
+  try {
+    await startDraft();
+    req.io.emit('draft-started');
+    res.json({ success: true, message: 'Draft started' });
+  } catch (err) {
+    console.error('Start draft error:', err);
+    res.status(500).json({ error: 'Failed to start draft' });
+  }
 });
 
 // Check if current user can start auction
-router.get('/can-start-auction', (req, res) => {
+router.get('/can-start-auction', async (req, res) => {
   const teamId = req.user.teamId;
-  const db = getDatabase();
   
-  db.get(
-    'SELECT current_team_id, is_active FROM draft_state WHERE id = 1',
-    [],
-    (err, state) => {
-      if (err) {
-        return res.status(500).json({ error: 'Database error' });
-      }
-      
-      const canStart = state && state.is_active && state.current_team_id === teamId;
-      res.json({ can_start: canStart });
+  try {
+    const stateDoc = await collections.draftState.doc('current').get();
+    
+    if (!stateDoc.exists) {
+      return res.json({ can_start: false });
     }
-  );
+    
+    const state = stateDoc.data();
+    const canStart = state && state.is_active && state.current_team_id === teamId;
+    res.json({ can_start: canStart });
+    
+  } catch (error) {
+    console.error('Error checking auction permission:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // Complete current team's turn and advance to next
-router.post('/advance-turn', (req, res) => {
+router.post('/advance-turn', async (req, res) => {
   const teamId = req.user.teamId;
-  const db = getDatabase();
   
-  // Verify it's the current team's turn
-  db.get(
-    'SELECT current_team_id, is_active FROM draft_state WHERE id = 1',
-    [],
-    (err, state) => {
-      if (err) {
-        return res.status(500).json({ error: 'Database error' });
-      }
-      
-      if (!state || !state.is_active) {
-        return res.status(400).json({ error: 'Draft is not active' });
-      }
-      
-      if (state.current_team_id !== teamId) {
-        return res.status(403).json({ error: 'Not your turn' });
-      }
-      
-      advanceDraftTurn()
-        .then(result => {
-          // Emit draft update to all clients
-          req.io.emit('draft-turn-advanced', result);
-          res.json({ success: true, ...result });
-        })
-        .catch(err => {
-          console.error('Advance turn error:', err);
-          res.status(500).json({ error: 'Failed to advance turn' });
-        });
+  try {
+    // Verify it's the current team's turn
+    const stateDoc = await collections.draftState.doc('current').get();
+    
+    if (!stateDoc.exists) {
+      return res.status(400).json({ error: 'Draft not initialized' });
     }
-  );
+    
+    const state = stateDoc.data();
+    
+    if (!state.is_active) {
+      return res.status(400).json({ error: 'Draft is not active' });
+    }
+    
+    if (state.current_team_id !== teamId) {
+      return res.status(403).json({ error: 'Not your turn' });
+    }
+    
+    const result = await advanceDraftTurn();
+    
+    // Emit draft update to all clients
+    req.io.emit('draft-turn-advanced', result);
+    res.json({ success: true, ...result });
+    
+  } catch (err) {
+    console.error('Advance turn error:', err);
+    res.status(500).json({ error: 'Failed to advance turn' });
+  }
 });
 
 // Get chat messages
-router.get('/chat', (req, res) => {
-  const db = getDatabase();
-  
-  db.all(
-    `SELECT cm.id, cm.message, cm.created_at, t.name as team_name, t.username
-     FROM chat_messages cm
-     JOIN teams t ON cm.team_id = t.id
-     ORDER BY cm.created_at DESC
-     LIMIT 50`,
-    [],
-    (err, messages) => {
-      if (err) {
-        return res.status(500).json({ error: 'Database error' });
-      }
+router.get('/chat', async (req, res) => {
+  try {
+    const messagesSnapshot = await collections.chatMessages
+      .orderBy('created_at', 'desc')
+      .limit(50)
+      .get();
+    
+    const messages = [];
+    
+    for (const doc of messagesSnapshot.docs) {
+      const message = doc.data();
       
-      res.json(messages.reverse()); // Return in chronological order
+      // Get team info
+      const teamQuery = await collections.teams
+        .where('id', '==', message.team_id)
+        .limit(1)
+        .get();
+      
+      if (!teamQuery.empty) {
+        const team = teamQuery.docs[0].data();
+        messages.push({
+          id: doc.id,
+          message: message.message,
+          created_at: message.created_at,
+          team_name: team.name,
+          username: team.username
+        });
+      }
     }
-  );
+    
+    res.json(messages.reverse()); // Return in chronological order
+    
+  } catch (error) {
+    console.error('Error fetching chat messages:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // Send chat message
-router.post('/chat', (req, res) => {
+router.post('/chat', async (req, res) => {
   const teamId = req.user.teamId;
   const { message } = req.body;
   
@@ -164,35 +204,42 @@ router.post('/chat', (req, res) => {
     return res.status(400).json({ error: 'Message too long (max 500 characters)' });
   }
   
-  const db = getDatabase();
-  
-  db.run(
-    'INSERT INTO chat_messages (team_id, message) VALUES (?, ?)',
-    [teamId, message.trim()],
-    function(err) {
-      if (err) {
-        return res.status(500).json({ error: 'Failed to send message' });
-      }
-      
-      // Get the complete message with team info
-      db.get(
-        `SELECT cm.id, cm.message, cm.created_at, t.name as team_name, t.username
-         FROM chat_messages cm
-         JOIN teams t ON cm.team_id = t.id
-         WHERE cm.id = ?`,
-        [this.lastID],
-        (err, messageData) => {
-          if (err) {
-            return res.status(500).json({ error: 'Database error' });
-          }
-          
-          // Broadcast to all clients
-          req.io.emit('new-chat-message', messageData);
-          res.json({ success: true, message: messageData });
-        }
-      );
+  try {
+    // Add message to Firestore
+    const messageRef = await collections.chatMessages.add({
+      team_id: teamId,
+      message: message.trim(),
+      created_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Get team info for response
+    const teamQuery = await collections.teams
+      .where('id', '==', teamId)
+      .limit(1)
+      .get();
+    
+    if (teamQuery.empty) {
+      return res.status(404).json({ error: 'Team not found' });
     }
-  );
+    
+    const team = teamQuery.docs[0].data();
+    
+    const messageData = {
+      id: messageRef.id,
+      message: message.trim(),
+      created_at: new Date().toISOString(),
+      team_name: team.name,
+      username: team.username
+    };
+    
+    // Broadcast to all clients
+    req.io.emit('new-chat-message', messageData);
+    res.json({ success: true, message: messageData });
+    
+  } catch (error) {
+    console.error('Error sending chat message:', error);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
 });
 
 module.exports = router;

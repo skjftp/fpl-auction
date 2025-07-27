@@ -78,27 +78,27 @@ app.options('*', (req, res) => {
 });
 
 // Health check
-app.get('/api/health', (req, res) => {
-  const db = require('./models/database').getDatabase();
-  
-  // Test database connection
-  db.get('SELECT COUNT(*) as count FROM teams', [], (err, result) => {
-    if (err) {
-      res.status(500).json({ 
-        status: 'ERROR', 
-        timestamp: new Date().toISOString(),
-        database: 'Failed',
-        error: err.message 
-      });
-    } else {
-      res.json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        database: 'Connected',
-        teams: result.count
-      });
-    }
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    const { collections } = require('./models/database');
+    
+    // Test database connection by counting teams
+    const teamsSnapshot = await collections.teams.get();
+    
+    res.json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      database: 'Connected',
+      teams: teamsSnapshot.size
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      status: 'ERROR', 
+      timestamp: new Date().toISOString(),
+      database: 'Failed',
+      error: err.message 
+    });
+  }
 });
 
 // Socket.IO for real-time auction

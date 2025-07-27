@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
-const { getDatabase } = require('../models/database');
+const { collections } = require('../models/database');
+const admin = require('firebase-admin');
 
 const router = express.Router();
 
@@ -13,48 +14,40 @@ router.post('/sync-fpl-data', async (req, res) => {
     const response = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
     const { elements: players, teams: clubs, element_types: positions } = response.data;
     
-    const db = getDatabase();
+    // Use batch write for better performance
+    const batch = admin.firestore().batch();
     
     // Update or insert clubs
-    const clubStmt = db.prepare(`
-      INSERT OR REPLACE INTO fpl_clubs (id, name, short_name, code, strength) 
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    
     clubs.forEach(club => {
-      clubStmt.run(
-        club.id,
-        club.name,
-        club.short_name,
-        club.code,
-        club.strength
-      );
+      const clubRef = collections.fplClubs.doc(club.id.toString());
+      batch.set(clubRef, {
+        id: club.id,
+        name: club.name,
+        short_name: club.short_name,
+        code: club.code,
+        strength: club.strength
+      });
     });
-    clubStmt.finalize();
     
     // Update or insert players
-    const playerStmt = db.prepare(`
-      INSERT OR REPLACE INTO fpl_players (
-        id, web_name, first_name, second_name, position, 
-        team_id, price, points_per_game, total_points, photo
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    
     players.forEach(player => {
-      playerStmt.run(
-        player.id,
-        player.web_name,
-        player.first_name,
-        player.second_name,
-        player.element_type,
-        player.team,
-        player.now_cost,
-        parseFloat(player.points_per_game || 0),
-        player.total_points,
-        player.photo
-      );
+      const playerRef = collections.fplPlayers.doc(player.id.toString());
+      batch.set(playerRef, {
+        id: player.id,
+        web_name: player.web_name,
+        first_name: player.first_name,
+        second_name: player.second_name,
+        position: player.element_type,
+        team_id: player.team,
+        price: player.now_cost,
+        points_per_game: parseFloat(player.points_per_game || 0),
+        total_points: player.total_points,
+        photo: player.photo
+      });
     });
-    playerStmt.finalize();
+    
+    // Commit the batch
+    await batch.commit();
     
     console.log(`✅ Synced ${players.length} players and ${clubs.length} clubs`);
     
@@ -78,64 +71,87 @@ router.post('/sync-fpl-data', async (req, res) => {
 });
 
 // Get all players with filters
-router.get('/', (req, res) => {
-  const { position, team, status, search } = req.query;
-  const db = getDatabase();
-  
-  let query = `
-    SELECT p.*, c.name as team_name, c.short_name as team_short_name
-    FROM fpl_players p
-    LEFT JOIN fpl_clubs c ON p.team_id = c.id
-    WHERE 1=1
-  `;
-  
-  const params = [];
-  
-  if (position) {
-    query += ' AND p.position = ?';
-    params.push(position);
-  }
-  
-  if (team) {
-    query += ' AND p.team_id = ?';
-    params.push(team);
-  }
-  
-  if (status) {
-    query += ' AND p.status = ?';
-    params.push(status);
-  }
-  
-  if (search) {
-    query += ' AND (p.web_name LIKE ? OR p.first_name LIKE ? OR p.second_name LIKE ?)';
-    const searchTerm = `%${search}%`;
-    params.push(searchTerm, searchTerm, searchTerm);
-  }
-  
-  query += ' ORDER BY p.total_points DESC';
-  
-  db.all(query, params, (err, players) => {
-    if (err) {
-      return res.status(500).json({ error: 'Database error' });
+router.get('/', async (req, res) => {
+  try {
+    const { position, team, status, search } = req.query;
+    
+    // Start with all players
+    let playersQuery = collections.fplPlayers;
+    
+    // Apply filters
+    if (position) {
+      playersQuery = playersQuery.where('position', '==', parseInt(position));
     }
+    
+    if (team) {
+      playersQuery = playersQuery.where('team_id', '==', parseInt(team));
+    }
+    
+    if (status) {
+      playersQuery = playersQuery.where('status', '==', status);
+    }
+    
+    // Get players
+    const playersSnapshot = await playersQuery.get();
+    const players = [];
+    
+    // Get all clubs for joining
+    const clubsSnapshot = await collections.fplClubs.get();
+    const clubsMap = {};
+    clubsSnapshot.docs.forEach(doc => {
+      const club = doc.data();
+      clubsMap[club.id] = club;
+    });
+    
+    // Process players and add club info
+    playersSnapshot.docs.forEach(doc => {
+      const player = doc.data();
+      const club = clubsMap[player.team_id] || {};
+      
+      // Apply search filter if needed
+      if (search) {
+        const searchLower = search.toLowerCase();
+        if (!player.web_name.toLowerCase().includes(searchLower) &&
+            !player.first_name.toLowerCase().includes(searchLower) &&
+            !player.second_name.toLowerCase().includes(searchLower)) {
+          return; // Skip this player
+        }
+      }
+      
+      players.push({
+        ...player,
+        team_name: club.name,
+        team_short_name: club.short_name
+      });
+    });
+    
+    // Sort by total points
+    players.sort((a, b) => b.total_points - a.total_points);
+    
     res.json(players);
-  });
+  } catch (error) {
+    console.error('Error fetching players:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // Get clubs
-router.get('/clubs', (req, res) => {
-  const db = getDatabase();
-  
-  db.all(
-    'SELECT * FROM fpl_clubs ORDER BY strength DESC',
-    [],
-    (err, clubs) => {
-      if (err) {
-        return res.status(500).json({ error: 'Database error' });
-      }
-      res.json(clubs);
-    }
-  );
+router.get('/clubs', async (req, res) => {
+  try {
+    const clubsSnapshot = await collections.fplClubs
+      .orderBy('strength', 'desc')
+      .get();
+    
+    const clubs = [];
+    clubsSnapshot.docs.forEach(doc => {
+      clubs.push(doc.data());
+    });
+    
+    res.json(clubs);
+  } catch (error) {
+    console.error('Error fetching clubs:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 // Get position types
