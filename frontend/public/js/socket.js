@@ -47,6 +47,22 @@ class SocketManager {
             this.handleSellingStageUpdate(data);
         });
 
+        // Wait request events
+        this.socket.on('wait-requested', (data) => {
+            console.log('⏸️ Wait requested:', data);
+            this.handleWaitRequested(data);
+        });
+
+        this.socket.on('wait-accepted', (data) => {
+            console.log('✅ Wait accepted:', data);
+            this.handleWaitAccepted(data);
+        });
+
+        this.socket.on('wait-rejected', (data) => {
+            console.log('❌ Wait rejected:', data);
+            this.handleWaitRejected(data);
+        });
+
         this.socket.on('error', (error) => {
             console.error('Socket error:', error);
             showNotification('Connection error', 'error');
@@ -137,6 +153,40 @@ class SocketManager {
             }
             
             showNotification(data.message, 'info');
+        }
+    }
+
+    handleWaitRequested(data) {
+        if (window.auctionManager && window.auctionManager.currentAuction && 
+            window.auctionManager.currentAuction.id === data.auctionId) {
+            // Update auction state with wait request
+            window.auctionManager.currentAuction.wait_requested_by = data.teamId;
+            window.auctionManager.displayCurrentAuction(window.auctionManager.currentAuction);
+            
+            showNotification(data.message, 'info');
+        }
+    }
+
+    handleWaitAccepted(data) {
+        if (window.auctionManager && window.auctionManager.currentAuction && 
+            window.auctionManager.currentAuction.id === data.auctionId) {
+            // Reset auction to normal state
+            window.auctionManager.currentAuction.selling_stage = null;
+            window.auctionManager.currentAuction.wait_requested_by = null;
+            window.auctionManager.displayCurrentAuction(window.auctionManager.currentAuction);
+            
+            showNotification(data.message, 'success');
+        }
+    }
+
+    handleWaitRejected(data) {
+        if (window.auctionManager && window.auctionManager.currentAuction && 
+            window.auctionManager.currentAuction.id === data.auctionId) {
+            // Clear wait request but keep selling stage
+            window.auctionManager.currentAuction.wait_requested_by = null;
+            window.auctionManager.displayCurrentAuction(window.auctionManager.currentAuction);
+            
+            showNotification(data.message, 'warning');
         }
     }
 }

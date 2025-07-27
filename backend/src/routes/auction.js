@@ -70,6 +70,8 @@ router.post('/start-player/:playerId', async (req, res) => {
       current_bidder_id: teamId,
       status: 'active',
       selling_stage: null, // Will be set to 'selling1', 'selling2' by admin
+      wait_requested_by: null, // Team ID that requested wait
+      wait_requested_at: null, // Timestamp of wait request
       started_at: admin.firestore.FieldValue.serverTimestamp(),
       bid_count: 1
     };
@@ -187,6 +189,8 @@ router.post('/start-club/:clubId', async (req, res) => {
       current_bidder_id: teamId,
       status: 'active',
       selling_stage: null, // Will be set to 'selling1', 'selling2' by admin
+      wait_requested_by: null, // Team ID that requested wait
+      wait_requested_at: null, // Timestamp of wait request
       started_at: admin.firestore.FieldValue.serverTimestamp(),
       bid_count: 1
     };
@@ -335,6 +339,7 @@ router.post('/selling-stage/:auctionId', requireAdmin, async (req, res) => {
     if (stage === 'selling1' || stage === 'selling2') {
       await collections.auctions.doc(auctionId).update({
         selling_stage: stage,
+        wait_requested_by: null, // Clear any wait requests when moving to selling stage
         updated_at: admin.firestore.FieldValue.serverTimestamp()
       });
       
@@ -357,6 +362,111 @@ router.post('/selling-stage/:auctionId', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error updating selling stage:', error);
     res.status(500).json({ error: 'Failed to update selling stage' });
+  }
+});
+
+// Request wait during selling stage - Team only
+router.post('/request-wait/:auctionId', async (req, res) => {
+  const auctionId = req.params.auctionId;
+  const teamId = req.user.teamId;
+  
+  try {
+    const auctionDoc = await collections.auctions.doc(auctionId).get();
+    
+    if (!auctionDoc.exists || auctionDoc.data().status !== 'active') {
+      return res.status(404).json({ error: 'Auction not found or not active' });
+    }
+    
+    const auction = auctionDoc.data();
+    
+    // Can only request wait during selling stages
+    if (!auction.selling_stage || auction.selling_stage === 'sold') {
+      return res.status(400).json({ error: 'Can only request wait during selling stages' });
+    }
+    
+    // Update auction with wait request
+    await collections.auctions.doc(auctionId).update({
+      wait_requested_by: teamId,
+      wait_requested_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Get team name for broadcast
+    const teamDoc = await collections.teams.where('id', '==', teamId).limit(1).get();
+    const teamName = teamDoc.empty ? 'Unknown Team' : teamDoc.docs[0].data().name;
+    
+    // Broadcast wait request
+    req.io.to('auction-room').emit('wait-requested', {
+      auctionId,
+      teamId,
+      teamName,
+      message: `${teamName} requested wait!`
+    });
+    
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Error requesting wait:', error);
+    res.status(500).json({ error: 'Failed to request wait' });
+  }
+});
+
+// Handle wait request - Admin only
+router.post('/handle-wait/:auctionId', requireAdmin, async (req, res) => {
+  const auctionId = req.params.auctionId;
+  const { action } = req.body; // 'accept' or 'reject'
+  
+  try {
+    const auctionDoc = await collections.auctions.doc(auctionId).get();
+    
+    if (!auctionDoc.exists || auctionDoc.data().status !== 'active') {
+      return res.status(404).json({ error: 'Auction not found or not active' });
+    }
+    
+    const auction = auctionDoc.data();
+    
+    if (!auction.wait_requested_by) {
+      return res.status(400).json({ error: 'No wait request pending' });
+    }
+    
+    if (action === 'accept') {
+      // Reset auction to normal state (before selling stages)
+      await collections.auctions.doc(auctionId).update({
+        selling_stage: null,
+        wait_requested_by: null,
+        wait_requested_at: null,
+        updated_at: admin.firestore.FieldValue.serverTimestamp()
+      });
+      
+      // Broadcast wait accepted
+      req.io.to('auction-room').emit('wait-accepted', {
+        auctionId,
+        message: 'Wait accepted - auction continues'
+      });
+      
+      res.json({ success: true, action: 'accepted' });
+      
+    } else if (action === 'reject') {
+      // Clear wait request but keep selling stage
+      await collections.auctions.doc(auctionId).update({
+        wait_requested_by: null,
+        wait_requested_at: null
+      });
+      
+      // Broadcast wait rejected
+      req.io.to('auction-room').emit('wait-rejected', {
+        auctionId,
+        message: 'Wait rejected - selling continues'
+      });
+      
+      res.json({ success: true, action: 'rejected' });
+      
+    } else {
+      res.status(400).json({ error: 'Invalid action' });
+    }
+    
+  } catch (error) {
+    console.error('Error handling wait request:', error);
+    res.status(500).json({ error: 'Failed to handle wait request' });
   }
 });
 

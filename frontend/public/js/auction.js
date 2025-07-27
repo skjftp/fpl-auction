@@ -329,6 +329,11 @@ class AuctionManager {
                     <div id="sellingStatus" class="bg-${auction.selling_stage === 'selling1' ? 'yellow' : 'orange'}-100 border border-${auction.selling_stage === 'selling1' ? 'yellow' : 'orange'}-400 text-${auction.selling_stage === 'selling1' ? 'yellow' : 'orange'}-700 px-3 py-2 rounded mb-3 text-sm font-bold text-center animate-pulse">
                         ${auction.selling_stage === 'selling1' ? 'SELLING 1...' : 'SELLING 2...'}
                     </div>
+                    ${auction.wait_requested_by ? `
+                        <div id="waitStatus" class="bg-blue-100 border border-blue-400 text-blue-700 px-3 py-2 rounded mb-3 text-sm font-bold text-center">
+                            ${auction.wait_requested_by === window.app?.currentUser?.id ? 'You requested wait' : 'Wait requested'}
+                        </div>
+                    ` : ''}
                 ` : ''}
                 
                 <div class="space-y-2">
@@ -341,24 +346,51 @@ class AuctionManager {
                             class="bid-button w-full bg-green-500 text-white py-1 rounded text-sm hover:bg-green-600">
                         Place Bid
                     </button>
+                    ${auction.selling_stage && !window.app?.currentUser?.is_admin && !auction.wait_requested_by ? `
+                        <button onclick="auctionManager.requestWait()" 
+                                class="w-full bg-blue-500 text-white py-1 rounded text-sm hover:bg-blue-600 mt-1">
+                            Wait!
+                        </button>
+                    ` : ''}
                     ${window.app?.currentUser?.is_admin ? `
                         <div class="space-y-1">
+                            ${auction.wait_requested_by ? `
+                                <div class="bg-blue-50 border border-blue-200 rounded p-2 mb-1">
+                                    <div class="text-xs font-medium text-blue-800 mb-1">Wait requested</div>
+                                    <div class="flex gap-1">
+                                        <button onclick="auctionManager.handleWaitRequest('accept')" 
+                                                class="flex-1 bg-green-500 text-white py-1 px-2 rounded text-xs hover:bg-green-600">
+                                            Accept
+                                        </button>
+                                        <button onclick="auctionManager.handleWaitRequest('reject')" 
+                                                class="flex-1 bg-red-500 text-white py-1 px-2 rounded text-xs hover:bg-red-600">
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            ` : ''}
                             ${!auction.selling_stage ? `
                                 <button onclick="auctionManager.updateSellingStage('selling1')" 
                                         class="w-full bg-yellow-500 text-white py-1 rounded text-sm hover:bg-yellow-600">
                                     Selling 1
                                 </button>
                             ` : ''}
-                            ${auction.selling_stage === 'selling1' ? `
+                            ${auction.selling_stage === 'selling1' && !auction.wait_requested_by ? `
                                 <button onclick="auctionManager.updateSellingStage('selling2')" 
                                         class="w-full bg-orange-500 text-white py-1 rounded text-sm hover:bg-orange-600">
                                     Selling 2
                                 </button>
                             ` : ''}
-                            ${auction.selling_stage === 'selling2' ? `
+                            ${auction.selling_stage === 'selling2' && !auction.wait_requested_by ? `
                                 <button onclick="auctionManager.updateSellingStage('sold')" 
                                         class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
                                     Sold
+                                </button>
+                            ` : ''}
+                            ${auction.selling_stage && !auction.wait_requested_by ? `
+                                <button onclick="auctionManager.updateSellingStage('sold')" 
+                                        class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
+                                    Sold (Skip wait)
                                 </button>
                             ` : ''}
                         </div>
@@ -502,7 +534,9 @@ class AuctionManager {
                     currentBid: auction.current_bid,
                     currentBidder: auction.current_bidder_name,
                     type: auction.auction_type,
-                    status: auction.status
+                    status: auction.status,
+                    selling_stage: auction.selling_stage,
+                    wait_requested_by: auction.wait_requested_by
                 };
                 
                 if (auction.auction_type === 'player') {
@@ -830,6 +864,62 @@ class AuctionManager {
             
         } catch (error) {
             console.error('Error updating selling stage:', error);
+            showNotification(error.message, 'error');
+        }
+    }
+
+    async requestWait() {
+        try {
+            if (!this.currentAuction) {
+                showNotification('No active auction', 'error');
+                return;
+            }
+            
+            const response = await fetch(`${api.baseURL}/auction/request-wait/${this.currentAuction.id}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${api.token}`
+                }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to request wait');
+            }
+            
+            showNotification('Wait requested!', 'success');
+            
+        } catch (error) {
+            console.error('Error requesting wait:', error);
+            showNotification(error.message, 'error');
+        }
+    }
+
+    async handleWaitRequest(action) {
+        try {
+            if (!this.currentAuction) {
+                showNotification('No active auction', 'error');
+                return;
+            }
+            
+            const response = await fetch(`${api.baseURL}/auction/handle-wait/${this.currentAuction.id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${api.token}`
+                },
+                body: JSON.stringify({ action })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to handle wait request');
+            }
+            
+            showNotification(`Wait ${action}ed!`, 'success');
+            
+        } catch (error) {
+            console.error('Error handling wait request:', error);
             showNotification(error.message, 'error');
         }
     }
