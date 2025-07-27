@@ -5,9 +5,12 @@ const bcrypt = require('bcryptjs');
 const collections = {
   teams: db.collection('teams'),
   fplPlayers: db.collection('fpl_players'),
+  fplClubs: db.collection('fpl_clubs'),
   teamSquads: db.collection('team_squads'),
   auctions: db.collection('auctions'),
+  bidHistory: db.collection('bid_history'),
   gameweeks: db.collection('gameweeks'),
+  gameweekScores: db.collection('gameweek_scores'),
   draftOrder: db.collection('draft_order'),
   draftState: db.collection('draft_state'),
   chatMessages: db.collection('chat_messages')
