@@ -135,4 +135,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get single team info
+router.get('/:teamId', async (req, res) => {
+  try {
+    const teamId = parseInt(req.params.teamId);
+    console.log('Getting team info for:', teamId);
+    
+    // Get team info
+    const teamQuery = await collections.teams
+      .where('id', '==', teamId)
+      .limit(1)
+      .get();
+    
+    if (teamQuery.empty) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    
+    const team = teamQuery.docs[0].data();
+    res.json(team);
+    
+  } catch (error) {
+    console.error('Error fetching team info:', error);
+    res.status(500).json({ error: 'Failed to fetch team info' });
+  }
+});
+
 module.exports = router;
