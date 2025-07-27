@@ -41,6 +41,17 @@ app.use((req, res, next) => {
   next();
 });
 
+// Debug endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'Firebase Function is working!',
+    path: req.path,
+    url: req.url,
+    originalUrl: req.originalUrl,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ 
