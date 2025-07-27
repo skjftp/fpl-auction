@@ -802,7 +802,7 @@ class AuctionManager {
                 return;
             }
             
-            const response = await fetch(`${api.baseURL}/auctions/selling-stage/${this.currentAuction.id}`, {
+            const response = await fetch(`${api.baseURL}/auction/selling-stage/${this.currentAuction.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
