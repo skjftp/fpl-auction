@@ -4,7 +4,7 @@ class API {
         // Use environment-specific API URL
         this.baseURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api'
-            : 'BACKEND_URL_PLACEHOLDER/api';
+            : 'https://fpl-auction-backend-0bls.onrender.com/api';
         this.token = localStorage.getItem('fpl_token');
     }
 

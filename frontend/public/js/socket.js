@@ -9,7 +9,7 @@ class SocketManager {
         // Use environment-specific socket URL
         const socketURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001'
-            : 'BACKEND_URL_PLACEHOLDER';
+            : 'https://fpl-auction-backend-0bls.onrender.com';
         this.socket = io(socketURL);
         
         this.socket.on('connect', () => {
