@@ -19,12 +19,14 @@ router.get('/all-squads', async (req, res) => {
 router.get('/:teamId/squad', async (req, res) => {
   try {
     const teamId = parseInt(req.params.teamId);
+    console.log('Getting squad for team:', teamId);
     
     // Get squad for this team
     const squadSnapshot = await collections.teamSquads
       .where('team_id', '==', teamId)
-      .orderBy('acquired_at', 'desc')
       .get();
+    
+    console.log('Squad snapshot size:', squadSnapshot.size);
     
     const players = [];
     const clubs = [];
@@ -77,8 +79,9 @@ router.get('/:teamId/squad', async (req, res) => {
       positions
     });
   } catch (error) {
-    console.error('Error fetching squad:', error);
-    res.status(500).json({ error: 'Failed to fetch squad' });
+    console.error('Error fetching squad for team', req.params.teamId, ':', error.message);
+    console.error('Full error:', error);
+    res.status(500).json({ error: 'Failed to fetch squad', details: error.message });
   }
 });
 
