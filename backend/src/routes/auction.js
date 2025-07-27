@@ -404,7 +404,7 @@ router.post('/complete/:auctionId', (req, res) => {
         );
       });
     }
-  );
+  )
 });
 
 // Get current active auctions
