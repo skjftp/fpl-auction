@@ -498,18 +498,49 @@ class AuctionManager {
         }
 
         const isMyTurn = this.draftState.current_team_id === window.currentTeam.id;
-        const turnClass = isMyTurn ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-400';
-        const turnText = isMyTurn ? 'Your Turn!' : `${this.draftState.current_team_name}'s Turn`;
+        const currentTeamName = this.draftState.current_team_name;
+        
+        // Generate the snake draft order display
+        let draftOrderHtml = '';
+        if (this.draftState.draft_order && this.draftState.draft_order.length > 0) {
+            draftOrderHtml = this.draftState.draft_order.map((team, index) => {
+                const position = index + 1;
+                const isActive = team.team_id === this.draftState.current_team_id;
+                const isMyTeam = team.team_id === window.currentTeam?.id;
+                
+                let teamClass = 'px-2 py-1 rounded text-xs border';
+                if (isActive) {
+                    teamClass += ' bg-green-500 text-white border-green-600 font-bold';
+                } else if (isMyTeam) {
+                    teamClass += ' bg-blue-100 text-blue-800 border-blue-300';
+                } else {
+                    teamClass += ' bg-gray-100 text-gray-700 border-gray-300';
+                }
+                
+                return `<span class="${teamClass}">${position}. ${team.team_name}</span>`;
+            }).join('');
+        }
 
         indicator.innerHTML = `
-            <div class="text-center ${turnClass} border-2 rounded-lg p-4">
-                <div class="text-lg font-bold ${isMyTurn ? 'text-green-600' : 'text-gray-700'}">
-                    ${turnText}
+            <div class="bg-white border-2 ${isMyTurn ? 'border-green-500' : 'border-gray-300'} rounded-lg p-4">
+                <div class="text-center mb-3">
+                    <div class="text-lg font-bold ${isMyTurn ? 'text-green-600' : 'text-gray-700'}">
+                        ${isMyTurn ? 'Your Turn!' : `${currentTeamName}'s Turn`}
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        Position ${this.draftState.current_position} of ${this.draftState.draft_order?.length || 0}
+                    </div>
+                    ${isMyTurn ? '<div class="text-xs text-green-600 mt-1">You can start an auction now!</div>' : ''}
                 </div>
-                <div class="text-sm text-gray-600">
-                    Position ${this.draftState.current_position} of ${this.draftState.draft_order?.length || 0}
-                </div>
-                ${isMyTurn ? '<div class="text-xs text-green-600 mt-2">You can start an auction now!</div>' : ''}
+                
+                ${draftOrderHtml ? `
+                    <div class="border-t pt-3">
+                        <div class="text-xs font-semibold text-gray-600 mb-2 text-center">Snake Draft Order</div>
+                        <div class="flex flex-wrap gap-1 justify-center">
+                            ${draftOrderHtml}
+                        </div>
+                    </div>
+                ` : ''}
             </div>
         `;
 
