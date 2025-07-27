@@ -63,6 +63,7 @@ class App {
             
             if (response.success) {
                 this.currentUser = response.team;
+                console.log('Logged in user:', this.currentUser); // Debug log
                 this.showMainApp();
                 window.socketManager.connect();
                 showNotification(`Welcome, ${response.team.name}!`, 'success');
