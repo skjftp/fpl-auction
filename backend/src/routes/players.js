@@ -15,13 +15,9 @@ router.post('/sync-fpl-data', async (req, res) => {
     
     const db = getDatabase();
     
-    // Clear existing data
-    db.run('DELETE FROM fpl_players');
-    db.run('DELETE FROM fpl_clubs');
-    
-    // Insert clubs
+    // Update or insert clubs
     const clubStmt = db.prepare(`
-      INSERT INTO fpl_clubs (id, name, short_name, code, strength) 
+      INSERT OR REPLACE INTO fpl_clubs (id, name, short_name, code, strength) 
       VALUES (?, ?, ?, ?, ?)
     `);
     
@@ -36,9 +32,9 @@ router.post('/sync-fpl-data', async (req, res) => {
     });
     clubStmt.finalize();
     
-    // Insert players
+    // Update or insert players
     const playerStmt = db.prepare(`
-      INSERT INTO fpl_players (
+      INSERT OR REPLACE INTO fpl_players (
         id, web_name, first_name, second_name, position, 
         team_id, price, points_per_game, total_points, photo
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

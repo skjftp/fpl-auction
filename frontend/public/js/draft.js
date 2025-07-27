@@ -90,6 +90,7 @@ class DraftManager {
     async loadDraftState() {
         try {
             this.draftState = await window.api.getDraftState();
+            console.log('Loaded draft state:', this.draftState);
             this.updateDraftUI();
             this.updateAuctionControls();
         } catch (error) {
@@ -128,20 +129,24 @@ class DraftManager {
 
         // Update draft order display
         const orderEl = document.getElementById('draftOrder');
-        if (orderEl && this.draftState.draft_order) {
-            orderEl.innerHTML = this.draftState.draft_order.map((team, index) => {
-                const isCurrent = this.draftState.is_active && team.team_id === this.draftState.current_team_id;
-                const isCurrentUser = team.team_id === window.app.currentUser?.id;
-                
-                return `
-                    <div class="flex items-center p-2 rounded ${isCurrent ? 'bg-green-200 font-bold' : 'bg-gray-50'} ${isCurrentUser ? 'border-2 border-blue-400' : ''}">
-                        <span class="w-8 text-center font-semibold">${index + 1}</span>
-                        <span class="flex-1">${team.name}</span>
-                        ${isCurrent ? '<span class="text-green-600">🎯 Current</span>' : ''}
-                        ${isCurrentUser ? '<span class="text-blue-600">👤 You</span>' : ''}
-                    </div>
-                `;
-            }).join('');
+        if (orderEl) {
+            if (this.draftState.draft_order && this.draftState.draft_order.length > 0) {
+                orderEl.innerHTML = this.draftState.draft_order.map((team, index) => {
+                    const isCurrent = this.draftState.is_active && team.team_id === this.draftState.current_team_id;
+                    const isCurrentUser = team.team_id === window.app.currentUser?.id;
+                    
+                    return `
+                        <div class="flex items-center p-2 rounded ${isCurrent ? 'bg-green-200 font-bold' : 'bg-gray-50'} ${isCurrentUser ? 'border-2 border-blue-400' : ''}">
+                            <span class="w-8 text-center font-semibold">${index + 1}</span>
+                            <span class="flex-1">${team.name}</span>
+                            ${isCurrent ? '<span class="text-green-600">🎯 Current</span>' : ''}
+                            ${isCurrentUser ? '<span class="text-blue-600">👤 You</span>' : ''}
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                orderEl.innerHTML = '<div class="text-gray-500">No draft order yet...</div>';
+            }
         }
 
         // Update admin controls
