@@ -2,6 +2,11 @@ const jwt = require('jsonwebtoken');
 const { getDatabase } = require('../models/database');
 
 function authenticateToken(req, res, next) {
+  // Skip authentication for OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 

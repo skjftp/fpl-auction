@@ -9,8 +9,18 @@ admin.initializeApp();
 // Create Express app
 const app = express();
 
+// Configure CORS
+const corsOptions = {
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
 // Middleware
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Initialize Firestore
@@ -44,6 +54,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Handle OPTIONS requests
+app.options('*', cors(corsOptions));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/players', authenticateToken, playersRoutes);
@@ -52,8 +65,10 @@ app.use('/api/teams', authenticateToken, teamsRoutes);
 app.use('/api/scoring', authenticateToken, scoringRoutes);
 app.use('/api/draft', authenticateToken, draftRoutes);
 
-// Export the Express app as a Firebase Function
-exports.api = functions.https.onRequest(app);
+// Export the Express app as a Firebase Function with increased timeout
+exports.api = functions
+  .runWith({ timeoutSeconds: 300, memory: '1GB' })
+  .https.onRequest(app);
 
 // Export scheduled function to sync FPL data
 exports.syncFPLData = functions.pubsub.schedule('0 0 * * *').onRun(async (context) => {
