@@ -501,28 +501,19 @@ class AuctionManager {
         const isMyTurn = currentUser && this.draftState.current_team_id === currentUser.id;
         const currentTeamName = this.draftState.current_team_name;
         
-        // Generate the snake draft order display - show all 10 teams in current round direction
+        // Generate the snake draft order display - show all 10 teams in FIXED original order
         let draftOrderHtml = '';
         if (this.draftState.draft_order && this.draftState.draft_order.length > 0) {
             // Get current round
             const currentRound = Math.ceil(this.draftState.current_position / 10);
             const isForward = currentRound % 2 === 1; // Odd rounds go forward (1-10), even rounds go reverse (10-1)
             
-            // Get all teams and arrange them in the current direction
-            const teams = [];
-            this.draftState.draft_order.forEach(team => {
-                if (team.round === 1) { // Get base team order from round 1
-                    teams.push(team);
-                }
-            });
+            // Get teams from round 1 (original order) - this order NEVER changes
+            const originalOrderTeams = this.draftState.draft_order
+                .filter(team => team.round === 1)
+                .sort((a, b) => a.position - b.position);
             
-            // Sort teams by their original position in round 1
-            teams.sort((a, b) => a.position - b.position);
-            
-            // If current round is reverse, reverse the display order
-            const displayTeams = isForward ? teams : [...teams].reverse();
-            
-            const teamsHtml = displayTeams.map((team) => {
+            const teamsHtml = originalOrderTeams.map((team) => {
                 const isActive = team.team_id === this.draftState.current_team_id;
                 const isMyTeam = currentUser && team.team_id === currentUser.id;
                 
@@ -535,7 +526,7 @@ class AuctionManager {
                     teamClass += ' bg-gray-100 text-gray-700 border-gray-300';
                 }
                 
-                return `<span class="${teamClass}">${team.name || 'Team ' + team.team_id}</span>`;
+                return `<span class="${teamClass}">${team.name || team.username || 'Team ' + team.team_id}</span>`;
             }).join('');
             
             draftOrderHtml = `
@@ -543,7 +534,7 @@ class AuctionManager {
                     <div class="text-sm font-medium text-gray-600 mb-2 text-center">
                         Round ${currentRound} ${isForward ? '→' : '←'}
                     </div>
-                    <div class="flex flex-wrap gap-2 justify-center">
+                    <div class="flex gap-2 justify-center">
                         ${teamsHtml}
                     </div>
                 </div>
