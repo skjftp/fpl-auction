@@ -207,7 +207,13 @@ async function initializeDraftOrder() {
     // Get all teams
     database.all('SELECT id FROM teams ORDER BY id', [], (err, teams) => {
       if (err) {
+        console.error('Error getting teams:', err);
         reject(err);
+        return;
+      }
+      
+      if (!teams || teams.length === 0) {
+        reject(new Error('No teams found. Please initialize teams first.'));
         return;
       }
       
@@ -217,6 +223,7 @@ async function initializeDraftOrder() {
       // Clear existing draft order
       database.run('DELETE FROM draft_order', [], (err) => {
         if (err) {
+          console.error('Error clearing draft order:', err);
           reject(err);
           return;
         }
@@ -230,6 +237,7 @@ async function initializeDraftOrder() {
         
         stmt.finalize((err) => {
           if (err) {
+            console.error('Error finalizing draft order:', err);
             reject(err);
           } else {
             // Initialize draft state
@@ -239,8 +247,10 @@ async function initializeDraftOrder() {
               [shuffledTeams[0].id, shuffledTeams.length],
               (err) => {
                 if (err) {
+                  console.error('Error initializing draft state:', err);
                   reject(err);
                 } else {
+                  console.log('Draft order initialized successfully');
                   resolve();
                 }
               }

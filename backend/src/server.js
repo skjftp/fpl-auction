@@ -64,7 +64,26 @@ app.use('/api/draft', authenticateToken, draftRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  const db = require('./models/database').getDatabase();
+  
+  // Test database connection
+  db.get('SELECT COUNT(*) as count FROM teams', [], (err, result) => {
+    if (err) {
+      res.status(500).json({ 
+        status: 'ERROR', 
+        timestamp: new Date().toISOString(),
+        database: 'Failed',
+        error: err.message 
+      });
+    } else {
+      res.json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        database: 'Connected',
+        teams: result.count
+      });
+    }
+  });
 });
 
 // Socket.IO for real-time auction
