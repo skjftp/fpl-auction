@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initialize Teams - FPL Auction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Initialize Teams</h2>
+        
+        <div id="status" class="mb-4 text-center">
+            <p class="text-gray-600">Click the button below to initialize default teams in the database.</p>
+        </div>
+        
+        <button id="initBtn" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+            Initialize Teams
+        </button>
+        
+        <div class="mt-6 text-center text-sm text-gray-500">
+            <p>This will create teams: team1 to team10</p>
+            <p>Password for all teams: password123</p>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <a href="/" class="text-blue-600 hover:underline">Back to Login</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('initBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('initBtn');
+            const status = document.getElementById('status');
+            
+            btn.disabled = true;
+            btn.textContent = 'Initializing...';
+            
+            try {
+                const baseURL = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3001/api'
+                    : 'https://fpl-auction-backend-0bls.onrender.com/api';
+                    
+                const response = await fetch(`${baseURL}/auth/init-teams`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    status.innerHTML = '<p class="text-green-600 font-medium">✓ Teams initialized successfully!</p>';
+                    btn.textContent = 'Teams Initialized';
+                    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    btn.classList.add('bg-green-600');
+                } else {
+                    throw new Error(data.error || 'Failed to initialize teams');
+                }
+            } catch (error) {
+                status.innerHTML = `<p class="text-red-600 font-medium">Error: ${error.message}</p>`;
+                btn.disabled = false;
+                btn.textContent = 'Try Again';
+            }
+        });
+    </script>
+</body>
+</html>
