@@ -2,8 +2,7 @@
 class API {
     constructor() {
         // Use environment-specific API URL
-        // TODO: Update PRODUCTION_API_URL with your Google Cloud Run URL after deployment
-        const PRODUCTION_API_URL = 'https://fpl-auction-backend-0bls.onrender.com/api';
+        const PRODUCTION_API_URL = 'https://fpl-auction-backend-945963649649.us-central1.run.app/api';
         
         this.baseURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api'

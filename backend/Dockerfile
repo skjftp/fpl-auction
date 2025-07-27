@@ -1,23 +1,24 @@
 FROM node:18-alpine
 
-# Install build dependencies for SQLite
-RUN apk add --no-cache python3 make g++ sqlite
-
 WORKDIR /app
+
+# Install Python and build dependencies needed for node-gyp
+RUN apk add --no-cache python3 make g++ 
 
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev || npm install
 
 # Copy application code
 COPY . .
 
-# Create directory for SQLite database
-RUN mkdir -p /app/data
+# Create tmp directory for SQLite
+RUN mkdir -p /tmp
 
-# Expose port
+# Use the PORT environment variable provided by Cloud Run
+ENV PORT=8080
 EXPOSE 8080
 
 # Start the application

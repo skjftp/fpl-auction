@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "build": "echo 'No build process needed'",
+    "build": "npm install --production",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {

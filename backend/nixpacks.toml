@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "python3", "gcc", "sqlite"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[start]
+cmd = "npm start"
