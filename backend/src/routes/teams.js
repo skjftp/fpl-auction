@@ -34,26 +34,34 @@ router.get('/:teamId/squad', async (req, res) => {
     
     for (const doc of squadSnapshot.docs) {
       const squadItem = doc.data();
-      totalSpent += squadItem.price_paid;
+      const pricePaid = squadItem.price_paid || 0;
+      totalSpent += pricePaid;
       
       if (squadItem.player_id) {
-        // Get player details
-        const playerDoc = await collections.fplPlayers.doc(squadItem.player_id.toString()).get();
-        if (playerDoc.exists) {
-          const player = playerDoc.data();
-          players.push({
-            ...player,
-            price_paid: squadItem.price_paid,
-            acquired_at: squadItem.acquired_at
-          });
+        try {
+          // Get player details
+          const playerDoc = await collections.fplPlayers.doc(squadItem.player_id.toString()).get();
+          if (playerDoc.exists) {
+            const player = playerDoc.data();
+            players.push({
+              ...player,
+              price_paid: pricePaid,
+              acquired_at: squadItem.acquired_at
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching player details:', err);
         }
       } else if (squadItem.club_id) {
         // Handle club purchases if any
-        clubs.push(squadItem);
+        clubs.push({
+          ...squadItem,
+          price_paid: pricePaid
+        });
       }
     }
     
-    // Count by position
+    // Count by position (with safety checks)
     const counts = {
       players: players.length,
       clubs: clubs.length,
@@ -63,13 +71,19 @@ router.get('/:teamId/squad', async (req, res) => {
       fwd: players.filter(p => p.position === 4).length
     };
     
-    // Group by position
+    // Group by position (with safety checks)
     const positions = {
       1: players.filter(p => p.position === 1),
       2: players.filter(p => p.position === 2),
       3: players.filter(p => p.position === 3),
       4: players.filter(p => p.position === 4)
     };
+    
+    console.log('Squad response:', { 
+      playerCount: players.length, 
+      clubCount: clubs.length, 
+      totalSpent 
+    });
     
     res.json({
       players,

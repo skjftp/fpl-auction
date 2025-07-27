@@ -78,7 +78,7 @@ class AuctionManager {
     async loadSoldItems() {
         try {
             // Load all sold players and clubs from team squads
-            const response = await fetch(`${api.baseURL}/api/teams/all-squads`, {
+            const response = await fetch(`${api.baseURL}/teams/all-squads`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('fpl_token')}`
                 }
