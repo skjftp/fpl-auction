@@ -3,6 +3,11 @@ const { collections } = require('../models/database');
 
 const router = express.Router();
 
+// Test endpoint to verify route is working
+router.get('/test', (req, res) => {
+  res.json({ message: 'Teams route is working', timestamp: new Date().toISOString() });
+});
+
 // Get all squad items (for tracking sold players/clubs)
 router.get('/all-squads', async (req, res) => {
   try {
