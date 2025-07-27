@@ -379,7 +379,6 @@ router.get('/active', async (req, res) => {
   try {
     const activeAuctions = await collections.auctions
       .where('status', '==', 'active')
-      .orderBy('started_at', 'desc')
       .get();
     
     const auctions = [];
@@ -391,9 +390,19 @@ router.get('/active', async (req, res) => {
       if (auction.player_id) {
         const playerDoc = await collections.fplPlayers.doc(auction.player_id.toString()).get();
         if (playerDoc.exists) {
-          auction.player_name = playerDoc.data().web_name;
-          auction.position = playerDoc.data().position;
-          auction.player_team_id = playerDoc.data().team_id;
+          const player = playerDoc.data();
+          auction.player_name = player.web_name;
+          auction.position = player.position;
+          auction.player_team_id = player.team_id;
+          auction.photo = player.photo;
+          
+          // Get player's club name
+          if (player.team_id) {
+            const clubDoc = await collections.fplClubs.doc(player.team_id.toString()).get();
+            if (clubDoc.exists) {
+              auction.team_name = clubDoc.data().name;
+            }
+          }
         }
       } else if (auction.club_id) {
         const clubDoc = await collections.fplClubs.doc(auction.club_id.toString()).get();

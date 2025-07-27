@@ -77,10 +77,10 @@
         <div class="bg-white shadow">
             <div class="container mx-auto px-4">
                 <div class="flex space-x-8">
-                    <button class="tab-btn py-4 px-2 border-b-2 border-green-500 text-green-600 font-medium" data-tab="draft">
+                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="draft">
                         🎲 Draft
                     </button>
-                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="auction">
+                    <button class="tab-btn py-4 px-2 border-b-2 border-green-500 text-green-600 font-medium" data-tab="auction">
                         🔨 Auction
                     </button>
                     <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="myTeam">
@@ -99,7 +99,7 @@
         <!-- Tab Content -->
         <div class="container mx-auto px-4 py-6">
             <!-- Draft Tab -->
-            <div id="draftTab" class="tab-content">
+            <div id="draftTab" class="tab-content hidden">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Draft Status and Controls -->
                     <div class="lg:col-span-2">
@@ -158,10 +158,17 @@
             </div>
 
             <!-- Auction Tab -->
-            <div id="auctionTab" class="tab-content hidden">
+            <div id="auctionTab" class="tab-content">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Available Players -->
                     <div class="lg:col-span-2">
+                        <!-- Turn Indicator -->
+                        <div id="auctionTurnIndicator" class="bg-white rounded-lg shadow p-4 mb-4">
+                            <div class="text-center">
+                                <span class="text-gray-500">Loading turn info...</span>
+                            </div>
+                        </div>
+                        
                         <div class="bg-white rounded-lg shadow p-6">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-lg font-semibold">Available Players</h3>
@@ -207,6 +214,27 @@
                             <div id="clubsList" class="space-y-2 max-h-48 overflow-y-auto">
                                 <!-- Clubs will be loaded here -->
                             </div>
+                        </div>
+                        
+                        <!-- Team Chat -->
+                        <div class="bg-white rounded-lg shadow p-6 mt-6">
+                            <h3 class="text-lg font-semibold mb-4">💬 Team Chat</h3>
+                            
+                            <!-- Chat Messages -->
+                            <div id="auctionChatMessages" class="h-48 overflow-y-auto border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                                <div class="text-gray-500 text-center">No messages yet...</div>
+                            </div>
+                            
+                            <!-- Chat Input -->
+                            <form id="auctionChatForm" class="flex">
+                                <input type="text" id="auctionChatInput" 
+                                       placeholder="Type a message..." 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                       maxlength="500">
+                                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600">
+                                    Send
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

@@ -1,0 +1,63 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "auctions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "started_at",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "draft_order",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "position",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "chat_messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "created_at",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "team_squads",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "team_id",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "acquired_at",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "fpl_clubs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "strength",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

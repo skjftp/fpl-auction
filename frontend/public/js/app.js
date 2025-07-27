@@ -2,7 +2,7 @@
 class App {
     constructor() {
         this.currentUser = null;
-        this.currentTab = 'draft';
+        this.currentTab = 'auction'; // Changed default tab to auction
         this.init();
     }
 

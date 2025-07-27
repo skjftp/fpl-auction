@@ -5,12 +5,16 @@ class AuctionManager {
         this.players = [];
         this.clubs = [];
         this.positions = [];
+        this.draftState = null;
+        this.chatMessages = [];
         this.init();
     }
 
     init() {
         this.bindEvents();
         this.loadInitialData();
+        this.initializeChat();
+        this.loadDraftState();
     }
 
     bindEvents() {
@@ -385,6 +389,141 @@ class AuctionManager {
         } catch (error) {
             console.error('Error loading active auctions:', error);
         }
+    }
+
+    // Initialize chat functionality
+    initializeChat() {
+        const chatForm = document.getElementById('auctionChatForm');
+        const chatInput = document.getElementById('auctionChatInput');
+        
+        if (chatForm) {
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const message = chatInput.value.trim();
+                if (message) {
+                    await this.sendChatMessage(message);
+                    chatInput.value = '';
+                }
+            });
+        }
+
+        // Listen for new chat messages
+        if (window.socketManager && window.socketManager.socket) {
+            window.socketManager.socket.on('new-chat-message', (message) => {
+                this.addChatMessage(message);
+            });
+        }
+
+        // Load initial chat messages
+        this.loadChatMessages();
+    }
+
+    async loadChatMessages() {
+        try {
+            const messages = await api.getChatMessages();
+            this.chatMessages = messages;
+            this.displayChatMessages();
+        } catch (error) {
+            console.error('Error loading chat messages:', error);
+        }
+    }
+
+    async sendChatMessage(message) {
+        try {
+            await api.sendChatMessage(message);
+        } catch (error) {
+            console.error('Error sending chat message:', error);
+            showNotification('Failed to send message', 'error');
+        }
+    }
+
+    addChatMessage(message) {
+        this.chatMessages.push(message);
+        this.displayChatMessages();
+        
+        // Scroll to bottom
+        const container = document.getElementById('auctionChatMessages');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+
+    displayChatMessages() {
+        const container = document.getElementById('auctionChatMessages');
+        if (!container) return;
+
+        if (this.chatMessages.length === 0) {
+            container.innerHTML = '<div class="text-gray-500 text-center">No messages yet...</div>';
+            return;
+        }
+
+        container.innerHTML = this.chatMessages.map(msg => `
+            <div class="mb-2">
+                <span class="font-semibold text-sm">${msg.team_name}:</span>
+                <span class="text-sm">${msg.message}</span>
+                <span class="text-xs text-gray-400 ml-2">${new Date(msg.created_at).toLocaleTimeString()}</span>
+            </div>
+        `).join('');
+    }
+
+    // Load and display draft state
+    async loadDraftState() {
+        try {
+            const state = await api.getDraftState();
+            this.draftState = state;
+            this.updateTurnIndicator();
+
+            // Listen for draft updates
+            if (window.socketManager && window.socketManager.socket) {
+                window.socketManager.socket.on('draft-turn-advanced', (data) => {
+                    this.draftState = { ...this.draftState, ...data };
+                    this.updateTurnIndicator();
+                });
+            }
+        } catch (error) {
+            console.error('Error loading draft state:', error);
+        }
+    }
+
+    updateTurnIndicator() {
+        const indicator = document.getElementById('auctionTurnIndicator');
+        if (!indicator || !this.draftState) return;
+
+        if (!this.draftState.is_active) {
+            indicator.innerHTML = `
+                <div class="text-center">
+                    <span class="text-gray-500">Draft not active</span>
+                </div>
+            `;
+            return;
+        }
+
+        const isMyTurn = this.draftState.current_team_id === window.currentTeam.id;
+        const turnClass = isMyTurn ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-400';
+        const turnText = isMyTurn ? 'Your Turn!' : `${this.draftState.current_team_name}'s Turn`;
+
+        indicator.innerHTML = `
+            <div class="text-center ${turnClass} border-2 rounded-lg p-4">
+                <div class="text-lg font-bold ${isMyTurn ? 'text-green-600' : 'text-gray-700'}">
+                    ${turnText}
+                </div>
+                <div class="text-sm text-gray-600">
+                    Position ${this.draftState.current_position} of ${this.draftState.draft_order?.length || 0}
+                </div>
+                ${isMyTurn ? '<div class="text-xs text-green-600 mt-2">You can start an auction now!</div>' : ''}
+            </div>
+        `;
+
+        // Enable/disable auction buttons based on turn
+        const startButtons = document.querySelectorAll('.start-auction-btn');
+        startButtons.forEach(btn => {
+            btn.disabled = !isMyTurn;
+            if (!isMyTurn) {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
     }
 }
 
