@@ -77,7 +77,10 @@
         <div class="bg-white shadow">
             <div class="container mx-auto px-4">
                 <div class="flex space-x-8">
-                    <button class="tab-btn py-4 px-2 border-b-2 border-green-500 text-green-600 font-medium" data-tab="auction">
+                    <button class="tab-btn py-4 px-2 border-b-2 border-green-500 text-green-600 font-medium" data-tab="draft">
+                        🎲 Draft
+                    </button>
+                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="auction">
                         🔨 Auction
                     </button>
                     <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="myTeam">
@@ -95,8 +98,70 @@
 
         <!-- Tab Content -->
         <div class="container mx-auto px-4 py-6">
+            <!-- Draft Tab -->
+            <div id="draftTab" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Draft Status and Controls -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-lg shadow p-6 mb-6">
+                            <h2 class="text-2xl font-bold mb-4">🎲 Snake Draft Status</h2>
+                            <div id="draftStatus" class="mb-4">
+                                <div class="bg-gray-100 border border-gray-400 text-gray-700 px-4 py-3 rounded">
+                                    Loading draft status...
+                                </div>
+                            </div>
+                            
+                            <!-- Turn Indicator -->
+                            <div id="turnIndicator" class="mb-4"></div>
+                            
+                            <!-- Admin Controls -->
+                            <div class="space-x-2">
+                                <button id="initializeDraftBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                    🎲 Initialize Draft Order
+                                </button>
+                                <button id="startDraftBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                                    🚀 Start Draft
+                                </button>
+                                <button id="advanceTurnBtn" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600" style="display: none;">
+                                    ➡️ Complete My Turn
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Draft Order -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-xl font-bold mb-4">📋 Draft Order</h3>
+                            <div id="draftOrder" class="space-y-2">
+                                <div class="text-gray-500">No draft order yet...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Chat -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-xl font-bold mb-4">💬 Team Chat</h3>
+                        
+                        <!-- Chat Messages -->
+                        <div id="chatMessages" class="h-64 overflow-y-auto border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                            <div class="text-gray-500 text-center">No messages yet...</div>
+                        </div>
+                        
+                        <!-- Chat Input -->
+                        <form id="chatForm" class="flex">
+                            <input type="text" id="chatInput" 
+                                   placeholder="Type a message..." 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                   maxlength="500">
+                            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600">
+                                Send
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Auction Tab -->
-            <div id="auctionTab" class="tab-content">
+            <div id="auctionTab" class="tab-content hidden">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Available Players -->
                     <div class="lg:col-span-2">
@@ -185,6 +250,7 @@
     <!-- Scripts -->
     <script src="js/api.js"></script>
     <script src="js/socket.js"></script>
+    <script src="js/draft.js"></script>
     <script src="js/auction.js"></script>
     <script src="js/team.js"></script>
     <script src="js/scoring.js"></script>

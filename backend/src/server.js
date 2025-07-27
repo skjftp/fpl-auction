@@ -10,6 +10,7 @@ const playersRoutes = require('./routes/players');
 const auctionRoutes = require('./routes/auction');
 const teamsRoutes = require('./routes/teams');
 const scoringRoutes = require('./routes/scoring');
+const draftRoutes = require('./routes/draft');
 
 const { initializeDatabase } = require('./models/database');
 const { authenticateToken } = require('./middleware/auth');
@@ -59,6 +60,7 @@ app.use('/api/players', authenticateToken, playersRoutes);
 app.use('/api/auction', authenticateToken, auctionRoutes);
 app.use('/api/teams', authenticateToken, teamsRoutes);
 app.use('/api/scoring', authenticateToken, scoringRoutes);
+app.use('/api/draft', authenticateToken, draftRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

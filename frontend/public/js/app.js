@@ -2,7 +2,7 @@
 class App {
     constructor() {
         this.currentUser = null;
-        this.currentTab = 'auction';
+        this.currentTab = 'draft';
         this.init();
     }
 
@@ -152,6 +152,10 @@ class App {
 
     async loadTabContent(tabName) {
         switch (tabName) {
+            case 'draft':
+                // Draft content is loaded by DraftManager
+                break;
+                
             case 'auction':
                 // Auction content is loaded by AuctionManager
                 break;

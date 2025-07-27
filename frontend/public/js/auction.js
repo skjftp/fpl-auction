@@ -147,7 +147,7 @@ class AuctionManager {
                     <div class="text-sm text-gray-500">Points</div>
                     <div class="font-bold">${player.total_points}</div>
                     <button onclick="auctionManager.startPlayerAuction(${player.id})" 
-                            class="mt-2 bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                            class="start-auction-btn mt-2 bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
                         Start Auction
                     </button>
                 </div>
@@ -183,7 +183,7 @@ class AuctionManager {
                     <div class="text-sm text-gray-500">${club.short_name}</div>
                 </div>
                 <button onclick="auctionManager.startClubAuction(${club.id})" 
-                        class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+                        class="start-auction-btn bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
                     Start Auction
                 </button>
             </div>

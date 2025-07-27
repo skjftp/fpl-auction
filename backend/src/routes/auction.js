@@ -3,48 +3,77 @@ const { getDatabase } = require('../models/database');
 
 const router = express.Router();
 
-// Start auction for a player
+// Start auction for a player (with draft validation)
 router.post('/start-player/:playerId', (req, res) => {
   const playerId = parseInt(req.params.playerId);
+  const teamId = req.user.teamId;
   const db = getDatabase();
   
-  // Check if player is already in auction or sold
+  // First check if it's this team's turn in the draft
   db.get(
-    'SELECT * FROM auctions WHERE player_id = ? AND status = "active"',
-    [playerId],
-    (err, existingAuction) => {
+    'SELECT current_team_id, is_active FROM draft_state WHERE id = 1',
+    [],
+    (err, draftState) => {
       if (err) {
         return res.status(500).json({ error: 'Database error' });
       }
       
-      if (existingAuction) {
-        return res.status(400).json({ error: 'Player is already in active auction' });
+      if (!draftState || !draftState.is_active) {
+        return res.status(400).json({ error: 'Draft is not active' });
       }
       
-      // Check if player is already sold
+      if (draftState.current_team_id !== teamId) {
+        return res.status(403).json({ error: 'Not your turn to start an auction' });
+      }
+      
+      // Check if there's already an active auction
       db.get(
-        'SELECT * FROM team_squads WHERE player_id = ?',
-        [playerId],
-        (err, sold) => {
+        'SELECT * FROM auctions WHERE status = "active"',
+        [],
+        (err, activeAuction) => {
           if (err) {
             return res.status(500).json({ error: 'Database error' });
           }
           
-          if (sold) {
-            return res.status(400).json({ error: 'Player is already sold' });
+          if (activeAuction) {
+            return res.status(400).json({ error: 'Another auction is already active' });
           }
           
-          // Create new auction
-          db.run(
-            `INSERT INTO auctions (player_id, auction_type, current_bid, status) 
-             VALUES (?, 'player', 5, 'active')`,
+          // Check if player is already sold
+          db.get(
+            'SELECT * FROM team_squads WHERE player_id = ?',
             [playerId],
-            function(err) {
+            (err, sold) => {
               if (err) {
-                return res.status(500).json({ error: 'Failed to start auction' });
+                return res.status(500).json({ error: 'Database error' });
               }
               
-              const auctionId = this.lastID;
+              if (sold) {
+                return res.status(400).json({ error: 'Player is already sold' });
+              }
+              
+              // Create new auction with automatic £5 bid
+              db.run(
+                `INSERT INTO auctions (player_id, auction_type, current_bid, current_bidder_id, status) 
+                 VALUES (?, 'player', 5, ?, 'active')`,
+                [playerId, teamId],
+                function(err) {
+                  if (err) {
+                    return res.status(500).json({ error: 'Failed to start auction' });
+                  }
+                  
+                  const auctionId = this.lastID;
+                  
+                  // Record the automatic £5 bid in bid history
+                  db.run(
+                    'INSERT INTO bid_history (auction_id, team_id, bid_amount) VALUES (?, ?, 5)',
+                    [auctionId, teamId],
+                    (err) => {
+                      if (err) {
+                        console.error('Failed to record initial bid:', err);
+                      }
+                    }
+                  );
               
               // Get player details for response
               db.get(
@@ -58,19 +87,32 @@ router.post('/start-player/:playerId', (req, res) => {
                     return res.status(500).json({ error: 'Failed to fetch player details' });
                   }
                   
-                  const auctionData = {
-                    id: auctionId,
-                    player,
-                    currentBid: 5,
-                    currentBidder: null,
-                    status: 'active',
-                    type: 'player'
-                  };
-                  
-                  // Broadcast to all connected clients
-                  req.io.to('auction-room').emit('auction-started', auctionData);
-                  
-                  res.json({ success: true, auction: auctionData });
+                  // Get team info for the initial bidder
+                  db.get(
+                    'SELECT name, username FROM teams WHERE id = ?',
+                    [teamId],
+                    (err, team) => {
+                      if (err) {
+                        console.error('Failed to get team info:', err);
+                      }
+                      
+                      const auctionData = {
+                        id: auctionId,
+                        player,
+                        currentBid: 5,
+                        currentBidder: team || { name: 'Unknown', username: 'unknown' },
+                        currentBidderId: teamId,
+                        status: 'active',
+                        type: 'player',
+                        startedBy: team || { name: 'Unknown', username: 'unknown' }
+                      };
+                      
+                      // Broadcast to all connected clients
+                      req.io.emit('auction-started', auctionData);
+                      
+                      res.json({ success: true, auction: auctionData });
+                    }
+                  );
                 }
               );
             }
@@ -81,66 +123,115 @@ router.post('/start-player/:playerId', (req, res) => {
   );
 });
 
-// Start auction for a club
+// Start auction for a club (with draft validation)
 router.post('/start-club/:clubId', (req, res) => {
   const clubId = parseInt(req.params.clubId);
+  const teamId = req.user.teamId;
   const db = getDatabase();
   
-  // Similar logic for clubs
+  // First check if it's this team's turn in the draft
   db.get(
-    'SELECT * FROM auctions WHERE club_id = ? AND status = "active"',
-    [clubId],
-    (err, existingAuction) => {
+    'SELECT current_team_id, is_active FROM draft_state WHERE id = 1',
+    [],
+    (err, draftState) => {
       if (err) {
         return res.status(500).json({ error: 'Database error' });
       }
       
-      if (existingAuction) {
-        return res.status(400).json({ error: 'Club is already in active auction' });
+      if (!draftState || !draftState.is_active) {
+        return res.status(400).json({ error: 'Draft is not active' });
       }
       
+      if (draftState.current_team_id !== teamId) {
+        return res.status(403).json({ error: 'Not your turn to start an auction' });
+      }
+      
+      // Check if there's already an active auction
       db.get(
-        'SELECT * FROM team_squads WHERE club_id = ?',
-        [clubId],
-        (err, sold) => {
+        'SELECT * FROM auctions WHERE status = "active"',
+        [],
+        (err, activeAuction) => {
           if (err) {
             return res.status(500).json({ error: 'Database error' });
           }
           
-          if (sold) {
-            return res.status(400).json({ error: 'Club is already sold' });
+          if (activeAuction) {
+            return res.status(400).json({ error: 'Another auction is already active' });
           }
           
-          db.run(
-            `INSERT INTO auctions (club_id, auction_type, current_bid, status) 
-             VALUES (?, 'club', 5, 'active')`,
+          // Check if club is already sold
+          db.get(
+            'SELECT * FROM team_squads WHERE club_id = ?',
             [clubId],
-            function(err) {
+            (err, sold) => {
               if (err) {
-                return res.status(500).json({ error: 'Failed to start auction' });
+                return res.status(500).json({ error: 'Database error' });
               }
               
-              const auctionId = this.lastID;
+              if (sold) {
+                return res.status(400).json({ error: 'Club is already sold' });
+              }
               
-              db.get(
-                'SELECT * FROM fpl_clubs WHERE id = ?',
-                [clubId],
-                (err, club) => {
+              // Create new auction with automatic £5 bid
+              db.run(
+                `INSERT INTO auctions (club_id, auction_type, current_bid, current_bidder_id, status) 
+                 VALUES (?, 'club', 5, ?, 'active')`,
+                [clubId, teamId],
+                function(err) {
                   if (err) {
-                    return res.status(500).json({ error: 'Failed to fetch club details' });
+                    return res.status(500).json({ error: 'Failed to start auction' });
                   }
                   
-                  const auctionData = {
-                    id: auctionId,
-                    club,
-                    currentBid: 5,
-                    currentBidder: null,
-                    status: 'active',
-                    type: 'club'
-                  };
+                  const auctionId = this.lastID;
                   
-                  req.io.to('auction-room').emit('auction-started', auctionData);
-                  res.json({ success: true, auction: auctionData });
+                  // Record the automatic £5 bid in bid history
+                  db.run(
+                    'INSERT INTO bid_history (auction_id, team_id, bid_amount) VALUES (?, ?, 5)',
+                    [auctionId, teamId],
+                    (err) => {
+                      if (err) {
+                        console.error('Failed to record initial bid:', err);
+                      }
+                    }
+                  );
+                  
+                  // Get club details
+                  db.get(
+                    'SELECT * FROM fpl_clubs WHERE id = ?',
+                    [clubId],
+                    (err, club) => {
+                      if (err) {
+                        return res.status(500).json({ error: 'Failed to fetch club details' });
+                      }
+                      
+                      // Get team info for the initial bidder
+                      db.get(
+                        'SELECT name, username FROM teams WHERE id = ?',
+                        [teamId],
+                        (err, team) => {
+                          if (err) {
+                            console.error('Failed to get team info:', err);
+                          }
+                          
+                          const auctionData = {
+                            id: auctionId,
+                            club,
+                            currentBid: 5,
+                            currentBidder: team || { name: 'Unknown', username: 'unknown' },
+                            currentBidderId: teamId,
+                            status: 'active',
+                            type: 'club',
+                            startedBy: team || { name: 'Unknown', username: 'unknown' }
+                          };
+                          
+                          // Broadcast to all connected clients
+                          req.io.emit('auction-started', auctionData);
+                          
+                          res.json({ success: true, auction: auctionData });
+                        }
+                      );
+                    }
+                  );
                 }
               );
             }

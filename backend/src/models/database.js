@@ -127,6 +127,44 @@ async function initializeDatabase() {
           FOREIGN KEY (player_id) REFERENCES fpl_players(id),
           UNIQUE(team_id, gameweek, player_id)
         )
+      `);
+      
+      // Snake draft order table
+      database.run(`
+        CREATE TABLE IF NOT EXISTS draft_order (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          team_id INTEGER NOT NULL,
+          position INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (team_id) REFERENCES teams(id),
+          UNIQUE(team_id),
+          UNIQUE(position)
+        )
+      `);
+      
+      // Draft state table (single row to track current state)
+      database.run(`
+        CREATE TABLE IF NOT EXISTS draft_state (
+          id INTEGER PRIMARY KEY CHECK(id = 1),
+          current_team_id INTEGER,
+          current_position INTEGER DEFAULT 1,
+          is_active BOOLEAN DEFAULT FALSE,
+          total_teams INTEGER DEFAULT 10,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (current_team_id) REFERENCES teams(id)
+        )
+      `);
+      
+      // Chat messages table
+      database.run(`
+        CREATE TABLE IF NOT EXISTS chat_messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          team_id INTEGER NOT NULL,
+          message TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (team_id) REFERENCES teams(id)
+        )
       `, (err) => {
         if (err) {
           reject(err);
@@ -161,8 +199,139 @@ async function createDefaultTeams() {
   }
 }
 
+// Initialize snake draft order
+async function initializeDraftOrder() {
+  const database = getDatabase();
+  
+  return new Promise((resolve, reject) => {
+    // Get all teams
+    database.all('SELECT id FROM teams ORDER BY id', [], (err, teams) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      // Shuffle teams for random order
+      const shuffledTeams = teams.sort(() => Math.random() - 0.5);
+      
+      // Clear existing draft order
+      database.run('DELETE FROM draft_order', [], (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        // Insert new draft order
+        const stmt = database.prepare('INSERT INTO draft_order (team_id, position) VALUES (?, ?)');
+        
+        shuffledTeams.forEach((team, index) => {
+          stmt.run(team.id, index + 1);
+        });
+        
+        stmt.finalize((err) => {
+          if (err) {
+            reject(err);
+          } else {
+            // Initialize draft state
+            database.run(
+              `INSERT OR REPLACE INTO draft_state (id, current_team_id, current_position, is_active, total_teams, updated_at) 
+               VALUES (1, ?, 1, 0, ?, CURRENT_TIMESTAMP)`,
+              [shuffledTeams[0].id, shuffledTeams.length],
+              (err) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve();
+                }
+              }
+            );
+          }
+        });
+      });
+    });
+  });
+}
+
+// Start the draft
+async function startDraft() {
+  const database = getDatabase();
+  
+  return new Promise((resolve, reject) => {
+    database.run(
+      'UPDATE draft_state SET is_active = 1, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
+      [],
+      (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      }
+    );
+  });
+}
+
+// Move to next team in draft order
+async function advanceDraftTurn() {
+  const database = getDatabase();
+  
+  return new Promise((resolve, reject) => {
+    database.get('SELECT * FROM draft_state WHERE id = 1', [], (err, state) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      const nextPosition = state.current_position + 1;
+      
+      // Get next team
+      database.get(
+        'SELECT team_id FROM draft_order WHERE position = ?',
+        [nextPosition],
+        (err, nextTeam) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          
+          if (nextTeam) {
+            // Move to next team
+            database.run(
+              'UPDATE draft_state SET current_team_id = ?, current_position = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
+              [nextTeam.team_id, nextPosition],
+              (err) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve({ hasNext: true, nextTeamId: nextTeam.team_id });
+                }
+              }
+            );
+          } else {
+            // Draft complete
+            database.run(
+              'UPDATE draft_state SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = 1',
+              [],
+              (err) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve({ hasNext: false });
+                }
+              }
+            );
+          }
+        }
+      );
+    });
+  });
+}
+
 module.exports = {
   getDatabase,
   initializeDatabase,
-  createDefaultTeams
+  createDefaultTeams,
+  initializeDraftOrder,
+  startDraft,
+  advanceDraftTurn
 };

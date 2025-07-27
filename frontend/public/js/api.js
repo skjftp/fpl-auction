@@ -148,6 +148,38 @@ class API {
     async getCurrentGameweek() {
         return await this.request('/scoring/current-gameweek');
     }
+
+    // Draft endpoints
+    async getDraftState() {
+        return await this.request('/draft/state');
+    }
+
+    async initializeDraft() {
+        return await this.request('/draft/initialize', { method: 'POST' });
+    }
+
+    async startDraft() {
+        return await this.request('/draft/start', { method: 'POST' });
+    }
+
+    async canStartAuction() {
+        return await this.request('/draft/can-start-auction');
+    }
+
+    async advanceTurn() {
+        return await this.request('/draft/advance-turn', { method: 'POST' });
+    }
+
+    async getChatMessages() {
+        return await this.request('/draft/chat');
+    }
+
+    async sendChatMessage(message) {
+        return await this.request('/draft/chat', {
+            method: 'POST',
+            body: JSON.stringify({ message })
+        });
+    }
 }
 
 // Global API instance
