@@ -350,7 +350,7 @@ class App {
                                     </div>
                                     <div class="flex-1">
                                         <div class="font-medium">${player.web_name}</div>
-                                        <div class="text-sm text-gray-500">${player.player_club_name}</div>
+                                        <div class="text-sm text-gray-500">${player.team_name || 'Unknown'}</div>
                                         <div class="text-sm font-semibold text-green-600">£${player.price_paid}</div>
                                     </div>
                                 </div>
