@@ -68,28 +68,25 @@ async function initializeDraftOrder() {
     [teams[i], teams[j]] = [teams[j], teams[i]];
   }
 
-  // Create snake draft order
+  // Create snake draft order for 17 rounds
   const draftOrder = [];
+  const totalRounds = 17;
+  let position = 1;
   
-  // Forward pass
-  teams.forEach((team, index) => {
-    draftOrder.push({
-      position: index + 1,
-      team_id: team.id,
-      round: 1,
-      is_forward: true
+  for (let round = 1; round <= totalRounds; round++) {
+    const isForward = round % 2 === 1; // Odd rounds go forward (1-10), even rounds go reverse (10-1)
+    const roundTeams = isForward ? teams : [...teams].reverse();
+    
+    roundTeams.forEach((team, index) => {
+      draftOrder.push({
+        position: position++,
+        team_id: team.id,
+        round: round,
+        is_forward: isForward,
+        round_position: index + 1
+      });
     });
-  });
-  
-  // Reverse pass
-  teams.reverse().forEach((team, index) => {
-    draftOrder.push({
-      position: teams.length + index + 1,
-      team_id: team.id,
-      round: 2,
-      is_forward: false
-    });
-  });
+  }
 
   // Save draft order
   const batch = db.batch();
@@ -118,6 +115,94 @@ async function startDraft() {
   });
 }
 
+// Check if a team has completed their squad (15 players + 2 clubs)
+async function isTeamCompleted(teamId) {
+  const squadSnapshot = await collections.teamSquads
+    .where('team_id', '==', teamId)
+    .get();
+  
+  let playerCount = 0;
+  let clubCount = 0;
+  
+  squadSnapshot.forEach(doc => {
+    const item = doc.data();
+    if (item.player_id) playerCount++;
+    if (item.club_id) clubCount++;
+  });
+  
+  return playerCount >= 15 && clubCount >= 2;
+}
+
+// Get team's current squad composition
+async function getTeamSquadStats(teamId) {
+  const squadSnapshot = await collections.teamSquads
+    .where('team_id', '==', teamId)
+    .get();
+  
+  const stats = {
+    players: { total: 0, byPosition: { 1: 0, 2: 0, 3: 0, 4: 0 }, byClub: {} },
+    clubs: { total: 0 }
+  };
+  
+  for (const doc of squadSnapshot.docs) {
+    const item = doc.data();
+    
+    if (item.player_id) {
+      stats.players.total++;
+      
+      // Get player details to check position and club
+      const playerDoc = await collections.fplPlayers.doc(item.player_id.toString()).get();
+      if (playerDoc.exists) {
+        const player = playerDoc.data();
+        stats.players.byPosition[player.position] = (stats.players.byPosition[player.position] || 0) + 1;
+        stats.players.byClub[player.team_id] = (stats.players.byClub[player.team_id] || 0) + 1;
+      }
+    }
+    
+    if (item.club_id) {
+      stats.clubs.total++;
+    }
+  }
+  
+  return stats;
+}
+
+// Check if team can acquire a player based on position and club limits
+async function canTeamAcquirePlayer(teamId, playerId) {
+  const stats = await getTeamSquadStats(teamId);
+  
+  // Get player details
+  const playerDoc = await collections.fplPlayers.doc(playerId.toString()).get();
+  if (!playerDoc.exists) {
+    return { canAcquire: false, reason: 'Player not found' };
+  }
+  
+  const player = playerDoc.data();
+  const position = player.position;
+  const clubId = player.team_id;
+  
+  // Position limits: GKP(1)=2, DEF(2)=5, MID(3)=5, FWD(4)=3
+  const positionLimits = { 1: 2, 2: 5, 3: 5, 4: 3 };
+  const positionNames = { 1: 'Goalkeeper', 2: 'Defender', 3: 'Midfielder', 4: 'Forward' };
+  
+  if (stats.players.byPosition[position] >= positionLimits[position]) {
+    return { 
+      canAcquire: false, 
+      reason: `Team already has maximum ${positionNames[position]}s (${positionLimits[position]})` 
+    };
+  }
+  
+  // Club limit: max 3 players per club
+  if (stats.players.byClub[clubId] >= 3) {
+    return { 
+      canAcquire: false, 
+      reason: 'Team already has 3 players from this club' 
+    };
+  }
+  
+  return { canAcquire: true };
+}
+
 async function advanceDraftTurn() {
   const stateDoc = await collections.draftState.doc('current').get();
   const currentState = stateDoc.data();
@@ -126,38 +211,62 @@ async function advanceDraftTurn() {
     return { error: 'Draft is not active' };
   }
 
-  const nextPosition = currentState.current_position + 1;
+  let nextPosition = currentState.current_position + 1;
+  let attempts = 0;
+  const maxAttempts = currentState.total_positions;
   
-  if (nextPosition > currentState.total_positions) {
-    await collections.draftState.doc('current').update({
-      is_active: false,
-      ended_at: new Date().toISOString()
-    });
-    return { completed: true };
-  }
+  // Keep advancing until we find a non-completed team or reach the end
+  while (attempts < maxAttempts) {
+    if (nextPosition > currentState.total_positions) {
+      await collections.draftState.doc('current').update({
+        is_active: false,
+        ended_at: new Date().toISOString()
+      });
+      return { completed: true };
+    }
 
-  // Get next team from draft order
-  const nextOrderDoc = await collections.draftOrder
-    .where('position', '==', nextPosition)
-    .limit(1)
-    .get();
-  
-  if (nextOrderDoc.empty) {
-    return { error: 'Invalid draft position' };
-  }
+    // Get next team from draft order
+    const nextOrderDoc = await collections.draftOrder
+      .where('position', '==', nextPosition)
+      .limit(1)
+      .get();
+    
+    if (nextOrderDoc.empty) {
+      nextPosition++;
+      attempts++;
+      continue;
+    }
 
-  const nextOrder = nextOrderDoc.docs[0].data();
+    const nextOrder = nextOrderDoc.docs[0].data();
+    
+    // Check if this team is completed (frozen)
+    const isCompleted = await isTeamCompleted(nextOrder.team_id);
+    
+    if (!isCompleted) {
+      // Found an active team
+      await collections.draftState.doc('current').update({
+        current_position: nextPosition,
+        current_team_id: nextOrder.team_id
+      });
+
+      return {
+        hasNext: true,
+        currentPosition: nextPosition,
+        currentTeam: nextOrder.team_id
+      };
+    }
+    
+    // This team is completed, skip to next position
+    nextPosition++;
+    attempts++;
+  }
   
+  // If we get here, all teams are completed
   await collections.draftState.doc('current').update({
-    current_position: nextPosition,
-    current_team_id: nextOrder.team_id
+    is_active: false,
+    ended_at: new Date().toISOString()
   });
-
-  return {
-    hasNext: true,
-    currentPosition: nextPosition,
-    currentTeam: nextOrder.team_id
-  };
+  return { completed: true };
 }
 
 // Convert SQLite-style functions to Firestore
@@ -201,6 +310,9 @@ module.exports = {
   initializeDraftOrder,
   startDraft,
   advanceDraftTurn,
+  isTeamCompleted,
+  getTeamSquadStats,
+  canTeamAcquirePlayer,
   runAsync,
   allAsync,
   getAsync,

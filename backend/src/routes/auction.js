@@ -1,5 +1,5 @@
 const express = require('express');
-const { collections, advanceDraftTurn } = require('../models/database');
+const { collections, advanceDraftTurn, isTeamCompleted, canTeamAcquirePlayer } = require('../models/database');
 const admin = require('firebase-admin');
 
 const router = express.Router();
@@ -25,6 +25,18 @@ router.post('/start-player/:playerId', async (req, res) => {
     
     if (draftState.current_team_id !== teamId) {
       return res.status(403).json({ error: 'Not your turn to start an auction' });
+    }
+    
+    // Check if team has completed their squad (15 players + 2 clubs)
+    const teamCompleted = await isTeamCompleted(teamId);
+    if (teamCompleted) {
+      return res.status(403).json({ error: 'Your team has completed its squad (15 players + 2 clubs)' });
+    }
+    
+    // Check if team can acquire this player (position and club limits)
+    const canAcquire = await canTeamAcquirePlayer(teamId, playerId);
+    if (!canAcquire.canAcquire) {
+      return res.status(403).json({ error: canAcquire.reason });
     }
     
     // Check if there's already an active auction
@@ -135,6 +147,12 @@ router.post('/start-club/:clubId', async (req, res) => {
     
     if (draftState.current_team_id !== teamId) {
       return res.status(403).json({ error: 'Not your turn to start an auction' });
+    }
+    
+    // Check if team has completed their squad (15 players + 2 clubs)
+    const teamCompleted = await isTeamCompleted(teamId);
+    if (teamCompleted) {
+      return res.status(403).json({ error: 'Your team has completed its squad (15 players + 2 clubs)' });
     }
     
     // Check if there's already an active auction
@@ -252,6 +270,14 @@ router.post('/bid/:auctionId', async (req, res) => {
     const team = teamDoc.docs[0].data();
     if (team.budget < bidAmount) {
       return res.status(400).json({ error: 'Insufficient budget' });
+    }
+    
+    // Check if team can acquire this player (position and club limits) - only for player auctions
+    if (auction.player_id) {
+      const canAcquire = await canTeamAcquirePlayer(teamId, auction.player_id);
+      if (!canAcquire.canAcquire) {
+        return res.status(403).json({ error: canAcquire.reason });
+      }
     }
     
     // Update auction

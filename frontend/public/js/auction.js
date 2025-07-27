@@ -504,16 +504,32 @@ class AuctionManager {
         // Generate the snake draft order display
         let draftOrderHtml = '';
         if (this.draftState.draft_order && this.draftState.draft_order.length > 0) {
-            // Separate into rounds
-            const round1 = this.draftState.draft_order.filter(team => team.round === 1 || team.position <= 10);
-            const round2 = this.draftState.draft_order.filter(team => team.round === 2 || team.position > 10);
+            // Group by rounds
+            const roundsMap = {};
+            this.draftState.draft_order.forEach(team => {
+                if (!roundsMap[team.round]) {
+                    roundsMap[team.round] = [];
+                }
+                roundsMap[team.round].push(team);
+            });
             
-            let rounds = [];
-            if (round1.length > 0) rounds.push({ name: 'Round 1', teams: round1 });
-            if (round2.length > 0) rounds.push({ name: 'Round 2', teams: round2 });
+            // Show only first 5 rounds to avoid overwhelming display, with current round emphasized
+            const currentRound = Math.ceil(this.draftState.current_position / 10);
+            const roundsToShow = [];
             
-            draftOrderHtml = rounds.map(round => {
-                const teamsHtml = round.teams.map((team) => {
+            // Always show current round and 2 rounds before/after
+            for (let r = Math.max(1, currentRound - 2); r <= Math.min(17, currentRound + 2); r++) {
+                if (roundsMap[r]) {
+                    roundsToShow.push(r);
+                }
+            }
+            
+            draftOrderHtml = roundsToShow.map(roundNum => {
+                const roundTeams = roundsMap[roundNum];
+                const isCurrentRound = roundNum === currentRound;
+                const isForward = roundNum % 2 === 1;
+                
+                const teamsHtml = roundTeams.map((team) => {
                     const isActive = team.team_id === this.draftState.current_team_id;
                     const isMyTeam = currentUser && team.team_id === currentUser.id;
                     
@@ -530,14 +546,23 @@ class AuctionManager {
                 }).join('');
                 
                 return `
-                    <div class="mb-2">
-                        <div class="text-xs font-medium text-gray-500 mb-1">${round.name}</div>
-                        <div class="flex flex-wrap gap-1">
+                    <div class="mb-2 ${isCurrentRound ? 'bg-yellow-50 p-2 rounded border-yellow-200 border' : ''}">
+                        <div class="text-xs font-medium ${isCurrentRound ? 'text-yellow-800' : 'text-gray-500'} mb-1">
+                            Round ${roundNum} ${isForward ? '→' : '←'} ${isCurrentRound ? '(Current)' : ''}
+                        </div>
+                        <div class="flex flex-wrap gap-1 ${!isForward ? 'flex-row-reverse' : ''}">
                             ${teamsHtml}
                         </div>
                     </div>
                 `;
             }).join('');
+            
+            // Add summary info
+            draftOrderHtml += `
+                <div class="text-xs text-gray-500 text-center mt-2 pt-2 border-t">
+                    Showing rounds ${Math.max(1, currentRound - 2)}-${Math.min(17, currentRound + 2)} of 17 total
+                </div>
+            `;
         }
 
         indicator.innerHTML = `
