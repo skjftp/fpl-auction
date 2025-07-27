@@ -504,21 +504,39 @@ class AuctionManager {
         // Generate the snake draft order display
         let draftOrderHtml = '';
         if (this.draftState.draft_order && this.draftState.draft_order.length > 0) {
-            draftOrderHtml = this.draftState.draft_order.map((team, index) => {
-                const position = index + 1;
-                const isActive = team.team_id === this.draftState.current_team_id;
-                const isMyTeam = currentUser && team.team_id === currentUser.id;
+            // Separate into rounds
+            const round1 = this.draftState.draft_order.filter(team => team.round === 1 || team.position <= 10);
+            const round2 = this.draftState.draft_order.filter(team => team.round === 2 || team.position > 10);
+            
+            let rounds = [];
+            if (round1.length > 0) rounds.push({ name: 'Round 1', teams: round1 });
+            if (round2.length > 0) rounds.push({ name: 'Round 2', teams: round2 });
+            
+            draftOrderHtml = rounds.map(round => {
+                const teamsHtml = round.teams.map((team) => {
+                    const isActive = team.team_id === this.draftState.current_team_id;
+                    const isMyTeam = currentUser && team.team_id === currentUser.id;
+                    
+                    let teamClass = 'px-2 py-1 rounded text-xs border';
+                    if (isActive) {
+                        teamClass += ' bg-green-500 text-white border-green-600 font-bold';
+                    } else if (isMyTeam) {
+                        teamClass += ' bg-blue-100 text-blue-800 border-blue-300';
+                    } else {
+                        teamClass += ' bg-gray-100 text-gray-700 border-gray-300';
+                    }
+                    
+                    return `<span class="${teamClass}">${team.position}. ${team.name || 'Team ' + team.team_id}</span>`;
+                }).join('');
                 
-                let teamClass = 'px-2 py-1 rounded text-xs border';
-                if (isActive) {
-                    teamClass += ' bg-green-500 text-white border-green-600 font-bold';
-                } else if (isMyTeam) {
-                    teamClass += ' bg-blue-100 text-blue-800 border-blue-300';
-                } else {
-                    teamClass += ' bg-gray-100 text-gray-700 border-gray-300';
-                }
-                
-                return `<span class="${teamClass}">${position}. ${team.team_name}</span>`;
+                return `
+                    <div class="mb-2">
+                        <div class="text-xs font-medium text-gray-500 mb-1">${round.name}</div>
+                        <div class="flex flex-wrap gap-1">
+                            ${teamsHtml}
+                        </div>
+                    </div>
+                `;
             }).join('');
         }
 
