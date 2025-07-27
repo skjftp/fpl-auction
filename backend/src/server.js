@@ -43,8 +43,19 @@ const PORT = process.env.PORT || 8080;
 app.use(helmet());
 
 app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins for now
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -61,6 +72,9 @@ app.use('/api/auction', authenticateToken, auctionRoutes);
 app.use('/api/teams', authenticateToken, teamsRoutes);
 app.use('/api/scoring', authenticateToken, scoringRoutes);
 app.use('/api/draft', authenticateToken, draftRoutes);
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Health check
 app.get('/api/health', (req, res) => {
