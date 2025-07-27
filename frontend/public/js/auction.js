@@ -325,6 +325,12 @@ class AuctionManager {
                     </div>
                 </div>
                 
+                ${auction.selling_stage ? `
+                    <div id="sellingStatus" class="bg-${auction.selling_stage === 'selling1' ? 'yellow' : 'orange'}-100 border border-${auction.selling_stage === 'selling1' ? 'yellow' : 'orange'}-400 text-${auction.selling_stage === 'selling1' ? 'yellow' : 'orange'}-700 px-3 py-2 rounded mb-3 text-sm font-bold text-center animate-pulse">
+                        ${auction.selling_stage === 'selling1' ? 'SELLING 1...' : 'SELLING 2...'}
+                    </div>
+                ` : ''}
+                
                 <div class="space-y-2">
                     <div class="text-xs text-gray-600 mb-1">
                         Max bid: £${maxBid > 0 ? maxBid : 'N/A'}
@@ -336,10 +342,26 @@ class AuctionManager {
                         Place Bid
                     </button>
                     ${window.app?.currentUser?.is_admin ? `
-                        <button onclick="auctionManager.completeAuction()" 
-                                class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
-                            Complete Auction
-                        </button>
+                        <div class="space-y-1">
+                            ${!auction.selling_stage ? `
+                                <button onclick="auctionManager.updateSellingStage('selling1')" 
+                                        class="w-full bg-yellow-500 text-white py-1 rounded text-sm hover:bg-yellow-600">
+                                    Selling 1
+                                </button>
+                            ` : ''}
+                            ${auction.selling_stage === 'selling1' ? `
+                                <button onclick="auctionManager.updateSellingStage('selling2')" 
+                                        class="w-full bg-orange-500 text-white py-1 rounded text-sm hover:bg-orange-600">
+                                    Selling 2
+                                </button>
+                            ` : ''}
+                            ${auction.selling_stage === 'selling2' ? `
+                                <button onclick="auctionManager.updateSellingStage('sold')" 
+                                        class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
+                                    Sold
+                                </button>
+                            ` : ''}
+                        </div>
                     ` : ''}
                 </div>
             </div>
@@ -771,6 +793,45 @@ class AuctionManager {
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         });
+    }
+
+    async updateSellingStage(stage) {
+        try {
+            if (!this.currentAuction) {
+                showNotification('No active auction', 'error');
+                return;
+            }
+            
+            const response = await fetch(`${api.baseURL}/auctions/selling-stage/${this.currentAuction.id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${api.token}`
+                },
+                body: JSON.stringify({ stage })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to update selling stage');
+            }
+            
+            if (stage === 'sold') {
+                // Auction will be completed, clear the display
+                showNotification('Auction completed!', 'success');
+                this.clearCurrentAuction();
+                await this.loadSoldItems();
+                await this.loadPlayers();
+            } else {
+                // Update local state
+                this.currentAuction.selling_stage = stage;
+                await this.displayCurrentAuction(this.currentAuction);
+            }
+            
+        } catch (error) {
+            console.error('Error updating selling stage:', error);
+            showNotification(error.message, 'error');
+        }
     }
 
     escapeHtml(text) {

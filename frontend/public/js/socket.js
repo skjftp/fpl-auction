@@ -41,6 +41,12 @@ class SocketManager {
             this.handleAuctionCompleted(data);
         });
 
+        // Selling stage events
+        this.socket.on('selling-stage-updated', (data) => {
+            console.log('🔔 Selling stage updated:', data);
+            this.handleSellingStageUpdate(data);
+        });
+
         this.socket.on('error', (error) => {
             console.error('Socket error:', error);
             showNotification('Connection error', 'error');
@@ -114,6 +120,23 @@ class SocketManager {
         const team = JSON.parse(localStorage.getItem('fpl_team') || '{}');
         if (team.id === data.winnerId && window.teamManager) {
             window.teamManager.loadTeamData();
+        }
+    }
+
+    handleSellingStageUpdate(data) {
+        if (window.auctionManager && window.auctionManager.currentAuction) {
+            // Update the selling status display
+            const sellingStatus = document.getElementById('sellingStatus');
+            if (sellingStatus) {
+                sellingStatus.className = `bg-${data.stage === 'selling1' ? 'yellow' : 'orange'}-100 border border-${data.stage === 'selling1' ? 'yellow' : 'orange'}-400 text-${data.stage === 'selling1' ? 'yellow' : 'orange'}-700 px-3 py-2 rounded mb-3 text-sm font-bold text-center animate-pulse`;
+                sellingStatus.textContent = data.message;
+            } else if (window.auctionManager.currentAuction.id === data.auctionId) {
+                // Update the auction display to show selling status
+                window.auctionManager.currentAuction.selling_stage = data.stage;
+                window.auctionManager.displayCurrentAuction(window.auctionManager.currentAuction);
+            }
+            
+            showNotification(data.message, 'info');
         }
     }
 }

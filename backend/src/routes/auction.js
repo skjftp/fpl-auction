@@ -69,6 +69,7 @@ router.post('/start-player/:playerId', async (req, res) => {
       current_bid: 5,
       current_bidder_id: teamId,
       status: 'active',
+      selling_stage: null, // Will be set to 'selling1', 'selling2' by admin
       started_at: admin.firestore.FieldValue.serverTimestamp(),
       bid_count: 1
     };
@@ -185,6 +186,7 @@ router.post('/start-club/:clubId', async (req, res) => {
       current_bid: 5,
       current_bidder_id: teamId,
       status: 'active',
+      selling_stage: null, // Will be set to 'selling1', 'selling2' by admin
       started_at: admin.firestore.FieldValue.serverTimestamp(),
       bid_count: 1
     };
@@ -315,9 +317,10 @@ router.post('/bid/:auctionId', async (req, res) => {
   }
 });
 
-// Complete auction (sell to current highest bidder) - Admin only
-router.post('/complete/:auctionId', requireAdmin, async (req, res) => {
+// Update auction selling stage - Admin only
+router.post('/selling-stage/:auctionId', requireAdmin, async (req, res) => {
   const auctionId = req.params.auctionId;
+  const { stage } = req.body; // 'selling1', 'selling2', or 'sold'
   
   try {
     const auctionDoc = await collections.auctions.doc(auctionId).get();
@@ -327,6 +330,39 @@ router.post('/complete/:auctionId', requireAdmin, async (req, res) => {
     }
     
     const auction = auctionDoc.data();
+    
+    // Update selling stage
+    if (stage === 'selling1' || stage === 'selling2') {
+      await collections.auctions.doc(auctionId).update({
+        selling_stage: stage,
+        updated_at: admin.firestore.FieldValue.serverTimestamp()
+      });
+      
+      // Broadcast stage update
+      req.io.to('auction-room').emit('selling-stage-updated', {
+        auctionId,
+        stage,
+        message: stage === 'selling1' ? 'Selling 1...' : 'Selling 2...'
+      });
+      
+      res.json({ success: true, stage });
+      
+    } else if (stage === 'sold') {
+      // Complete the auction when sold
+      await completeAuction(req, res, auctionId, auction);
+    } else {
+      res.status(400).json({ error: 'Invalid stage' });
+    }
+    
+  } catch (error) {
+    console.error('Error updating selling stage:', error);
+    res.status(500).json({ error: 'Failed to update selling stage' });
+  }
+});
+
+// Helper function to complete auction
+async function completeAuction(req, res, auctionId, auction) {
+  try {
     
     if (!auction.current_bidder_id) {
       return res.status(400).json({ error: 'No bids placed yet' });
@@ -399,7 +435,7 @@ router.post('/complete/:auctionId', requireAdmin, async (req, res) => {
     console.error('Error completing auction:', error);
     res.status(500).json({ error: 'Failed to complete auction' });
   }
-});
+}
 
 // Get current active auctions
 router.get('/active', async (req, res) => {
