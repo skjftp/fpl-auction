@@ -7,7 +7,7 @@ class SocketManager {
 
     connect() {
         // Use environment-specific socket URL
-        const PRODUCTION_SOCKET_URL = 'https://us-central1-fpl-auction-2025.cloudfunctions.net/api';
+        const PRODUCTION_SOCKET_URL = '';
         
         const socketURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001'

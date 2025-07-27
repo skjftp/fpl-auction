@@ -9,18 +9,15 @@ admin.initializeApp();
 // Create Express app
 const app = express();
 
-// Configure CORS
-const corsOptions = {
+// Configure CORS - Allow all origins for Firebase Functions
+const corsHandler = cors({ 
   origin: true,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-};
+  credentials: true 
+});
 
-// Middleware
-app.use(cors(corsOptions));
+// Apply CORS to all routes
+app.use(corsHandler);
+app.options('*', corsHandler); // Enable preflight for all routes
 app.use(express.json());
 
 // Initialize Firestore
@@ -54,8 +51,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Handle OPTIONS requests
-app.options('*', cors(corsOptions));
 
 // Routes
 app.use('/api/auth', authRoutes);

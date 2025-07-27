@@ -2,7 +2,7 @@
 class API {
     constructor() {
         // Use environment-specific API URL
-        const PRODUCTION_API_URL = 'https://us-central1-fpl-auction-2025.cloudfunctions.net/api';
+        const PRODUCTION_API_URL = '/api';
         
         this.baseURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api'
