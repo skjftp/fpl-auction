@@ -43,6 +43,13 @@ class DraftManager {
     }
 
     setupSocketListeners() {
+        // Check if socket manager and socket exist
+        if (!window.socketManager || !window.socketManager.socket) {
+            console.log('Socket not ready, will retry setupSocketListeners');
+            setTimeout(() => this.setupSocketListeners(), 100);
+            return;
+        }
+
         window.socketManager.socket.on('draft-initialized', () => {
             console.log('🎲 Draft order initialized');
             this.loadDraftState();
