@@ -549,12 +549,22 @@ class AuctionManager {
             const currentRound = Math.ceil(this.draftState.current_position / 10);
             const isForward = currentRound % 2 === 1; // Odd rounds go forward (1-10), even rounds go reverse (10-1)
             
-            // Get teams from round 1 (original order) - this order NEVER changes
-            const originalOrderTeams = this.draftState.draft_order
-                .filter(team => team.round === 1)
-                .sort((a, b) => a.position - b.position);
+            // Use same logic as Draft tab - get first 10 teams (one from each team)
+            const uniqueTeams = [];
+            const seenTeamIds = new Set();
             
-            const teamsHtml = originalOrderTeams.map((team) => {
+            // Get the first occurrence of each team to establish the base order
+            for (const team of this.draftState.draft_order) {
+                if (!seenTeamIds.has(team.team_id)) {
+                    uniqueTeams.push(team);
+                    seenTeamIds.add(team.team_id);
+                }
+            }
+            
+            // Sort by the original position to maintain consistent order
+            uniqueTeams.sort((a, b) => a.position - b.position);
+            
+            const teamsHtml = uniqueTeams.map((team) => {
                 const isActive = team.team_id === this.draftState.current_team_id;
                 const isMyTeam = currentUser && team.team_id === currentUser.id;
                 
@@ -575,7 +585,7 @@ class AuctionManager {
                     <div class="text-sm font-medium text-gray-600 mb-2 text-center">
                         Round ${currentRound} ${isForward ? '→' : '←'}
                     </div>
-                    <div class="flex gap-2 justify-center">
+                    <div class="flex flex-wrap gap-2 justify-center">
                         ${teamsHtml}
                     </div>
                 </div>
