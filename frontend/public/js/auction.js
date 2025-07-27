@@ -501,66 +501,51 @@ class AuctionManager {
         const isMyTurn = currentUser && this.draftState.current_team_id === currentUser.id;
         const currentTeamName = this.draftState.current_team_name;
         
-        // Generate the snake draft order display
+        // Generate the snake draft order display - show all 10 teams in current round direction
         let draftOrderHtml = '';
         if (this.draftState.draft_order && this.draftState.draft_order.length > 0) {
-            // Group by rounds
-            const roundsMap = {};
+            // Get current round
+            const currentRound = Math.ceil(this.draftState.current_position / 10);
+            const isForward = currentRound % 2 === 1; // Odd rounds go forward (1-10), even rounds go reverse (10-1)
+            
+            // Get all teams and arrange them in the current direction
+            const teams = [];
             this.draftState.draft_order.forEach(team => {
-                if (!roundsMap[team.round]) {
-                    roundsMap[team.round] = [];
+                if (team.round === 1) { // Get base team order from round 1
+                    teams.push(team);
                 }
-                roundsMap[team.round].push(team);
             });
             
-            // Show only first 5 rounds to avoid overwhelming display, with current round emphasized
-            const currentRound = Math.ceil(this.draftState.current_position / 10);
-            const roundsToShow = [];
+            // Sort teams by their original position in round 1
+            teams.sort((a, b) => a.position - b.position);
             
-            // Always show current round and 2 rounds before/after
-            for (let r = Math.max(1, currentRound - 2); r <= Math.min(17, currentRound + 2); r++) {
-                if (roundsMap[r]) {
-                    roundsToShow.push(r);
+            // If current round is reverse, reverse the display order
+            const displayTeams = isForward ? teams : [...teams].reverse();
+            
+            const teamsHtml = displayTeams.map((team) => {
+                const isActive = team.team_id === this.draftState.current_team_id;
+                const isMyTeam = currentUser && team.team_id === currentUser.id;
+                
+                let teamClass = 'px-3 py-2 rounded text-sm border';
+                if (isActive) {
+                    teamClass += ' bg-green-500 text-white border-green-600 font-bold shadow-lg';
+                } else if (isMyTeam) {
+                    teamClass += ' bg-blue-100 text-blue-800 border-blue-300';
+                } else {
+                    teamClass += ' bg-gray-100 text-gray-700 border-gray-300';
                 }
-            }
-            
-            draftOrderHtml = roundsToShow.map(roundNum => {
-                const roundTeams = roundsMap[roundNum];
-                const isCurrentRound = roundNum === currentRound;
-                const isForward = roundNum % 2 === 1;
                 
-                const teamsHtml = roundTeams.map((team) => {
-                    const isActive = team.team_id === this.draftState.current_team_id;
-                    const isMyTeam = currentUser && team.team_id === currentUser.id;
-                    
-                    let teamClass = 'px-2 py-1 rounded text-xs border';
-                    if (isActive) {
-                        teamClass += ' bg-green-500 text-white border-green-600 font-bold';
-                    } else if (isMyTeam) {
-                        teamClass += ' bg-blue-100 text-blue-800 border-blue-300';
-                    } else {
-                        teamClass += ' bg-gray-100 text-gray-700 border-gray-300';
-                    }
-                    
-                    return `<span class="${teamClass}">${team.position}. ${team.name || 'Team ' + team.team_id}</span>`;
-                }).join('');
-                
-                return `
-                    <div class="mb-2 ${isCurrentRound ? 'bg-yellow-50 p-2 rounded border-yellow-200 border' : ''}">
-                        <div class="text-xs font-medium ${isCurrentRound ? 'text-yellow-800' : 'text-gray-500'} mb-1">
-                            Round ${roundNum} ${isForward ? '→' : '←'} ${isCurrentRound ? '(Current)' : ''}
-                        </div>
-                        <div class="flex flex-wrap gap-1 ${!isForward ? 'flex-row-reverse' : ''}">
-                            ${teamsHtml}
-                        </div>
-                    </div>
-                `;
+                return `<span class="${teamClass}">${team.name || 'Team ' + team.team_id}</span>`;
             }).join('');
             
-            // Add summary info
-            draftOrderHtml += `
-                <div class="text-xs text-gray-500 text-center mt-2 pt-2 border-t">
-                    Showing rounds ${Math.max(1, currentRound - 2)}-${Math.min(17, currentRound + 2)} of 17 total
+            draftOrderHtml = `
+                <div class="mb-3">
+                    <div class="text-sm font-medium text-gray-600 mb-2 text-center">
+                        Round ${currentRound} ${isForward ? '→' : '←'}
+                    </div>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        ${teamsHtml}
+                    </div>
                 </div>
             `;
         }
@@ -571,18 +556,12 @@ class AuctionManager {
                     <div class="text-lg font-bold ${isMyTurn ? 'text-green-600' : 'text-gray-700'}">
                         ${isMyTurn ? 'Your Turn!' : `${currentTeamName}'s Turn`}
                     </div>
-                    <div class="text-sm text-gray-600">
-                        Position ${this.draftState.current_position} of ${this.draftState.draft_order?.length || 0}
-                    </div>
                     ${isMyTurn ? '<div class="text-xs text-green-600 mt-1">You can start an auction now!</div>' : ''}
                 </div>
                 
                 ${draftOrderHtml ? `
                     <div class="border-t pt-3">
-                        <div class="text-xs font-semibold text-gray-600 mb-2 text-center">Snake Draft Order</div>
-                        <div class="flex flex-wrap gap-1 justify-center">
-                            ${draftOrderHtml}
-                        </div>
+                        ${draftOrderHtml}
                     </div>
                 ` : ''}
             </div>
