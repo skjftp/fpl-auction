@@ -37,9 +37,12 @@
             btn.textContent = 'Initializing...';
             
             try {
+                // TODO: Update PRODUCTION_API_URL with your Google Cloud Run URL after deployment
+                const PRODUCTION_API_URL = 'https://fpl-auction-backend-0bls.onrender.com/api';
+                
                 const baseURL = window.location.hostname === 'localhost' 
                     ? 'http://localhost:3001/api'
-                    : 'https://fpl-auction-backend-0bls.onrender.com/api';
+                    : PRODUCTION_API_URL;
                     
                 const response = await fetch(`${baseURL}/auth/init-teams`, {
                     method: 'POST',

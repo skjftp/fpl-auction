@@ -7,9 +7,12 @@ class SocketManager {
 
     connect() {
         // Use environment-specific socket URL
+        // TODO: Update PRODUCTION_SOCKET_URL with your Google Cloud Run URL after deployment
+        const PRODUCTION_SOCKET_URL = 'https://fpl-auction-backend-0bls.onrender.com';
+        
         const socketURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001'
-            : 'https://fpl-auction-backend-0bls.onrender.com';
+            : PRODUCTION_SOCKET_URL;
         this.socket = io(socketURL);
         
         this.socket.on('connect', () => {
