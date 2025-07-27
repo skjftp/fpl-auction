@@ -1,0 +1,34 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/fpl-auction-backend', '.']
+  
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/fpl-auction-backend']
+  
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'fpl-auction-backend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/fpl-auction-backend'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'NODE_ENV=production,DB_PATH=/tmp/fpl_auction.db'
+      - '--memory'
+      - '512Mi'
+      - '--max-instances'
+      - '10'
+      - '--timeout'
+      - '60'
+
+images:
+  - 'gcr.io/$PROJECT_ID/fpl-auction-backend'
