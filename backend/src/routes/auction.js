@@ -74,43 +74,45 @@ router.post('/start-player/:playerId', (req, res) => {
                       }
                     }
                   );
-              
-              // Get player details for response
-              db.get(
-                `SELECT p.*, c.name as team_name 
-                 FROM fpl_players p 
-                 LEFT JOIN fpl_clubs c ON p.team_id = c.id 
-                 WHERE p.id = ?`,
-                [playerId],
-                (err, player) => {
-                  if (err) {
-                    return res.status(500).json({ error: 'Failed to fetch player details' });
-                  }
                   
-                  // Get team info for the initial bidder
+                  // Get player details for response
                   db.get(
-                    'SELECT name, username FROM teams WHERE id = ?',
-                    [teamId],
-                    (err, team) => {
+                    `SELECT p.*, c.name as team_name 
+                     FROM fpl_players p 
+                     LEFT JOIN fpl_clubs c ON p.team_id = c.id 
+                     WHERE p.id = ?`,
+                    [playerId],
+                    (err, player) => {
                       if (err) {
-                        console.error('Failed to get team info:', err);
+                        return res.status(500).json({ error: 'Failed to fetch player details' });
                       }
                       
-                      const auctionData = {
-                        id: auctionId,
-                        player,
-                        currentBid: 5,
-                        currentBidder: team || { name: 'Unknown', username: 'unknown' },
-                        currentBidderId: teamId,
-                        status: 'active',
-                        type: 'player',
-                        startedBy: team || { name: 'Unknown', username: 'unknown' }
-                      };
-                      
-                      // Broadcast to all connected clients
-                      req.io.emit('auction-started', auctionData);
-                      
-                      res.json({ success: true, auction: auctionData });
+                      // Get team info for the initial bidder
+                      db.get(
+                        'SELECT name, username FROM teams WHERE id = ?',
+                        [teamId],
+                        (err, team) => {
+                          if (err) {
+                            console.error('Failed to get team info:', err);
+                          }
+                          
+                          const auctionData = {
+                            id: auctionId,
+                            player,
+                            currentBid: 5,
+                            currentBidder: team || { name: 'Unknown', username: 'unknown' },
+                            currentBidderId: teamId,
+                            status: 'active',
+                            type: 'player',
+                            startedBy: team || { name: 'Unknown', username: 'unknown' }
+                          };
+                          
+                          // Broadcast to all connected clients
+                          req.io.emit('auction-started', auctionData);
+                          
+                          res.json({ success: true, auction: auctionData });
+                        }
+                      );
                     }
                   );
                 }
@@ -404,7 +406,7 @@ router.post('/complete/:auctionId', (req, res) => {
         );
       });
     }
-  )
+  );
 });
 
 // Get current active auctions
