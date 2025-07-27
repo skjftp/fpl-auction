@@ -123,36 +123,40 @@ class AuctionManager {
 
     createPlayerCard(player) {
         const div = document.createElement('div');
-        div.className = 'player-card bg-gray-50 p-3 rounded border hover:shadow-md';
+        div.className = 'player-card bg-gray-50 p-2 rounded border hover:shadow-md transition-shadow';
         
         const positionNames = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
-        const positionClasses = { 1: 'position-gkp', 2: 'position-def', 3: 'position-mid', 4: 'position-fwd' };
+        const positionClasses = { 
+            1: 'bg-yellow-100 text-yellow-800', 
+            2: 'bg-green-100 text-green-800', 
+            3: 'bg-blue-100 text-blue-800', 
+            4: 'bg-red-100 text-red-800' 
+        };
         
         div.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center space-x-2 flex-1 min-w-0">
+                    <div class="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
                         ${player.photo ? 
                             `<img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo.replace('.jpg', '')}.png" 
-                                  alt="${player.web_name}" class="w-full h-full object-cover rounded-full">` :
+                                  alt="${player.web_name}" class="w-full h-full object-cover">` :
                             '<span class="text-xs font-bold">' + player.web_name.substring(0, 2) + '</span>'
                         }
                     </div>
-                    <div>
-                        <div class="font-medium">${player.web_name}</div>
-                        <div class="text-sm text-gray-500">${player.team_name || 'Unknown Team'}</div>
-                        <div class="flex items-center space-x-2 mt-1">
-                            <span class="position-badge ${positionClasses[player.position]}">${positionNames[player.position]}</span>
-                            <span class="text-xs text-gray-500">£${(player.price / 10).toFixed(1)}m</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm truncate">${player.web_name}</div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs ${positionClasses[player.position]} px-1.5 py-0.5 rounded font-medium">${positionNames[player.position]}</span>
+                            <span class="text-xs text-gray-500 truncate">${player.team_name || 'Unknown'}</span>
                         </div>
                     </div>
                 </div>
-                <div class="text-right">
-                    <div class="text-sm text-gray-500">Points</div>
-                    <div class="font-bold">${player.total_points}</div>
+                <div class="text-right flex-shrink-0">
+                    <div class="text-xs font-medium">£${(player.price / 10).toFixed(1)}m</div>
+                    <div class="text-sm font-bold">${player.total_points}pts</div>
                     <button onclick="auctionManager.startPlayerAuction(${player.id})" 
-                            class="start-auction-btn mt-2 bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
-                        Start Auction
+                            class="start-auction-btn mt-1 bg-green-500 text-white px-2 py-0.5 rounded text-xs hover:bg-green-600 transition-colors">
+                        Auction
                     </button>
                 </div>
             </div>
@@ -178,19 +182,14 @@ class AuctionManager {
 
     createClubCard(club) {
         const div = document.createElement('div');
-        div.className = 'bg-gray-50 p-3 rounded border hover:shadow-md';
+        div.className = 'bg-gray-50 p-2 rounded border hover:shadow-md text-center';
         
         div.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="font-medium">${club.name}</div>
-                    <div class="text-sm text-gray-500">${club.short_name}</div>
-                </div>
-                <button onclick="auctionManager.startClubAuction(${club.id})" 
-                        class="start-auction-btn bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
-                    Start Auction
-                </button>
-            </div>
+            <div class="text-xs font-medium truncate">${club.short_name}</div>
+            <button onclick="auctionManager.startClubAuction(${club.id})" 
+                    class="start-auction-btn bg-blue-500 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-600 mt-1 w-full">
+                Auction
+            </button>
         `;
         
         return div;
@@ -252,43 +251,53 @@ class AuctionManager {
             null;
 
         container.innerHTML = `
-            <div class="auction-item text-center">
-                <div class="mb-4">
+            <div class="auction-item">
+                <div class="flex items-center gap-3 mb-3">
                     ${itemImage ? 
-                        `<img src="${itemImage}" alt="${itemName}" class="w-20 h-20 object-cover rounded-full mx-auto mb-2">` :
-                        `<div class="w-20 h-20 bg-gray-200 rounded-full mx-auto mb-2 flex items-center justify-center">
-                            <span class="text-lg font-bold">${itemName.substring(0, 2)}</span>
+                        `<img src="${itemImage}" alt="${itemName}" class="w-16 h-16 object-cover rounded-full">` :
+                        `<div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                            <span class="text-sm font-bold">${itemName.substring(0, 2)}</span>
                         </div>`
                     }
-                    <h4 class="font-bold text-lg">${itemName}</h4>
-                    ${auction.player ? 
-                        `<p class="text-sm text-gray-500">${item.team_name || ''}</p>` :
-                        `<p class="text-sm text-gray-500">Club</p>`
-                    }
-                    ${auction.startedBy ? 
-                        `<p class="text-xs text-gray-400">Started by ${auction.startedBy.name || auction.startedBy}</p>` :
-                        ''
-                    }
+                    <div class="flex-1">
+                        <h4 class="font-bold text-base">${itemName}</h4>
+                        ${auction.player ? 
+                            `<p class="text-xs text-gray-500">${item.team_name || ''}</p>` :
+                            `<p class="text-xs text-gray-500">Club</p>`
+                        }
+                        ${auction.startedBy ? 
+                            `<p class="text-xs text-gray-400">by ${auction.startedBy.name || auction.startedBy}</p>` :
+                            ''
+                        }
+                    </div>
                 </div>
                 
-                <div class="mb-4">
-                    <div class="text-sm text-gray-500">Current Bid</div>
-                    <div class="text-2xl font-bold text-green-600">£${auction.currentBid}</div>
-                    ${auction.currentBidder ? 
-                        `<div class="text-sm text-gray-500">by ${auction.currentBidder.name || auction.currentBidder}</div>` :
-                        `<div class="text-sm text-gray-500">No bids yet</div>`
-                    }
+                <div class="bg-gray-50 rounded p-3 mb-3">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-xs text-gray-500">Current Bid</div>
+                            <div class="text-xl font-bold text-green-600">£${auction.currentBid}</div>
+                        </div>
+                        <div class="text-right">
+                            ${auction.currentBidder ? 
+                                `<div class="text-sm font-medium">${auction.currentBidder.name || auction.currentBidder}</div>` :
+                                `<div class="text-sm text-gray-500">No bids</div>`
+                            }
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="space-y-2">
-                    <input type="number" id="bidAmount" value="${auction.currentBid + 5}" min="${auction.currentBid + 5}" step="5"
-                           class="w-full px-3 py-2 border rounded text-center">
-                    <button onclick="auctionManager.placeBid()" 
-                            class="bid-button w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">
-                        Place Bid
-                    </button>
+                    <div class="flex gap-2">
+                        <input type="number" id="bidAmount" value="${auction.currentBid + 5}" min="${auction.currentBid + 5}" step="5"
+                               class="flex-1 px-2 py-1 border rounded text-center text-sm">
+                        <button onclick="auctionManager.placeBid()" 
+                                class="bid-button bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                            Bid
+                        </button>
+                    </div>
                     <button onclick="auctionManager.completeAuction()" 
-                            class="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600">
+                            class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
                         Complete Auction
                     </button>
                 </div>
@@ -458,10 +467,10 @@ class AuctionManager {
         }
 
         container.innerHTML = this.chatMessages.map(msg => `
-            <div class="mb-2">
-                <span class="font-semibold text-sm">${msg.team_name}:</span>
-                <span class="text-sm">${msg.message}</span>
-                <span class="text-xs text-gray-400 ml-2">${new Date(msg.created_at).toLocaleTimeString()}</span>
+            <div class="mb-1 text-xs">
+                <span class="font-semibold">${msg.team_name}:</span>
+                <span>${msg.message}</span>
+                <span class="text-gray-400 ml-1">${new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
         `).join('');
     }
