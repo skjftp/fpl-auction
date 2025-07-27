@@ -252,42 +252,42 @@ class AuctionManager {
 
         container.innerHTML = `
             <div class="auction-item text-center">
-                <div class="mb-4">
+                <div class="mb-3">
                     ${itemImage ? 
-                        `<img src="${itemImage}" alt="${itemName}" class="w-24 h-24 object-cover rounded-full mx-auto mb-3">` :
-                        `<div class="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center">
-                            <span class="text-lg font-bold">${itemName.substring(0, 2)}</span>
+                        `<img src="${itemImage}" alt="${itemName}" class="w-16 h-16 object-cover rounded-full mx-auto mb-2">` :
+                        `<div class="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-sm font-bold">${itemName.substring(0, 2)}</span>
                         </div>`
                     }
-                    <h4 class="font-bold text-lg">${itemName}</h4>
+                    <h4 class="font-bold text-base">${itemName}</h4>
                     ${auction.player ? 
-                        `<p class="text-sm text-gray-500">${item.team_name || ''}</p>` :
-                        `<p class="text-sm text-gray-500">Club</p>`
+                        `<p class="text-xs text-gray-500">${item.team_name || ''}</p>` :
+                        `<p class="text-xs text-gray-500">Club</p>`
                     }
                     ${auction.startedBy ? 
-                        `<p class="text-xs text-gray-400 mt-1">Started by ${auction.startedBy.name || auction.startedBy}</p>` :
+                        `<p class="text-xs text-gray-400">by ${auction.startedBy.name || auction.startedBy}</p>` :
                         ''
                     }
                 </div>
                 
-                <div class="bg-gray-50 rounded p-4 mb-4">
-                    <div class="text-sm text-gray-500 mb-1">Current Bid</div>
-                    <div class="text-3xl font-bold text-green-600 mb-2">£${auction.currentBid}</div>
+                <div class="bg-gray-50 rounded p-3 mb-3">
+                    <div class="text-xs text-gray-500 mb-1">Current Bid</div>
+                    <div class="text-xl font-bold text-green-600 mb-1">£${auction.currentBid}</div>
                     ${auction.currentBidder ? 
-                        `<div class="text-sm font-medium">by ${auction.currentBidder.name || auction.currentBidder}</div>` :
-                        `<div class="text-sm text-gray-500">No bids yet</div>`
+                        `<div class="text-xs font-medium">${auction.currentBidder.name || auction.currentBidder}</div>` :
+                        `<div class="text-xs text-gray-500">No bids yet</div>`
                     }
                 </div>
                 
-                <div class="space-y-3">
+                <div class="space-y-2">
                     <input type="number" id="bidAmount" value="${auction.currentBid + 5}" min="${auction.currentBid + 5}" step="5"
-                           class="w-full px-3 py-2 border rounded text-center text-lg">
+                           class="w-full px-2 py-1 border rounded text-center text-sm">
                     <button onclick="auctionManager.placeBid()" 
-                            class="bid-button w-full bg-green-500 text-white py-2 rounded text-lg hover:bg-green-600">
+                            class="bid-button w-full bg-green-500 text-white py-1 rounded text-sm hover:bg-green-600">
                         Place Bid
                     </button>
                     <button onclick="auctionManager.completeAuction()" 
-                            class="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600">
+                            class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
                         Complete Auction
                     </button>
                 </div>
