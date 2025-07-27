@@ -38,10 +38,6 @@ class DraftManager {
             }
         });
 
-        // Turn controls
-        document.getElementById('advanceTurnBtn')?.addEventListener('click', () => {
-            this.advanceTurn();
-        });
     }
 
     setupSocketListeners() {
@@ -155,7 +151,6 @@ class DraftManager {
     updateAdminControls() {
         const initBtn = document.getElementById('initializeDraftBtn');
         const startBtn = document.getElementById('startDraftBtn');
-        const advanceBtn = document.getElementById('advanceTurnBtn');
 
         if (initBtn) {
             initBtn.disabled = this.draftState?.is_active || false;
@@ -165,11 +160,6 @@ class DraftManager {
             startBtn.disabled = !this.draftState?.draft_order || this.draftState?.is_active || false;
         }
 
-        if (advanceBtn) {
-            const canAdvance = this.draftState?.is_active && 
-                             this.draftState?.current_team_id === window.app.currentUser?.id;
-            advanceBtn.style.display = canAdvance ? 'block' : 'none';
-        }
     }
 
     async updateAuctionControls() {
@@ -230,19 +220,6 @@ class DraftManager {
         }
     }
 
-    async advanceTurn() {
-        try {
-            const result = await window.api.advanceTurn();
-            if (result.hasNext) {
-                this.showNotification('Turn advanced to next team', 'success');
-            } else {
-                this.showNotification('Draft completed!', 'success');
-            }
-        } catch (error) {
-            console.error('Error advancing turn:', error);
-            this.showNotification('Failed to advance turn', 'error');
-        }
-    }
 
     async loadChatMessages() {
         try {

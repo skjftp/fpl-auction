@@ -166,9 +166,6 @@ class API {
         return await this.request('/draft/can-start-auction');
     }
 
-    async advanceTurn() {
-        return await this.request('/draft/advance-turn', { method: 'POST' });
-    }
 
     async getChatMessages() {
         return await this.request('/draft/chat');

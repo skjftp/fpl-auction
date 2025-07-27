@@ -1,5 +1,5 @@
 const express = require('express');
-const { getDatabase } = require('../models/database');
+const { getDatabase, advanceDraftTurn } = require('../models/database');
 
 const router = express.Router();
 
@@ -396,6 +396,18 @@ router.post('/complete/:auctionId', (req, res) => {
                     
                     // Broadcast completion
                     req.io.to('auction-room').emit('auction-completed', completionData);
+                    
+                    // Advance to next team in draft order
+                    advanceDraftTurn().then(result => {
+                      if (result.hasNext) {
+                        req.io.emit('draft-turn-advanced', {
+                          currentTeam: result.currentTeam,
+                          currentPosition: result.currentPosition
+                        });
+                      }
+                    }).catch(err => {
+                      console.error('Failed to advance draft turn:', err);
+                    });
                     
                     res.json({ success: true, completion: completionData });
                   }
