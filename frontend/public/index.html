@@ -92,6 +92,9 @@
                     <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="leaderboard">
                         🏅 Leaderboard
                     </button>
+                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 admin-only" data-tab="admin" style="display: none;">
+                        ⚙️ Admin
+                    </button>
                 </div>
             </div>
         </div>
@@ -278,6 +281,39 @@
                     <h3 class="text-lg font-semibold mb-6">Leaderboard</h3>
                     <div id="leaderboardContent">
                         <!-- Leaderboard will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Tab -->
+            <div id="adminTab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-6">⚙️ Admin Panel</h3>
+                    
+                    <!-- Admin Management -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-semibold mb-4">Admin Access Management</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-4">Grant or revoke admin access to teams. Team10 is the super admin and cannot be modified.</p>
+                            <div id="adminTeamsList" class="space-y-2">
+                                <!-- Teams list will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Draft Controls -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-semibold mb-4">Draft Controls</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="space-y-2">
+                                <button onclick="window.draftManager.initializeDraft()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                    🎲 Initialize Draft Order
+                                </button>
+                                <button onclick="window.draftManager.startDraft()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                                    🚀 Start Draft
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

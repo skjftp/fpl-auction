@@ -95,6 +95,12 @@ class App {
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('navbar').classList.remove('hidden');
         
+        // Show admin tab if user is admin
+        const adminTab = document.querySelector('[data-tab="admin"]');
+        if (adminTab) {
+            adminTab.style.display = this.currentUser?.is_admin ? 'block' : 'none';
+        }
+        
         this.updateNavbar();
         this.switchTab(this.currentTab);
     }
@@ -174,6 +180,10 @@ class App {
                 
             case 'leaderboard':
                 await this.loadLeaderboard();
+                break;
+                
+            case 'admin':
+                await this.loadAdminPanel();
                 break;
         }
     }
@@ -458,6 +468,100 @@ class App {
                 </table>
             </div>
         `;
+    }
+
+    async loadAdminPanel() {
+        if (!this.currentUser?.is_admin) {
+            showNotification('Admin access required', 'error');
+            return;
+        }
+
+        try {
+            const teams = await api.getTeamsLeaderboard();
+            this.displayAdminTeams(teams);
+        } catch (error) {
+            console.error('Error loading admin panel:', error);
+            showNotification('Failed to load admin panel', 'error');
+        }
+    }
+
+    displayAdminTeams(teams) {
+        const container = document.getElementById('adminTeamsList');
+        
+        container.innerHTML = teams.map(team => {
+            const isSuper = team.id === 10;
+            const isAdmin = team.is_admin || isSuper;
+            
+            return `
+                <div class="flex items-center justify-between p-3 bg-white rounded border">
+                    <div>
+                        <span class="font-medium">${team.name}</span>
+                        <span class="text-sm text-gray-500 ml-2">(${team.username})</span>
+                        ${isSuper ? '<span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded ml-2">Super Admin</span>' : ''}
+                        ${isAdmin && !isSuper ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded ml-2">Admin</span>' : ''}
+                    </div>
+                    <div>
+                        ${!isSuper ? `
+                            ${isAdmin ? `
+                                <button onclick="app.revokeAdmin(${team.id})" 
+                                        class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
+                                    Revoke Admin
+                                </button>
+                            ` : `
+                                <button onclick="app.grantAdmin(${team.id})" 
+                                        class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                                    Grant Admin
+                                </button>
+                            `}
+                        ` : '<span class="text-xs text-gray-500">Cannot modify</span>'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async grantAdmin(teamId) {
+        try {
+            const response = await fetch(`${api.baseURL}/teams/${teamId}/grant-admin`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${api.token}`
+                }
+            });
+
+            if (response.ok) {
+                showNotification('Admin access granted', 'success');
+                await this.loadAdminPanel();
+            } else {
+                const error = await response.json();
+                showNotification(error.error || 'Failed to grant admin', 'error');
+            }
+        } catch (error) {
+            console.error('Error granting admin:', error);
+            showNotification('Failed to grant admin access', 'error');
+        }
+    }
+
+    async revokeAdmin(teamId) {
+        try {
+            const response = await fetch(`${api.baseURL}/teams/${teamId}/revoke-admin`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${api.token}`
+                }
+            });
+
+            if (response.ok) {
+                showNotification('Admin access revoked', 'success');
+                await this.loadAdminPanel();
+            } else {
+                const error = await response.json();
+                showNotification(error.error || 'Failed to revoke admin', 'error');
+            }
+        } catch (error) {
+            console.error('Error revoking admin:', error);
+            showNotification('Failed to revoke admin access', 'error');
+        }
     }
 }
 

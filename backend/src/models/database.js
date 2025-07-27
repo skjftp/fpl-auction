@@ -40,6 +40,7 @@ async function createDefaultTeams() {
       username: username,
       password_hash: passwordHash,
       budget: 1000,
+      is_admin: (i + 1) === 10, // Team10 is super admin
       created_at: new Date().toISOString()
     });
   }

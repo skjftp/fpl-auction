@@ -156,15 +156,23 @@ class DraftManager {
     updateAdminControls() {
         const initBtn = document.getElementById('initializeDraftBtn');
         const startBtn = document.getElementById('startDraftBtn');
+        const isAdmin = window.app?.currentUser?.is_admin || false;
 
-        if (initBtn) {
-            initBtn.disabled = this.draftState?.is_active || false;
+        // Hide admin controls from non-admin users
+        const adminControlsContainer = initBtn?.parentElement;
+        if (adminControlsContainer) {
+            adminControlsContainer.style.display = isAdmin ? 'block' : 'none';
         }
 
-        if (startBtn) {
-            startBtn.disabled = !this.draftState?.draft_order || this.draftState?.is_active || false;
-        }
+        if (isAdmin) {
+            if (initBtn) {
+                initBtn.disabled = this.draftState?.is_active || false;
+            }
 
+            if (startBtn) {
+                startBtn.disabled = !this.draftState?.draft_order || this.draftState?.is_active || false;
+            }
+        }
     }
 
     async updateAuctionControls() {

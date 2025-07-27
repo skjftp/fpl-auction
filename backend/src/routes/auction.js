@@ -1,6 +1,7 @@
 const express = require('express');
 const { collections, advanceDraftTurn, isTeamCompleted, canTeamAcquirePlayer } = require('../models/database');
 const admin = require('firebase-admin');
+const { requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -314,8 +315,8 @@ router.post('/bid/:auctionId', async (req, res) => {
   }
 });
 
-// Complete auction (sell to current highest bidder)
-router.post('/complete/:auctionId', async (req, res) => {
+// Complete auction (sell to current highest bidder) - Admin only
+router.post('/complete/:auctionId', requireAdmin, async (req, res) => {
   const auctionId = req.params.auctionId;
   
   try {

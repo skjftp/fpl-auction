@@ -29,7 +29,7 @@ router.post('/login', async (req, res) => {
     }
     
     const token = jwt.sign(
-      { teamId: team.id, username: team.username, teamName: team.name },
+      { teamId: team.id, username: team.username, teamName: team.name, is_admin: team.is_admin || false },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '24h' }
     );
@@ -41,7 +41,8 @@ router.post('/login', async (req, res) => {
         id: team.id,
         name: team.name,
         username: team.username,
-        budget: team.budget
+        budget: team.budget,
+        is_admin: team.is_admin || false
       }
     });
   } catch (error) {

@@ -335,10 +335,12 @@ class AuctionManager {
                             class="bid-button w-full bg-green-500 text-white py-1 rounded text-sm hover:bg-green-600">
                         Place Bid
                     </button>
-                    <button onclick="auctionManager.completeAuction()" 
-                            class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
-                        Complete Auction
-                    </button>
+                    ${window.app?.currentUser?.is_admin ? `
+                        <button onclick="auctionManager.completeAuction()" 
+                                class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
+                            Complete Auction
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;

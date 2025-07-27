@@ -1,6 +1,7 @@
 const express = require('express');
 const { collections, initializeDraftOrder, startDraft, advanceDraftTurn } = require('../models/database');
 const admin = require('firebase-admin');
+const { requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -74,7 +75,7 @@ router.get('/state', async (req, res) => {
 });
 
 // Initialize random draft order (admin only)
-router.post('/initialize', async (req, res) => {
+router.post('/initialize', requireAdmin, async (req, res) => {
   try {
     await initializeDraftOrder();
     req.io.emit('draft-initialized');
@@ -86,7 +87,7 @@ router.post('/initialize', async (req, res) => {
 });
 
 // Start the draft (admin only)
-router.post('/start', async (req, res) => {
+router.post('/start', requireAdmin, async (req, res) => {
   try {
     await startDraft();
     req.io.emit('draft-started');

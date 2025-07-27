@@ -1,5 +1,6 @@
 const express = require('express');
 const { collections } = require('../models/database');
+const { requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -157,6 +158,63 @@ router.get('/:teamId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching team info:', error);
     res.status(500).json({ error: 'Failed to fetch team info' });
+  }
+});
+
+// Grant admin access to another team (admin only)
+router.post('/:teamId/grant-admin', requireAdmin, async (req, res) => {
+  try {
+    const teamId = parseInt(req.params.teamId);
+    
+    // Update team's admin status
+    const teamQuery = await collections.teams
+      .where('id', '==', teamId)
+      .limit(1)
+      .get();
+    
+    if (teamQuery.empty) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    
+    const teamDoc = teamQuery.docs[0];
+    await teamDoc.ref.update({ is_admin: true });
+    
+    res.json({ success: true, message: `Team ${teamId} granted admin access` });
+    
+  } catch (error) {
+    console.error('Error granting admin access:', error);
+    res.status(500).json({ error: 'Failed to grant admin access' });
+  }
+});
+
+// Revoke admin access from a team (admin only)
+router.post('/:teamId/revoke-admin', requireAdmin, async (req, res) => {
+  try {
+    const teamId = parseInt(req.params.teamId);
+    
+    // Don't allow removing admin from team10
+    if (teamId === 10) {
+      return res.status(403).json({ error: 'Cannot revoke admin from Team10' });
+    }
+    
+    // Update team's admin status
+    const teamQuery = await collections.teams
+      .where('id', '==', teamId)
+      .limit(1)
+      .get();
+    
+    if (teamQuery.empty) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    
+    const teamDoc = teamQuery.docs[0];
+    await teamDoc.ref.update({ is_admin: false });
+    
+    res.json({ success: true, message: `Team ${teamId} admin access revoked` });
+    
+  } catch (error) {
+    console.error('Error revoking admin access:', error);
+    res.status(500).json({ error: 'Failed to revoke admin access' });
   }
 });
 
