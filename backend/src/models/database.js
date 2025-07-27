@@ -182,8 +182,8 @@ async function createDefaultTeams() {
   const database = getDatabase();
   
   const defaultTeams = [
-    'Team Arsenal', 'Team Chelsea', 'Team Liverpool', 'Team City', 'Team United',
-    'Team Spurs', 'Team Newcastle', 'Team Brighton', 'Team Villa', 'Team Wolves'
+    'Wadde Badmash', 'Baba & Nawaab', 'Kesari', 'Finding Timo', 'Khelenge Jigar Se',
+    'Yaya Tours Pvt ltd', 'Shiggy FC', 'Analysis Paralysis', 'Dukes', 'Cash down under redux'
   ];
   
   for (let i = 0; i < defaultTeams.length; i++) {
