@@ -258,8 +258,12 @@ class AuctionManager {
                     }
                     <h4 class="font-bold text-lg">${itemName}</h4>
                     ${auction.player ? 
-                        `<p class="text-sm text-gray-500">${item.team_name}</p>` :
+                        `<p class="text-sm text-gray-500">${item.team_name || ''}</p>` :
                         `<p class="text-sm text-gray-500">Club</p>`
+                    }
+                    ${auction.startedBy ? 
+                        `<p class="text-xs text-gray-400">Started by ${auction.startedBy.name || auction.startedBy}</p>` :
+                        ''
                     }
                 </div>
                 
@@ -267,7 +271,7 @@ class AuctionManager {
                     <div class="text-sm text-gray-500">Current Bid</div>
                     <div class="text-2xl font-bold text-green-600">£${auction.currentBid}</div>
                     ${auction.currentBidder ? 
-                        `<div class="text-sm text-gray-500">by ${auction.currentBidder}</div>` :
+                        `<div class="text-sm text-gray-500">by ${auction.currentBidder.name || auction.currentBidder}</div>` :
                         `<div class="text-sm text-gray-500">No bids yet</div>`
                     }
                 </div>
