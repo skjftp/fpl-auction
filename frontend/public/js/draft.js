@@ -3,6 +3,8 @@ class DraftManager {
     constructor() {
         this.draftState = null;
         this.chatMessages = [];
+        this.socketRetryCount = 0;
+        this.maxSocketRetries = 10;
         this.init();
     }
 
@@ -45,10 +47,18 @@ class DraftManager {
     setupSocketListeners() {
         // Check if socket manager and socket exist
         if (!window.socketManager || !window.socketManager.socket) {
-            console.log('Socket not ready, will retry setupSocketListeners');
-            setTimeout(() => this.setupSocketListeners(), 100);
+            this.socketRetryCount++;
+            if (this.socketRetryCount >= this.maxSocketRetries) {
+                console.warn('Max socket retry attempts reached. Socket listeners not set up.');
+                return;
+            }
+            console.log(`Socket not ready, retry ${this.socketRetryCount}/${this.maxSocketRetries}`);
+            setTimeout(() => this.setupSocketListeners(), 500);
             return;
         }
+        
+        // Reset retry count on successful connection
+        this.socketRetryCount = 0;
 
         window.socketManager.socket.on('draft-initialized', () => {
             console.log('🎲 Draft order initialized');
