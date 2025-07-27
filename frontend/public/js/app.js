@@ -158,6 +158,10 @@ class App {
                 
             case 'auction':
                 // Auction content is loaded by AuctionManager
+                // Re-setup chat socket listeners when auction tab becomes active
+                if (window.auctionManager) {
+                    window.auctionManager.setupChatSocketListeners();
+                }
                 break;
                 
             case 'myTeam':
@@ -174,24 +178,95 @@ class App {
         }
     }
 
-    async loadMyTeam() {
+    async loadMyTeam(teamId = null) {
         if (!this.currentUser) return;
         
+        // Use provided teamId or default to current user's team
+        const selectedTeamId = teamId || this.currentUser.id;
+        
         try {
-            const squad = await api.getTeamSquad(this.currentUser.id);
-            this.displayMyTeam(squad);
+            // Load team selector options first time
+            if (!teamId) {
+                await this.loadTeamSelector();
+            }
+            
+            const squad = await api.getTeamSquad(selectedTeamId);
+            
+            // Get team name if viewing another team
+            let teamName = null;
+            if (teamId && teamId !== this.currentUser.id) {
+                const teamInfo = await api.getTeamInfo(selectedTeamId);
+                teamName = teamInfo.name;
+            }
+            
+            this.displayMyTeam(squad, selectedTeamId, teamName);
         } catch (error) {
             console.error('Error loading team:', error);
             showNotification('Failed to load team data', 'error');
         }
     }
 
-    displayMyTeam(squad) {
+    async loadTeamSelector() {
+        try {
+            const teams = await api.getTeamsLeaderboard();
+            const selector = document.getElementById('teamSelector');
+            
+            // Clear existing options
+            selector.innerHTML = '';
+            
+            // Add current user's team first
+            const currentTeamOption = document.createElement('option');
+            currentTeamOption.value = this.currentUser.id;
+            currentTeamOption.textContent = `${this.currentUser.name} (My Team)`;
+            currentTeamOption.selected = true;
+            selector.appendChild(currentTeamOption);
+            
+            // Add other teams
+            teams.forEach(team => {
+                if (team.id !== this.currentUser.id) {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    selector.appendChild(option);
+                }
+            });
+            
+            // Add event listener for team selection changes (prevent duplicate listeners)
+            if (!selector.hasAttribute('data-listener-added')) {
+                selector.addEventListener('change', (e) => {
+                    const selectedTeamId = e.target.value;
+                    this.loadMyTeam(selectedTeamId);
+                });
+                selector.setAttribute('data-listener-added', 'true');
+            }
+            
+        } catch (error) {
+            console.error('Error loading teams for selector:', error);
+        }
+    }
+
+    displayMyTeam(squad, selectedTeamId = null, teamName = null) {
         const container = document.getElementById('mySquad');
+        
+        // Update header to show which team is being viewed
+        const isMyTeam = !selectedTeamId || selectedTeamId === this.currentUser.id;
+        const headerText = isMyTeam ? 'Team Squad' : `${teamName || 'Team'} Squad`;
         
         const totalSpent = squad.totalSpent || 0;
         const remainingBudget = 1000 - totalSpent;
         
+        // Update the header in the HTML structure
+        const headerElement = document.querySelector('#myTeamTab .flex.justify-between.items-center h3');
+        if (headerElement) {
+            headerElement.textContent = headerText;
+        }
+
+        // Update the dropdown selection
+        const selector = document.getElementById('teamSelector');
+        if (selector && selectedTeamId) {
+            selector.value = selectedTeamId;
+        }
+
         container.innerHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Squad Overview -->

@@ -69,8 +69,8 @@ class SocketManager {
         }
     }
 
-    handleAuctionStarted(data) {
-        window.auctionManager.displayCurrentAuction(data);
+    async handleAuctionStarted(data) {
+        await window.auctionManager.displayCurrentAuction(data);
         showNotification(
             `New auction started: ${data.player?.web_name || data.club?.name}`,
             'info'

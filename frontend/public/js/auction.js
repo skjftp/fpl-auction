@@ -259,7 +259,7 @@ class AuctionManager {
         try {
             const response = await api.startPlayerAuction(playerId);
             if (response.success) {
-                this.displayCurrentAuction(response.auction);
+                await this.displayCurrentAuction(response.auction);
                 showNotification('Auction started!', 'success');
             }
         } catch (error) {
@@ -272,7 +272,7 @@ class AuctionManager {
         try {
             const response = await api.startClubAuction(clubId);
             if (response.success) {
-                this.displayCurrentAuction(response.auction);
+                await this.displayCurrentAuction(response.auction);
                 showNotification('Club auction started!', 'success');
             }
         } catch (error) {
@@ -281,7 +281,7 @@ class AuctionManager {
         }
     }
 
-    displayCurrentAuction(auction) {
+    async displayCurrentAuction(auction) {
         this.currentAuction = auction;
         const container = document.getElementById('currentAuction');
         
@@ -290,6 +290,9 @@ class AuctionManager {
         const itemImage = auction.player && item.photo ? 
             `https://resources.premierleague.com/premierleague/photos/players/110x140/p${item.photo.replace('.jpg', '')}.png` : 
             null;
+
+        // Calculate maximum bid for current user
+        const maxBid = await this.calculateMaxBid();
 
         container.innerHTML = `
             <div class="auction-item text-center">
@@ -313,15 +316,20 @@ class AuctionManager {
                 
                 <div class="bg-gray-50 rounded p-3 mb-3">
                     <div class="text-xs text-gray-500 mb-1">Current Bid</div>
-                    <div class="text-xl font-bold text-green-600 mb-1">£${auction.currentBid}</div>
-                    ${auction.currentBidder ? 
-                        `<div class="text-xs font-medium">${auction.currentBidder.name || auction.currentBidder}</div>` :
-                        `<div class="text-xs text-gray-500">No bids yet</div>`
-                    }
+                    <div id="currentBidAmount" class="text-xl font-bold text-green-600 mb-1">£${auction.currentBid}</div>
+                    <div id="currentBidder" class="${auction.currentBidder ? 'text-xs font-medium' : 'text-xs text-gray-500'}">
+                        ${auction.currentBidder ? 
+                            (auction.currentBidder.name || auction.currentBidder) :
+                            'No bids yet'
+                        }
+                    </div>
                 </div>
                 
                 <div class="space-y-2">
-                    <input type="number" id="bidAmount" value="${auction.currentBid + 5}" min="${auction.currentBid + 5}" step="5"
+                    <div class="text-xs text-gray-600 mb-1">
+                        Max bid: £${maxBid > 0 ? maxBid : 'N/A'}
+                    </div>
+                    <input type="number" id="bidAmount" value="${auction.currentBid + 5}" min="${auction.currentBid + 5}" max="${maxBid > 0 ? maxBid : ''}" step="5"
                            class="w-full px-2 py-1 border rounded text-center text-sm">
                     <button onclick="auctionManager.placeBid()" 
                             class="bid-button w-full bg-green-500 text-white py-1 rounded text-sm hover:bg-green-600">
@@ -334,6 +342,44 @@ class AuctionManager {
                 </div>
             </div>
         `;
+    }
+
+    async calculateMaxBid() {
+        try {
+            const currentUser = window.app?.currentUser;
+            if (!currentUser) return 0;
+            
+            const currentBudget = currentUser.budget;
+            
+            // Get actual squad count from backend
+            let remainingPicks = 17; // Default to full picks
+            
+            try {
+                const squadData = await api.getTeamSquad(currentUser.id);
+                const totalOwned = (squadData.counts?.players || 0) + (squadData.counts?.clubs || 0);
+                remainingPicks = Math.max(0, 17 - totalOwned);
+            } catch (error) {
+                console.warn('Could not get squad data, using estimated remaining picks');
+                // Fallback to estimation based on draft position
+                if (this.draftState && this.draftState.current_position) {
+                    const userCompletedPicks = Math.floor((this.draftState.current_position - 1) / (this.draftState.total_teams || 10));
+                    remainingPicks = Math.max(0, 17 - userCompletedPicks);
+                }
+            }
+            
+            // Minimum bid for remaining picks (excluding current auction)
+            const minForRemaining = Math.max(0, (remainingPicks - 1) * 5);
+            
+            // Maximum bid = current budget - minimum needed for remaining picks
+            const maxBid = Math.max(0, currentBudget - minForRemaining);
+            
+            // Make sure it's a multiple of 5 (since bids are in increments of 5)
+            return Math.floor(maxBid / 5) * 5;
+            
+        } catch (error) {
+            console.error('Error calculating max bid:', error);
+            return 0;
+        }
     }
 
     async placeBid() {
@@ -351,6 +397,13 @@ class AuctionManager {
                 return;
             }
 
+            // Check if bid exceeds maximum allowed bid
+            const maxBid = await this.calculateMaxBid();
+            if (maxBid > 0 && bidAmount > maxBid) {
+                showNotification(`Bid cannot exceed £${maxBid} (budget constraint)`, 'error');
+                return;
+            }
+
             await api.placeBid(this.currentAuction.id, bidAmount);
             showNotification('Bid placed!', 'success');
             
@@ -365,14 +418,32 @@ class AuctionManager {
             this.currentAuction.currentBid = bidData.bidAmount;
             this.currentAuction.currentBidder = bidData.teamName;
             
-            // Update the display
-            const currentBidEl = document.querySelector('#currentAuction .text-2xl');
-            const bidderEl = document.querySelector('#currentAuction .text-sm.text-gray-500:last-child');
+            // Update the display using specific IDs
+            const currentBidEl = document.getElementById('currentBidAmount');
+            const bidderEl = document.getElementById('currentBidder');
             const bidInput = document.getElementById('bidAmount');
             
-            if (currentBidEl) currentBidEl.textContent = `£${bidData.bidAmount}`;
-            if (bidderEl) bidderEl.textContent = `by ${bidData.teamName}`;
-            if (bidInput) bidInput.value = bidData.bidAmount + 5;
+            if (currentBidEl) {
+                currentBidEl.textContent = `£${bidData.bidAmount}`;
+            }
+            
+            if (bidderEl) {
+                bidderEl.textContent = bidData.teamName;
+                // Update classes to show it's now a real bidder
+                bidderEl.className = 'text-xs font-medium';
+            }
+            
+            if (bidInput) {
+                bidInput.value = bidData.bidAmount + 5;
+                bidInput.min = bidData.bidAmount + 5;
+            }
+            
+            console.log('Updated bid display:', { 
+                currentBidEl: !!currentBidEl, 
+                bidderEl: !!bidderEl, 
+                bidAmount: bidData.bidAmount, 
+                teamName: bidData.teamName 
+            });
         }
     }
 
@@ -424,7 +495,7 @@ class AuctionManager {
                     };
                 }
                 
-                this.displayCurrentAuction(auctionData);
+                await this.displayCurrentAuction(auctionData);
             }
         } catch (error) {
             console.error('Error loading active auctions:', error);
@@ -447,21 +518,59 @@ class AuctionManager {
             });
         }
 
-        // Listen for new chat messages
-        if (window.socketManager && window.socketManager.socket) {
-            window.socketManager.socket.on('new-chat-message', (message) => {
-                this.addChatMessage(message);
-            });
-        }
+        // Setup socket listeners for chat with retry mechanism
+        this.setupChatSocketListeners();
 
         // Load initial chat messages
         this.loadChatMessages();
+        
+        // Set up periodic refresh as fallback (every 10 seconds)
+        this.chatRefreshInterval = setInterval(() => {
+            this.loadChatMessages();
+        }, 10000);
+    }
+
+    setupChatSocketListeners(retryCount = 0) {
+        const maxRetries = 10;
+        
+        if (!window.socketManager || !window.socketManager.socket) {
+            if (retryCount < maxRetries) {
+                console.log(`Chat: Socket not ready, retry ${retryCount + 1}/${maxRetries}`);
+                setTimeout(() => this.setupChatSocketListeners(retryCount + 1), 500);
+            } else {
+                console.warn('Chat: Max socket retry attempts reached');
+            }
+            return;
+        }
+
+        console.log('Chat: Setting up socket listeners');
+        
+        // Remove existing listeners to prevent duplicates from both Draft and Auction managers
+        window.socketManager.socket.off('new-chat-message');
+        
+        // Add listener for new chat messages in auction context
+        window.socketManager.socket.on('new-chat-message', (message) => {
+            console.log('Auction Chat: Received new message', message);
+            
+            // Only handle if we're on the auction tab
+            if (window.app && window.app.currentTab === 'auction') {
+                this.addChatMessage(message);
+            }
+        });
     }
 
     async loadChatMessages() {
         try {
             const messages = await api.getChatMessages();
             this.chatMessages = messages;
+            
+            // Debug: Log message format to see created_at structure
+            if (messages.length > 0) {
+                console.log('Chat message sample:', messages[0]);
+                console.log('created_at type:', typeof messages[0].created_at);
+                console.log('created_at value:', messages[0].created_at);
+            }
+            
             this.displayChatMessages();
         } catch (error) {
             console.error('Error loading chat messages:', error);
@@ -478,13 +587,24 @@ class AuctionManager {
     }
 
     addChatMessage(message) {
-        this.chatMessages.push(message);
-        this.displayChatMessages();
+        console.log('Adding chat message:', message);
         
-        // Scroll to bottom
-        const container = document.getElementById('auctionChatMessages');
-        if (container) {
-            container.scrollTop = container.scrollHeight;
+        // Check if message already exists to prevent duplicates
+        const exists = this.chatMessages.some(msg => 
+            msg.team_id === message.team_id && 
+            msg.message === message.message && 
+            Math.abs(new Date(msg.created_at) - new Date(message.created_at)) < 1000
+        );
+        
+        if (!exists) {
+            this.chatMessages.push(message);
+            this.displayChatMessages();
+            
+            // Scroll to bottom
+            const container = document.getElementById('auctionChatMessages');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
         }
     }
 
@@ -497,13 +617,43 @@ class AuctionManager {
             return;
         }
 
-        container.innerHTML = this.chatMessages.map(msg => `
-            <div class="mb-1 text-xs">
-                <span class="font-semibold">${msg.team_name}:</span>
-                <span>${msg.message}</span>
-                <span class="text-gray-400 ml-1">${new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-        `).join('');
+        container.innerHTML = this.chatMessages.map(msg => {
+            // Fix date formatting - handle Firestore timestamps
+            let timeString = '';
+            try {
+                if (msg.created_at) {
+                    let date;
+                    
+                    // Handle Firestore timestamp format
+                    if (typeof msg.created_at === 'object' && msg.created_at._seconds) {
+                        date = new Date(msg.created_at._seconds * 1000);
+                    } 
+                    // Handle standard ISO string or timestamp
+                    else {
+                        date = new Date(msg.created_at);
+                    }
+                    
+                    if (!isNaN(date.getTime())) {
+                        timeString = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    } else {
+                        timeString = 'now';
+                    }
+                } else {
+                    timeString = 'now';
+                }
+            } catch (error) {
+                console.warn('Error formatting date:', msg.created_at, error);
+                timeString = 'now';
+            }
+            
+            return `
+                <div class="mb-1 text-xs">
+                    <span class="font-semibold">${msg.team_name}:</span>
+                    <span>${this.escapeHtml(msg.message)}</span>
+                    <span class="text-gray-400 ml-1">${timeString}</span>
+                </div>
+            `;
+        }).join('');
     }
 
     // Load and display draft state
@@ -619,6 +769,20 @@ class AuctionManager {
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         });
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Clean up method
+    cleanup() {
+        if (this.chatRefreshInterval) {
+            clearInterval(this.chatRefreshInterval);
+            this.chatRefreshInterval = null;
+        }
     }
 }
 
