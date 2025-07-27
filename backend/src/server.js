@@ -18,7 +18,8 @@ const { authenticateToken } = require('./middleware/auth');
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000', 
-  'http://[::]:3000'
+  'http://[::]:3000',
+  'https://fpl-auction.netlify.app'
 ];
 
 // Add production frontend URL if available
