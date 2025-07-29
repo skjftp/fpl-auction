@@ -402,12 +402,21 @@ function shouldAutoBid(auction, config) {
 
     // Check second bidder rule
     if (config.neverSecondBidder) {
-        // If there's only one bid (current bidder), we would be the second bidder
-        const hasSingleBidder = auction.currentBidder && (!auction.bids || auction.bids.length <= 1);
-        if (hasSingleBidder) {
-            console.log('Not bidding: Never second bidder is enabled and there is only one bidder');
+        // Check if we would be the second unique bidder
+        // The auction starter is the first bidder, if current bidder is different, there are already 2 bidders
+        
+        // Get current team info
+        const currentTeam = JSON.parse(localStorage.getItem('fpl_team') || '{}');
+        
+        // If auction was started by someone else and no one else has bid yet
+        // (current bid is still from the starter), we would be the second bidder
+        if (auction.currentBid === 5 && auction.currentBidder !== currentTeam.name) {
+            console.log('Not bidding: Never second bidder is enabled and we would be the second bidder');
             return false;
         }
+        
+        // Log for debugging
+        console.log('Second bidder check passed - current bid:', auction.currentBid, 'by', auction.currentBidder);
     }
 
     // Check club player rule
