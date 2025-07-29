@@ -111,10 +111,12 @@ class SocketManager {
             }, 500);
         }
 
-        showNotification(
-            `${data.teamName} bid £${data.bidAmount}m`,
-            'info'
-        );
+        // Show notification with auto-bid indicator
+        const bidMessage = data.isAutoBid 
+            ? `🤖 ${data.teamName} auto-bid £${data.bidAmount}m`
+            : `${data.teamName} bid £${data.bidAmount}m`;
+            
+        showNotification(bidMessage, 'info');
     }
 
     handleAuctionCompleted(data) {

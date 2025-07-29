@@ -13,7 +13,8 @@ const collections = {
   gameweekScores: db.collection('gameweek_scores'),
   draftOrder: db.collection('draft_order'),
   draftState: db.collection('draft_state'),
-  chatMessages: db.collection('chat_messages')
+  chatMessages: db.collection('chat_messages'),
+  autoBidConfigs: db.collection('auto_bid_configs')
 };
 
 async function initializeDatabase() {
@@ -305,6 +306,7 @@ function getDatabase() {
 }
 
 module.exports = {
+  collections,
   getDatabase,
   initializeDatabase,
   createDefaultTeams,
@@ -317,6 +319,5 @@ module.exports = {
   runAsync,
   allAsync,
   getAsync,
-  collections,
   db
 };

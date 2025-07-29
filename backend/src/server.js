@@ -11,6 +11,7 @@ const auctionRoutes = require('./routes/auction');
 const teamsRoutes = require('./routes/teams');
 const scoringRoutes = require('./routes/scoring');
 const draftRoutes = require('./routes/draft');
+const autobidRoutes = require('./routes/autobid');
 
 const { initializeDatabase } = require('./models/database');
 const { authenticateToken } = require('./middleware/auth');
@@ -67,6 +68,7 @@ app.use('/api/auction', authenticateToken, auctionRoutes);
 app.use('/api/teams', authenticateToken, teamsRoutes);
 app.use('/api/scoring', authenticateToken, scoringRoutes);
 app.use('/api/draft', authenticateToken, draftRoutes);
+app.use('/api/autobid', authenticateToken, autobidRoutes);
 
 // Handle preflight requests explicitly
 app.options('*', (req, res) => {

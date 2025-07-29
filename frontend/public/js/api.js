@@ -100,11 +100,23 @@ class API {
         return await this.request(`/auction/start-club/${clubId}`, { method: 'POST' });
     }
 
-    async placeBid(auctionId, bidAmount) {
+    async placeBid(auctionId, bidAmount, isAutoBid = false) {
         return await this.request(`/auction/bid/${auctionId}`, {
             method: 'POST',
-            body: JSON.stringify({ bidAmount })
+            body: JSON.stringify({ bidAmount, isAutoBid })
         });
+    }
+
+    // Auto-bid configuration endpoints
+    async saveAutoBidConfig(config) {
+        return await this.request('/autobid/config', {
+            method: 'POST',
+            body: JSON.stringify(config)
+        });
+    }
+
+    async getAutoBidConfig() {
+        return await this.request('/autobid/config');
     }
 
     async completeAuction(auctionId) {

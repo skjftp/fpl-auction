@@ -244,7 +244,7 @@ router.post('/start-club/:clubId', async (req, res) => {
 // Place a bid
 router.post('/bid/:auctionId', async (req, res) => {
   const auctionId = req.params.auctionId;
-  const { bidAmount } = req.body;
+  const { bidAmount, isAutoBid } = req.body;
   const teamId = req.user.teamId;
   
   // Validate bid amount (minimum 5, increments of 5)
@@ -307,7 +307,8 @@ router.post('/bid/:auctionId', async (req, res) => {
       teamId,
       teamName: req.user.teamName,
       bidAmount,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      isAutoBid: isAutoBid || false
     };
     
     // Broadcast bid to all clients
