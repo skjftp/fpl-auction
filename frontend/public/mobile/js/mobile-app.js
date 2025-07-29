@@ -456,8 +456,16 @@ class MobileApp {
             index: teams.indexOf(t) + 1
         })));
         
-        // Find team at the next position (positions are 1-based)
-        const nextTeam = teams.find(team => team.position === nextPosition) || teams[nextPosition - 1];
+        // Find team at the next position (positions are 1-based, array is 0-based)
+        // Check if teams have position property, otherwise use array index
+        let nextTeam;
+        if (teams.length > 0 && teams[0].position !== undefined) {
+            nextTeam = teams.find(team => team.position === nextPosition);
+        } else {
+            // Use array index (position 1 = index 0, position 2 = index 1, etc.)
+            nextTeam = teams[nextPosition - 1];
+        }
+        
         const nextTeamName = nextTeam?.name || `Position ${nextPosition}`;
         const nextTeamId = nextTeam?.team_id || nextTeam?.id || nextPosition;
             
