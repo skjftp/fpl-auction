@@ -231,30 +231,35 @@ class App {
             const teams = await api.getTeamsLeaderboard();
             const selector = document.getElementById('teamSelector');
             
+            if (!selector) {
+                console.error('Team selector element not found');
+                return;
+            }
+            
             // Clear existing options
             selector.innerHTML = '';
             
-            // Add current user's team first
-            const currentTeamOption = document.createElement('option');
-            currentTeamOption.value = this.currentUser.id;
-            currentTeamOption.textContent = `${this.currentUser.name} (My Team)`;
-            currentTeamOption.selected = true;
-            selector.appendChild(currentTeamOption);
+            // Add "My Squad" as default option
+            const mySquadOption = document.createElement('option');
+            mySquadOption.value = '';
+            mySquadOption.textContent = 'My Squad';
+            mySquadOption.selected = true;
+            selector.appendChild(mySquadOption);
             
-            // Add other teams
-            teams.forEach(team => {
-                if (team.id !== this.currentUser.id) {
+            // Add all teams
+            if (Array.isArray(teams)) {
+                teams.forEach(team => {
                     const option = document.createElement('option');
                     option.value = team.id;
                     option.textContent = team.name;
                     selector.appendChild(option);
-                }
-            });
+                });
+            }
             
             // Add event listener for team selection changes (prevent duplicate listeners)
             if (!selector.hasAttribute('data-listener-added')) {
                 selector.addEventListener('change', (e) => {
-                    const selectedTeamId = e.target.value;
+                    const selectedTeamId = e.target.value || this.currentUser.id;
                     this.loadMyTeam(selectedTeamId);
                 });
                 selector.setAttribute('data-listener-added', 'true');
@@ -262,18 +267,64 @@ class App {
             
         } catch (error) {
             console.error('Error loading teams for selector:', error);
+            // Add at least the current option on error
+            const selector = document.getElementById('teamSelector');
+            if (selector) {
+                selector.innerHTML = '<option value="">My Squad</option>';
+            }
         }
     }
 
-    displayMyTeam(squad, selectedTeamId = null, teamName = null) {
+    displayMyTeam(squadData, selectedTeamId = null, teamName = null) {
         const container = document.getElementById('mySquad');
+        
+        if (!container) return;
+        
+        // Parse the squad data - it comes as arrays of players and clubs
+        const players = squadData.players || [];
+        const clubs = squadData.clubs || [];
+        
+        // Group players by position
+        const positions = {
+            1: [], // GKP
+            2: [], // DEF
+            3: [], // MID
+            4: []  // FWD
+        };
+        
+        players.forEach(player => {
+            const pos = player.position || player.element_type;
+            if (positions[pos]) {
+                positions[pos].push(player);
+            }
+        });
+        
+        // Calculate counts
+        const counts = {
+            players: players.length,
+            clubs: clubs.length,
+            gkp: positions[1].length,
+            def: positions[2].length,
+            mid: positions[3].length,
+            fwd: positions[4].length
+        };
+        
+        // Calculate total spent
+        const totalSpent = players.reduce((sum, p) => sum + (p.price_paid || 0), 0) + 
+                          clubs.reduce((sum, c) => sum + (c.price_paid || 0), 0);
+        const remainingBudget = 1000 - totalSpent;
+        
+        // Build squad object in expected format
+        const squad = {
+            positions,
+            clubs,
+            counts,
+            totalSpent
+        };
         
         // Update header to show which team is being viewed
         const isMyTeam = !selectedTeamId || selectedTeamId === this.currentUser.id;
         const headerText = isMyTeam ? 'Team Squad' : `${teamName || 'Team'} Squad`;
-        
-        const totalSpent = squad.totalSpent || 0;
-        const remainingBudget = 1000 - totalSpent;
         
         // Update the header in the HTML structure
         const headerElement = document.querySelector('#myTeamTab .flex.justify-between.items-center h3');
