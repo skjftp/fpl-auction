@@ -417,11 +417,16 @@ class MobileAuctionManager {
     }
 
     updateCurrentBid(bidData) {
+        console.log('💸 Mobile: Updating current bid with data:', bidData);
+        
         if (this.currentAuction && this.currentAuction.id === bidData.auctionId) {
-            // Update using backend format property names
+            // Update both formats to ensure compatibility
             this.currentAuction.current_bid = bidData.bidAmount;
             this.currentAuction.current_bidder_name = bidData.teamName;
+            this.currentAuction.currentBid = bidData.bidAmount;
+            this.currentAuction.currentBidder = { name: bidData.teamName };
             this.currentAuction.is_auto_bid = bidData.isAutoBid;
+            this.currentAuction.isAutoBid = bidData.isAutoBid;
             
             // Reset selling stage when new bid placed
             if (this.currentAuction.selling_stage) {
