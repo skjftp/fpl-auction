@@ -431,30 +431,28 @@ class MobileAuctionManager {
     receiveSellingStageUpdate(data) {
         if (this.currentAuction && this.currentAuction.id === data.auctionId) {
             this.currentAuction.selling_stage = data.stage;
-            this.updateSellingStatus(data.stage);
-            this.updateAdminControls(this.currentAuction);
+            this.updateControls(this.currentAuction);
         }
     }
 
     updateWaitRequest(data) {
         if (this.currentAuction && this.currentAuction.id === data.auctionId) {
             this.currentAuction.wait_requested_by = data.teamId;
-            this.updateAdminControls(this.currentAuction);
+            this.updateControls(this.currentAuction);
         }
     }
 
     clearWaitRequest() {
         if (this.currentAuction) {
             this.currentAuction.wait_requested_by = null;
-            this.updateAdminControls(this.currentAuction);
+            this.updateControls(this.currentAuction);
         }
     }
 
     clearSellingStage() {
         if (this.currentAuction) {
             this.currentAuction.selling_stage = null;
-            this.updateSellingStatus(null);
-            this.updateAdminControls(this.currentAuction);
+            this.updateControls(this.currentAuction);
         }
     }
 
