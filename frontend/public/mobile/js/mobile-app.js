@@ -388,13 +388,33 @@ class MobileApp {
         // Rounds 2,4,6,8,10,12,14,16 go 10→1
         
         const currentRound = draftState.current_round || 1;
-        const currentPosition = draftState.current_position || draftState.current_team_id || 1;
         const totalTeams = draftState.total_teams || 10;
+        const teams = draftState.draft_order || draftState.teams || [];
+        
+        // Find current team's position in draft order
+        let currentPosition = draftState.current_position;
+        if (!currentPosition && draftState.current_team_id) {
+            const currentTeamIndex = teams.findIndex(team => 
+                team.team_id === draftState.current_team_id || team.id === draftState.current_team_id
+            );
+            currentPosition = currentTeamIndex >= 0 ? currentTeamIndex + 1 : 1;
+        }
+        currentPosition = currentPosition || 1;
+        
+        console.log('🐍 Mobile: calculateNextTurn input:', {
+            currentRound,
+            currentPosition,
+            current_team_id: draftState.current_team_id,
+            current_position: draftState.current_position,
+            derived_position: currentPosition
+        });
         
         // Determine if current round is ascending (1→10) or descending (10→1)
         const isAscendingRound = currentRound % 2 === 1;
         
         let nextPosition, nextRound;
+        
+        console.log('🐍 Mobile: Round type:', isAscendingRound ? 'Ascending (1→10)' : 'Descending (10→1)');
         
         if (isAscendingRound) {
             // Current round goes 1→10
@@ -420,6 +440,8 @@ class MobileApp {
             }
         }
         
+        console.log('🐍 Mobile: Calculated next position:', nextPosition, 'in round:', nextRound);
+        
         // Handle case where draft is complete
         if (nextRound > 17) {
             return { teamId: null, teamName: 'Draft Complete' };
@@ -427,6 +449,13 @@ class MobileApp {
         
         // Get team at the next position from draft_order
         const teams = draftState.draft_order || draftState.teams || [];
+        
+        console.log('🐍 Mobile: Draft order teams:', teams.map(t => ({
+            name: t.name,
+            team_id: t.team_id,
+            position: t.position,
+            index: teams.indexOf(t) + 1
+        })));
         
         // Find team at the next position (positions are 1-based)
         const nextTeam = teams.find(team => team.position === nextPosition) || teams[nextPosition - 1];
