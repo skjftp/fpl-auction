@@ -902,17 +902,27 @@ body {
 }
 
 /* Chat Tab */
+#chatTab {
+    padding-bottom: 0 !important; /* Override general tab padding for chat */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 140px);
+    height: 100%;
+    max-height: calc(100vh - 180px); /* Account for top bars and bottom nav */
 }
 
 .chat-messages {
     flex: 1;
+    max-height: 60vh; /* 60% of screen height */
     padding: 16px;
     overflow-y: auto;
     background: #f8fafc;
+    scroll-behavior: smooth;
 }
 
 .chat-message {
@@ -954,6 +964,9 @@ body {
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-shrink: 0;
+    margin-top: auto;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .chat-input {

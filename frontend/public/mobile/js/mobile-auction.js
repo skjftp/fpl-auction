@@ -161,6 +161,9 @@ class MobileAuctionManager {
         
         // Update controls
         this.updateControls(auctionData);
+        
+        // Re-render players list to disable start buttons
+        this.renderPlayers();
     }
 
     displayPlayerAuction(auctionData) {
@@ -366,6 +369,9 @@ class MobileAuctionManager {
         
         if (auctionCard) auctionCard.classList.add('hidden');
         if (noAuction) noAuction.classList.remove('hidden');
+        
+        // Re-render players list to re-enable start buttons
+        this.renderPlayers();
     }
 
     updateCurrentBid(bidData) {
@@ -526,7 +532,8 @@ class MobileAuctionManager {
         container.innerHTML = this.filteredPlayers.map(player => {
             const isSold = player.sold_to_team_id;
             const currentUser = window.mobileAPI.getCurrentUser();
-            const canStartAuction = !isSold && currentUser.id; // Add draft turn logic if needed
+            const hasActiveAuction = this.currentAuction !== null;
+            const canStartAuction = !isSold && currentUser.id && !hasActiveAuction;
 
             const position = this.getPositionName(player.position, player);
             
