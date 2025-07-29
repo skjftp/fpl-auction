@@ -475,14 +475,18 @@ body {
 .chat-messages-mini {
     flex: 1;
     padding: 8px 12px;
-    overflow-y: scroll; /* Force scroll to always be available */
+    overflow-y: scroll;
     overflow-x: hidden;
     background: #f8fafc;
     font-size: 12px;
     scroll-behavior: smooth;
     min-height: 100px;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    max-height: 200px;
+    -webkit-overflow-scrolling: touch;
     position: relative;
+    /* Improve scroll performance */
+    will-change: scroll-position;
+    transform: translateZ(0);
 }
 
 /* Style scrollbar for better visibility */

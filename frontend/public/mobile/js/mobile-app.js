@@ -280,16 +280,30 @@ class MobileApp {
 
     async loadInitialData() {
         try {
-            // Load draft state
+            // Load draft state and team squad first (critical data)
             await this.loadDraftState();
-            
-            // Load chat messages
-            await this.loadChatMessages();
-            
-            // Load team squad
             await this.loadTeamSquad();
+            
+            // Load chat messages asynchronously (non-blocking)
+            this.loadChatMessagesAsync();
         } catch (error) {
             console.error('Error loading initial data:', error);
+        }
+    }
+
+    // Load chat messages asynchronously to prevent blocking app initialization
+    async loadChatMessagesAsync() {
+        try {
+            const messages = await window.mobileAPI.getChatMessages();
+            this.chatMessages = messages || [];
+            // Only render if we're currently on the auction tab
+            if (this.currentTab === 'auction') {
+                this.renderChatMessagesMini();
+            }
+        } catch (error) {
+            console.error('Error loading chat messages:', error);
+            // Show empty state if chat fails to load
+            this.chatMessages = [];
         }
     }
 
@@ -340,13 +354,33 @@ class MobileApp {
         const mainApp = document.getElementById('mainApp');
         if (tabName === 'auction') {
             mainApp.classList.add('auction-active');
-            this.renderChatMessagesMini();
+            // Delay chat rendering to ensure proper DOM setup
+            setTimeout(() => {
+                this.renderChatMessagesMini();
+                this.fixChatScroll();
+            }, 100);
         } else {
             mainApp.classList.remove('auction-active');
         }
         
         // Load tab-specific data
         this.loadTabData(tabName);
+    }
+
+    // Fix chat scroll issues when switching to auction tab
+    fixChatScroll() {
+        const chatContainer = document.getElementById('chatMessagesMini');
+        if (chatContainer) {
+            // Force reflow to fix scroll issues
+            chatContainer.style.overflow = 'hidden';
+            setTimeout(() => {
+                chatContainer.style.overflow = 'scroll';
+                // Ensure we're scrolled to bottom
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                // Trigger scroll capability
+                chatContainer.dispatchEvent(new Event('scroll'));
+            }, 50);
+        }
     }
 
     // View switching removed - always use formation view
@@ -361,7 +395,12 @@ class MobileApp {
                 await this.loadHistory();
                 break;
             case 'auction':
-                this.renderChatMessagesMini();
+                // Ensure chat messages are loaded if not already
+                if (this.chatMessages.length === 0) {
+                    await this.loadChatMessagesAsync();
+                } else {
+                    this.renderChatMessagesMini();
+                }
                 break;
         }
     }
@@ -633,16 +672,6 @@ class MobileApp {
         return squadHTML || '<div style="text-align: center; color: #9ca3af; padding: 40px;">No players or clubs yet</div>';
     }
 
-    async loadChatMessages() {
-        try {
-            const messages = await window.mobileAPI.getChatMessages();
-            this.chatMessages = messages || [];
-            this.renderChatMessages();
-        } catch (error) {
-            console.error('Error loading chat messages:', error);
-        }
-    }
-
     renderChatMessages() {
         // Render to mini chat at bottom
         this.renderChatMessagesMini();
@@ -653,12 +682,15 @@ class MobileApp {
         if (!container) return;
 
         if (this.chatMessages.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 8px; font-size: 12px;">No messages yet...</div>';
+            container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 8px; font-size: 12px;">Loading messages...</div>';
             return;
         }
 
-        // Show ALL messages, not just last 5
-        container.innerHTML = this.chatMessages.map(msg => {
+        // Limit to last 50 messages for better performance
+        const messagesToShow = this.chatMessages.slice(-50);
+        const wasScrolledToBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 5;
+
+        container.innerHTML = messagesToShow.map(msg => {
             let timeString = 'Now';
             try {
                 if (msg.created_at) {
@@ -687,8 +719,13 @@ class MobileApp {
             `;
         }).join('');
 
-        // Scroll to bottom
-        container.scrollTop = container.scrollHeight;
+        // Only auto-scroll if user was already at bottom or on initial load
+        if (wasScrolledToBottom || !container.hasScrolled) {
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+                container.hasScrolled = true;
+            }, 10);
+        }
     }
 
     addChatMessage(message) {
