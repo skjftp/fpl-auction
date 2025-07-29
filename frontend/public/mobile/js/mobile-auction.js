@@ -138,6 +138,9 @@ class MobileAuctionManager {
     }
 
     displayCurrentAuction(auctionData) {
+        console.log('📅 Mobile: Displaying auction data:', auctionData);
+        console.log('📅 Mobile: Selling stage in auction data:', auctionData.selling_stage);
+        
         this.currentAuction = auctionData;
         
         const auctionCard = document.getElementById('currentAuction');
@@ -258,6 +261,13 @@ class MobileAuctionManager {
         const isAdmin = currentUser.is_admin;
         const sellingStage = auctionData.selling_stage;
         const waitRequested = auctionData.wait_requested_by;
+
+        console.log('🎮 Mobile: Update controls called with:', {
+            isAdmin,
+            sellingStage,
+            waitRequested,
+            auctionId: auctionData.id
+        });
 
         // Update selling status
         this.updateSellingStatus(sellingStage);
