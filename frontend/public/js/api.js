@@ -1,8 +1,7 @@
 // API utility functions
 class API {
     constructor() {
-        // Use environment-specific API URL
-        // Update this URL after deployment if it changes
+        // Production API URL - FPL Auction Backend on Google Cloud Run
         const PRODUCTION_API_URL = 'https://fpl-auction-backend-mrlyxa4xiq-uc.a.run.app/api';
         
         this.baseURL = window.location.hostname === 'localhost' 

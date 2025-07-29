@@ -54,13 +54,14 @@ fpl-auction/
 
 ## Deployment
 - Backend: https://fpl-auction-backend-mrlyxa4xiq-uc.a.run.app
-- Frontend: Served statically
+- Frontend: https://fpl-auction.netlify.app
 - Project ID: fpl-auction-2025
+- Region: us-central1
 
 ## Common Commands
 ```bash
 # Deploy backend
-cd backend && gcloud run deploy fpl-auction-backend --source . --region us-central1 --allow-unauthenticated
+cd backend && gcloud run deploy fpl-auction-backend --source . --region us-central1 --allow-unauthenticated --project fpl-auction-2025
 
 # Run locally
 cd backend && npm start

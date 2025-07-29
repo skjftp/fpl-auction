@@ -6,7 +6,7 @@ class SocketManager {
     }
 
     connect() {
-        // Use environment-specific socket URL
+        // Production Socket URL - FPL Auction Backend on Google Cloud Run
         const PRODUCTION_SOCKET_URL = 'https://fpl-auction-backend-mrlyxa4xiq-uc.a.run.app';
         
         const socketURL = window.location.hostname === 'localhost' 
