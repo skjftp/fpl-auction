@@ -437,26 +437,34 @@ body {
     position: relative;
 }
 
-/* Auction tab - keep auction card fixed */
+/* Auction tab - NO SCROLL */
 #auctionTab {
-    padding-bottom: 200px; /* Space for fixed chat */
+    overflow: hidden !important;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding-top: 8px; /* Small padding after auto-bid card */
+}
+
+/* Spacer to push content above tab nav */
+#auctionTab::after {
+    content: '';
+    flex: 1;
+    min-height: 65px; /* Height of tab nav */
 }
 
 /* Fixed Bottom Chat - inside auction tab */
-.fixed-bottom-chat {
-    position: fixed;
-    bottom: 65px;
-    left: 0;
-    right: 0;
+#auctionTab .fixed-bottom-chat {
     background: white;
     border-top: 1px solid #e5e7eb;
-    z-index: 50;
     height: 180px;
-    display: none;
-}
-
-#auctionTab.active .fixed-bottom-chat {
-    display: block;
+    margin: 0 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 12px;
+    flex-shrink: 0;
 }
 
 .chat-messages-mini {
@@ -487,15 +495,14 @@ body {
 }
 
 /* Auction Tab */
-.auction-card {
+#auctionTab .auction-card,
+#auctionTab .no-auction {
     background: white;
-    margin: 12px;
+    margin: 8px 12px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    position: sticky;
-    top: 150px; /* Same as tab-content padding-top */
-    z-index: 20;
+    flex-shrink: 0;
 }
 
 .auction-header {
@@ -677,13 +684,6 @@ body {
     padding: 40px 20px;
     text-align: center;
     color: #6b7280;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    margin: 12px;
-    position: sticky;
-    top: 150px; /* Same as tab-content padding-top */
-    z-index: 10;
 }
 
 .no-auction-icon {
