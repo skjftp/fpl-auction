@@ -4,7 +4,7 @@ class MobileAPI {
         // Use production backend URL
         this.baseURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api'
-            : 'https://fpl-auction-backend-mrlyxa4xiq-uc.a.run.app/api';
+            : 'https://fpl-auction-backend-945963649649.us-central1.run.app/api';
         this.token = localStorage.getItem('fpl_token');
     }
 
