@@ -455,7 +455,7 @@ body {
 /* Fixed Bottom Chat - inside auction tab */
 #auctionTab .fixed-bottom-chat {
     background: white;
-    border-top: 1px solid #e5e7eb;
+    border: 1px solid #e5e7eb;
     margin: 8px 12px 12px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -464,14 +464,25 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 180px;
+    max-height: 300px; /* Limit max height */
 }
 
 .chat-messages-mini {
     flex: 1;
     padding: 8px 12px;
     overflow-y: auto;
+    overflow-x: hidden;
     background: #f8fafc;
     font-size: 12px;
+    scroll-behavior: smooth;
+    min-height: 100px;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+/* Hide scrollbar on mobile but keep functionality */
+.chat-messages-mini::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
 }
 
 .chat-input-bar {
@@ -482,6 +493,7 @@ body {
     background: white;
     border-top: 1px solid #e5e7eb;
     flex-shrink: 0;
+    height: 52px; /* Fixed height for input bar */
 }
 
 .tab-pane {
