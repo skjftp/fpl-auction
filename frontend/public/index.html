@@ -340,7 +340,7 @@
 
             <!-- Auction Tab -->
             <div id="auctionTab" class="tab-content fade-in">
-                <div class="max-h-[calc(100vh-120px)] overflow-hidden">
+                <div class="max-h-[calc(100vh-160px)] overflow-hidden">
                     <!-- Auto-Bidding Controls -->
                     <div class="card p-2 mb-2">
                         <div class="flex items-center justify-between">
@@ -368,7 +368,7 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 max-h-[calc(100vh-240px)]">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 h-[calc(100vh-280px)]">
                         <!-- Left: Players List -->
                         <div class="lg:col-span-1 h-full">
                             <div class="card p-3 h-full flex flex-col">
@@ -380,7 +380,7 @@
                                 </div>
                                 
                                 <!-- Compact Filters -->
-                                <div class="space-y-2 mb-2">
+                                <div class="space-y-2 mb-2 flex-shrink-0">
                                     <select id="positionFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
                                         <option value="">All Positions</option>
                                         <option value="1">GKP</option>
@@ -396,7 +396,7 @@
                                 </div>
                                 
                                 <!-- Players List -->
-                                <div id="playersList" class="space-y-1 overflow-y-auto pr-1 flex-1">
+                                <div id="playersList" class="space-y-1 overflow-y-auto pr-1 flex-1 min-h-0">
                                     <!-- Players will be loaded here -->
                                 </div>
                             </div>
@@ -404,17 +404,17 @@
                         
                         <!-- Middle: Current Auction and Clubs -->
                         <div class="lg:col-span-1 h-full flex flex-col space-y-3">
-                            <div class="card p-3 flex-1">
+                            <div class="card p-3 flex-1 min-h-0">
                                 <h3 class="text-sm font-semibold mb-2 text-gray-900">Current Auction</h3>
-                                <div id="currentAuction">
+                                <div id="currentAuction" class="overflow-y-auto h-full">
                                     <p class="text-gray-500 text-center py-4 text-sm">No active auction</p>
                                 </div>
                             </div>
                             
                             <!-- Available Clubs -->
-                            <div class="card p-3 flex-1">
+                            <div class="card p-3 flex-1 min-h-0">
                                 <h3 class="text-sm font-semibold mb-2 text-gray-900">Clubs</h3>
-                                <div id="clubsList" class="grid grid-cols-2 gap-2 overflow-y-auto pr-1 h-full">
+                                <div id="clubsList" class="grid grid-cols-2 gap-2 overflow-y-auto h-full">
                                     <!-- Clubs will be loaded here -->
                                 </div>
                             </div>
@@ -423,15 +423,15 @@
                         <!-- Right: Team Chat -->
                         <div class="lg:col-span-1 h-full">
                             <div class="card p-3 h-full flex flex-col">
-                                <h3 class="text-sm font-semibold mb-2 text-gray-900">💬 Chat</h3>
+                                <h3 class="text-sm font-semibold mb-2 text-gray-900 flex-shrink-0">💬 Chat</h3>
                                 
                                 <!-- Chat Messages -->
-                                <div id="chatMessages" class="flex-1 overflow-y-auto border border-gray-200 rounded p-2 mb-2 bg-gray-50 text-sm">
+                                <div id="chatMessages" class="flex-1 overflow-y-auto border border-gray-200 rounded p-2 mb-2 bg-gray-50 text-sm min-h-0">
                                     <div class="text-gray-500 text-center">No messages yet...</div>
                                 </div>
                                 
                                 <!-- Chat Input -->
-                                <form id="chatForm" class="flex gap-1">
+                                <form id="chatForm" class="flex gap-1 flex-shrink-0">
                                     <input type="text" id="chatInput" 
                                            placeholder="Type a message..." 
                                            class="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
