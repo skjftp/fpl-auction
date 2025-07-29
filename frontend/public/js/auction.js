@@ -353,7 +353,7 @@ class AuctionManager {
                         </button>
                     ` : ''}
                     ${window.app?.currentUser?.is_admin ? `
-                        <div class="space-y-1">
+                        <div id="adminControls" class="space-y-1">
                             ${auction.wait_requested_by ? `
                                 <div class="bg-blue-50 border border-blue-200 rounded p-2 mb-1">
                                     <div class="text-xs font-medium text-blue-800 mb-1">Wait requested</div>
@@ -476,6 +476,7 @@ class AuctionManager {
             this.currentAuction.isAutoBid = bidData.isAutoBid;
             
             // Reset selling stage when a new bid is placed
+            const wasInSellingStage = this.currentAuction.selling_stage;
             if (this.currentAuction.selling_stage) {
                 this.currentAuction.selling_stage = null;
                 // Remove selling status display
@@ -507,11 +508,17 @@ class AuctionManager {
                 bidInput.min = bidData.bidAmount + 5;
             }
             
+            // Update admin controls if selling stage was reset
+            if (wasInSellingStage && window.app?.currentUser?.is_admin) {
+                this.updateAdminControls();
+            }
+            
             console.log('Updated bid display:', { 
                 currentBidEl: !!currentBidEl, 
                 bidderEl: !!bidderEl, 
                 bidAmount: bidData.bidAmount, 
-                teamName: bidData.teamName 
+                teamName: bidData.teamName,
+                sellingStageReset: wasInSellingStage
             });
         }
     }
@@ -880,6 +887,60 @@ class AuctionManager {
             console.error('Error updating selling stage:', error);
             showNotification(error.message, 'error');
         }
+    }
+
+    updateAdminControls() {
+        const adminControls = document.getElementById('adminControls');
+        if (!adminControls || !this.currentAuction || !window.app?.currentUser?.is_admin) {
+            return;
+        }
+
+        const auction = this.currentAuction;
+        
+        // Re-render admin controls with current auction state
+        adminControls.innerHTML = `
+            ${auction.wait_requested_by ? `
+                <div class="bg-blue-50 border border-blue-200 rounded p-2 mb-1">
+                    <div class="text-xs font-medium text-blue-800 mb-1">Wait requested</div>
+                    <div class="flex gap-1">
+                        <button onclick="auctionManager.handleWaitRequest('accept')" 
+                                class="flex-1 bg-green-500 text-white py-1 px-2 rounded text-xs hover:bg-green-600">
+                            Accept
+                        </button>
+                        <button onclick="auctionManager.handleWaitRequest('reject')" 
+                                class="flex-1 bg-red-500 text-white py-1 px-2 rounded text-xs hover:bg-red-600">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+            ` : ''}
+            ${!auction.selling_stage ? `
+                <button onclick="auctionManager.updateSellingStage('selling1')" 
+                        class="w-full bg-yellow-500 text-white py-1 rounded text-sm hover:bg-yellow-600">
+                    Selling 1
+                </button>
+            ` : ''}
+            ${auction.selling_stage === 'selling1' && !auction.wait_requested_by ? `
+                <button onclick="auctionManager.updateSellingStage('selling2')" 
+                        class="w-full bg-orange-500 text-white py-1 rounded text-sm hover:bg-orange-600">
+                    Selling 2
+                </button>
+            ` : ''}
+            ${auction.selling_stage === 'selling2' && !auction.wait_requested_by ? `
+                <button onclick="auctionManager.updateSellingStage('sold')" 
+                        class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
+                    Sold
+                </button>
+            ` : ''}
+            ${auction.selling_stage && !auction.wait_requested_by ? `
+                <button onclick="auctionManager.updateSellingStage('sold')" 
+                        class="w-full bg-red-500 text-white py-1 rounded text-sm hover:bg-red-600">
+                    Sold (Skip wait)
+                </button>
+            ` : ''}
+        `;
+        
+        console.log('Admin controls updated - selling stage:', auction.selling_stage);
     }
 
     async requestWait() {
