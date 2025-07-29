@@ -393,15 +393,19 @@ async function checkAndPlaceAutoBids() {
 function shouldAutoBid(auction, config) {
     // Check selling stage rule
     if (config.onlySellingStage) {
-        if (auction.status !== 'selling1' && auction.status !== 'selling2') {
+        if (auction.status !== 'selling1' && auction.status !== 'selling2' && 
+            auction.selling_stage !== 'selling1' && auction.selling_stage !== 'selling2') {
+            console.log('Not bidding: Only selling stage is enabled but auction is in', auction.status || 'active', 'status');
             return false;
         }
     }
 
     // Check second bidder rule
     if (config.neverSecondBidder) {
-        const bidCount = auction.bids ? auction.bids.length : 0;
-        if (bidCount === 1) {
+        // If there's only one bid (current bidder), we would be the second bidder
+        const hasSingleBidder = auction.currentBidder && (!auction.bids || auction.bids.length <= 1);
+        if (hasSingleBidder) {
+            console.log('Not bidding: Never second bidder is enabled and there is only one bidder');
             return false;
         }
     }
