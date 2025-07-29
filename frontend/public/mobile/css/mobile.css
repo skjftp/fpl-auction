@@ -444,16 +444,15 @@ body {
 
 /* Fixed Bottom Chat - inside auction tab */
 .fixed-bottom-chat {
-    position: sticky;
+    position: fixed;
     bottom: 65px;
     left: 0;
     right: 0;
     background: white;
     border-top: 1px solid #e5e7eb;
-    z-index: 100;
+    z-index: 50;
     height: 180px;
     display: none;
-    margin-top: 12px; /* Small gap between auction card and chat */
 }
 
 #auctionTab.active .fixed-bottom-chat {
@@ -496,7 +495,7 @@ body {
     overflow: hidden;
     position: sticky;
     top: 150px; /* Same as tab-content padding-top */
-    z-index: 10;
+    z-index: 20;
 }
 
 .auction-header {
