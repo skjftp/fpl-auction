@@ -173,6 +173,7 @@ body {
     flex-direction: column;
     height: 100vh;
     background: #f8fafc;
+    overflow: hidden;
 }
 
 /* Top Bar */
@@ -275,6 +276,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .card-header {
@@ -427,6 +429,7 @@ body {
 .tab-pane {
     display: none;
     height: 100%;
+    overflow-y: auto;
 }
 
 .tab-pane.active {
@@ -814,12 +817,42 @@ body {
     display: flex;
     justify-content: center;
     gap: 16px;
+    margin-bottom: 12px;
 }
 
 .stat {
     font-size: 14px;
     color: #6b7280;
     font-weight: 600;
+}
+
+.view-toggle {
+    display: flex;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+.view-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.view-btn.active {
+    background: white;
+    color: #10b981;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .team-squad {
@@ -1249,4 +1282,136 @@ body {
     .tab-nav {
         padding-bottom: max(0px, env(safe-area-inset-bottom));
     }
+}
+
+/* Formation View */
+.formation-view {
+    background: linear-gradient(180deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px;
+    position: relative;
+    min-height: 400px;
+}
+
+.formation-pitch {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.formation-line {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.formation-player {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 6px;
+    min-width: 60px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid #ffffff;
+}
+
+.formation-player.empty {
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px dashed rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.formation-player-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.formation-player-price {
+    font-size: 9px;
+    color: #10b981;
+    font-weight: 600;
+}
+
+.formation-player.empty .formation-player-name {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.formation-clubs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.formation-club {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid #ffffff;
+    min-width: 80px;
+}
+
+.formation-club.empty {
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px dashed rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.formation-club-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.formation-club-price {
+    font-size: 10px;
+    color: #10b981;
+    font-weight: 600;
+}
+
+.formation-club.empty .formation-club-name {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* List View Styles */
+.list-view .position-group {
+    background: white;
+    margin: 8px 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.list-view .position-header {
+    background: #f8fafc;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.position-counter {
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
 }

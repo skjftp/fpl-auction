@@ -115,9 +115,12 @@ class MobileAuctionManager {
     async loadActiveAuctions() {
         try {
             const auctions = await window.mobileAPI.getActiveAuctions();
+            console.log('Loaded active auctions:', auctions);
             if (auctions && auctions.length > 0) {
+                console.log('Displaying auction:', auctions[0]);
                 this.displayCurrentAuction(auctions[0]);
             } else {
+                console.log('No active auctions found');
                 this.clearCurrentAuction();
             }
         } catch (error) {
@@ -162,6 +165,7 @@ class MobileAuctionManager {
 
     displayPlayerAuction(auctionData) {
         const player = auctionData.player;
+        console.log('Displaying player auction:', player);
         
         // Player photo
         const photoEl = document.getElementById('playerPhoto');

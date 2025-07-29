@@ -3,6 +3,7 @@ class MobileApp {
     constructor() {
         this.currentUser = null;
         this.currentTab = 'auction';
+        this.currentView = 'formation'; // 'formation' or 'list'
         this.chatMessages = [];
         this.unreadChatCount = 0;
         this.isInitialized = false;
@@ -218,6 +219,18 @@ class MobileApp {
             sendChatBtn.addEventListener('click', () => this.sendChatMessage());
         }
 
+        // View toggle buttons
+        const formationViewBtn = document.getElementById('formationViewBtn');
+        const listViewBtn = document.getElementById('listViewBtn');
+        
+        if (formationViewBtn) {
+            formationViewBtn.addEventListener('click', () => this.switchView('formation'));
+        }
+        
+        if (listViewBtn) {
+            listViewBtn.addEventListener('click', () => this.switchView('list'));
+        }
+
         // Prevent zoom on inputs (iOS)
         document.querySelectorAll('input, select, textarea').forEach(input => {
             input.addEventListener('focus', () => {
@@ -315,6 +328,27 @@ class MobileApp {
         this.loadTabData(tabName);
     }
 
+    switchView(viewName) {
+        // Update current view
+        this.currentView = viewName;
+        
+        // Update view buttons
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        if (viewName === 'formation') {
+            document.getElementById('formationViewBtn').classList.add('active');
+        } else {
+            document.getElementById('listViewBtn').classList.add('active');
+        }
+        
+        // Re-render team squad with new view
+        if (this.currentTab === 'team') {
+            this.loadTeamSquad();
+        }
+    }
+
     async loadTabData(tabName) {
         switch (tabName) {
             case 'team':
@@ -360,19 +394,125 @@ class MobileApp {
         };
 
         squad.players?.forEach(player => {
-            const position = player.position || player.element_type_name || 'Unknown';
-            if (positions[position]) {
-                positions[position].push(player);
+            // Map position numbers to names
+            let positionName;
+            if (player.position === 1 || player.position === 'GKP') positionName = 'GKP';
+            else if (player.position === 2 || player.position === 'DEF') positionName = 'DEF';
+            else if (player.position === 3 || player.position === 'MID') positionName = 'MID';
+            else if (player.position === 4 || player.position === 'FWD') positionName = 'FWD';
+            else positionName = player.element_type_name || 'Unknown';
+            
+            if (positions[positionName]) {
+                positions[positionName].push(player);
             }
         });
 
-        let squadHTML = '';
+        if (this.currentView === 'formation') {
+            container.innerHTML = this.renderFormationView(positions, squad.clubs);
+        } else {
+            container.innerHTML = this.renderListView(positions, squad.clubs);
+        }
+    }
+
+    renderFormationView(positions, clubs) {
+        const gkps = positions['GKP'] || [];
+        const defs = positions['DEF'] || [];
+        const mids = positions['MID'] || [];
+        const fwds = positions['FWD'] || [];
+
+        // Fill empty slots
+        const fillEmptySlots = (players, maxCount) => {
+            const filled = [...players];
+            while (filled.length < maxCount) {
+                filled.push(null);
+            }
+            return filled;
+        };
+
+        const renderPlayer = (player, isEmpty = false) => {
+            if (isEmpty || !player) {
+                return `
+                    <div class="formation-player empty">
+                        <div class="formation-player-name">Empty</div>
+                    </div>
+                `;
+            }
+            return `
+                <div class="formation-player">
+                    <div class="formation-player-name">${player.web_name || player.name || 'Unknown'}</div>
+                    <div class="formation-player-price">£${player.price_paid || 0}m</div>
+                </div>
+            `;
+        };
+
+        const renderClub = (club, isEmpty = false) => {
+            if (isEmpty || !club) {
+                return `
+                    <div class="formation-club empty">
+                        <div class="formation-club-name">Empty</div>
+                    </div>
+                `;
+            }
+            return `
+                <div class="formation-club">
+                    <div class="formation-club-name">${club.name || 'Unknown'}</div>
+                    <div class="formation-club-price">£${club.price_paid || 0}m</div>
+                </div>
+            `;
+        };
+
+        return `
+            <div class="formation-view">
+                <div class="formation-pitch">
+                    <!-- Forwards -->
+                    <div class="formation-line">
+                        ${fillEmptySlots(fwds, 3).map(player => renderPlayer(player)).join('')}
+                    </div>
+                    
+                    <!-- Midfielders -->
+                    <div class="formation-line">
+                        ${fillEmptySlots(mids, 5).map(player => renderPlayer(player)).join('')}
+                    </div>
+                    
+                    <!-- Defenders -->
+                    <div class="formation-line">
+                        ${fillEmptySlots(defs, 5).map(player => renderPlayer(player)).join('')}
+                    </div>
+                    
+                    <!-- Goalkeepers -->
+                    <div class="formation-line">
+                        ${fillEmptySlots(gkps, 2).map(player => renderPlayer(player)).join('')}
+                    </div>
+                </div>
+                
+                <!-- Clubs -->
+                <div class="formation-clubs">
+                    ${fillEmptySlots(clubs || [], 2).map(club => renderClub(club)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    renderListView(positions, clubs) {
+        let squadHTML = '<div class="list-view">';
+        
+        // Position requirements
+        const positionLimits = {
+            'GKP': 2,
+            'DEF': 5,
+            'MID': 5,
+            'FWD': 3
+        };
         
         // Render each position group
         Object.entries(positions).forEach(([position, players]) => {
+            const limit = positionLimits[position] || 0;
             squadHTML += `
                 <div class="position-group">
-                    <div class="position-header">${position} (${players.length})</div>
+                    <div class="position-header">
+                        ${position}
+                        <span class="position-counter">${players.length}/${limit}</span>
+                    </div>
                     ${players.map(player => `
                         <div class="squad-player">
                             <div class="squad-player-info">
@@ -388,11 +528,14 @@ class MobileApp {
         });
 
         // Add clubs section
-        if (squad.clubs && squad.clubs.length > 0) {
+        if (clubs && clubs.length > 0) {
             squadHTML += `
                 <div class="position-group">
-                    <div class="position-header">Clubs (${squad.clubs.length})</div>
-                    ${squad.clubs.map(club => `
+                    <div class="position-header">
+                        Clubs
+                        <span class="position-counter">${clubs.length}/2</span>
+                    </div>
+                    ${clubs.map(club => `
                         <div class="squad-player">
                             <div class="squad-player-info">
                                 <h5>${club.name || 'Unknown Club'}</h5>
@@ -403,9 +546,20 @@ class MobileApp {
                     `).join('')}
                 </div>
             `;
+        } else {
+            squadHTML += `
+                <div class="position-group">
+                    <div class="position-header">
+                        Clubs
+                        <span class="position-counter">0/2</span>
+                    </div>
+                    <div style="color: #9ca3af; font-style: italic; padding: 8px 0;">No clubs</div>
+                </div>
+            `;
         }
 
-        container.innerHTML = squadHTML || '<div style="text-align: center; color: #9ca3af; padding: 40px;">No players or clubs yet</div>';
+        squadHTML += '</div>';
+        return squadHTML || '<div style="text-align: center; color: #9ca3af; padding: 40px;">No players or clubs yet</div>';
     }
 
     async loadChatMessages() {
