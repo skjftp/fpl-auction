@@ -280,21 +280,32 @@ class MobileApp {
 
     async loadInitialData() {
         try {
-            // Load draft state and team squad first (critical data)
+            // Show loading state for chat immediately
+            this.showChatLoadingState();
+            
+            // Load all critical data including chat in parallel for instant loading
             await Promise.all([
                 this.loadDraftState(),
-                this.loadTeamSquad()
+                this.loadTeamSquad(),
+                this.loadChatMessages()  // Load chat synchronously with other data
             ]);
         } catch (error) {
             console.error('Error loading initial data:', error);
-        } finally {
-            // Always load chat messages regardless of other errors
-            this.loadChatMessagesAsync();
         }
     }
 
-    // Load chat messages asynchronously to prevent blocking app initialization
-    async loadChatMessagesAsync() {
+    // Show chat loading state immediately to prevent empty UI
+    showChatLoadingState() {
+        if (this.currentTab === 'auction') {
+            const container = document.getElementById('chatMessagesMini');
+            if (container) {
+                container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 12px; font-size: 12px;">Loading messages...</div>';
+            }
+        }
+    }
+
+    // Load chat messages
+    async loadChatMessages() {
         try {
             console.log('💬 Mobile App: Starting to load chat messages...');
             const messages = await window.mobileAPI.getChatMessages();
@@ -469,7 +480,7 @@ class MobileApp {
             case 'auction':
                 // Ensure chat messages are loaded if not already
                 if (this.chatMessages.length === 0) {
-                    await this.loadChatMessagesAsync();
+                    await this.loadChatMessages();
                 } else {
                     this.renderChatMessagesMini();
                 }
