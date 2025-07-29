@@ -432,52 +432,35 @@ body {
 .tab-content {
     flex: 1;
     overflow-y: auto;
-    padding-top: 200px; /* Space for fixed header - increased to prevent cutoff */
+    padding-top: 150px; /* Reduced padding - just enough for header */
     padding-bottom: 80px; /* Space for fixed tab nav */
     position: relative;
 }
 
-/* Auction tab specific - fixed layout, no scroll */
+/* Auction tab - keep auction card fixed */
 #auctionTab {
-    overflow: hidden !important;
-    height: 100%;
-    position: relative;
-    padding: 0;
+    padding-bottom: 200px; /* Space for fixed chat */
 }
 
-#auctionTab.active {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-/* Fixed auction content in auction tab */
-#auctionTab .auction-card,
-#auctionTab .no-auction {
-    margin: 12px;
-    flex-shrink: 0;
-}
-
-/* Fixed Bottom Chat - only for auction tab */
+/* Fixed Bottom Chat - inside auction tab */
 .fixed-bottom-chat {
-    position: absolute;
-    bottom: 0;
+    position: fixed;
+    bottom: 65px;
     left: 0;
     right: 0;
     background: white;
     border-top: 1px solid #e5e7eb;
     z-index: 100;
+    height: 180px;
     display: none;
-    height: 180px; /* Fixed height for chat */
 }
 
-#auctionTab.active ~ .fixed-bottom-chat,
-#mainApp.auction-active .fixed-bottom-chat {
+#auctionTab.active .fixed-bottom-chat {
     display: block;
 }
 
 .chat-messages-mini {
-    height: 100px; /* Space for 4-5 messages */
+    height: 120px;
     padding: 8px 12px;
     overflow-y: auto;
     background: #f8fafc;
@@ -491,15 +474,6 @@ body {
     align-items: center;
     background: white;
     border-top: 1px solid #e5e7eb;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-}
-
-/* Adjust auction tab padding for fixed chat */
-#mainApp.auction-active #auctionTab {
-    padding-bottom: 180px; /* Height of chat container */
 }
 
 .tab-pane {
@@ -515,10 +489,10 @@ body {
 /* Auction Tab */
 .auction-card {
     background: white;
+    margin: 12px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    flex-shrink: 0;
 }
 
 .auction-header {
@@ -703,6 +677,7 @@ body {
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin: 12px;
 }
 
 .no-auction-icon {
