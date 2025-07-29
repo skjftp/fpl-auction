@@ -1640,6 +1640,12 @@ body {
         background: white;
         border-top: 2px solid #e5e7eb;
     }
+    
+    /* Limit chat messages height on smaller screens */
+    .chat-messages-mini {
+        max-height: 120px; /* Reduced from 200px */
+        min-height: 60px; /* Reduced from 100px */
+    }
 }
 
 /* Extra small screens (iPhone SE) */
@@ -1650,6 +1656,20 @@ body {
     
     .fixed-bottom-chat {
         margin-bottom: 20px !important; /* Ensure space above tabs */
+    }
+    
+    /* Further limit chat messages on very small screens */
+    .chat-messages-mini {
+        max-height: 80px; /* Even smaller for iPhone SE */
+        min-height: 40px;
+    }
+}
+
+/* Landscape mode on small screens */
+@media (max-height: 480px) {
+    .chat-messages-mini {
+        max-height: 60px; /* Very limited height in landscape */
+        min-height: 30px;
     }
 }
 
