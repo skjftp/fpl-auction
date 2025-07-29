@@ -231,6 +231,28 @@ class MobileApp {
             listViewBtn.addEventListener('click', () => this.switchView('list'));
         }
 
+        // Auction chat toggle
+        const toggleAuctionChatBtn = document.getElementById('toggleAuctionChatBtn');
+        if (toggleAuctionChatBtn) {
+            toggleAuctionChatBtn.addEventListener('click', () => this.toggleAuctionChat());
+        }
+
+        // Auction chat input
+        const auctionChatInput = document.getElementById('auctionChatInput');
+        const sendAuctionChatBtn = document.getElementById('sendAuctionChatBtn');
+        
+        if (auctionChatInput) {
+            auctionChatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.sendAuctionChatMessage();
+                }
+            });
+        }
+        
+        if (sendAuctionChatBtn) {
+            sendAuctionChatBtn.addEventListener('click', () => this.sendAuctionChatMessage());
+        }
+
         // Prevent zoom on inputs (iOS)
         document.querySelectorAll('input, select, textarea').forEach(input => {
             input.addEventListener('focus', () => {
@@ -625,6 +647,12 @@ class MobileApp {
         if (!exists) {
             this.chatMessages.push(message);
             this.renderChatMessages();
+            
+            // Also update auction chat if it's visible
+            const auctionChatContainer = document.getElementById('auctionChatContainer');
+            if (auctionChatContainer && !auctionChatContainer.classList.contains('hidden')) {
+                this.renderAuctionChatMessages();
+            }
         }
     }
 
@@ -717,6 +745,84 @@ class MobileApp {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Auction chat methods
+    toggleAuctionChat() {
+        const container = document.getElementById('auctionChatContainer');
+        const toggleBtn = document.getElementById('toggleAuctionChatBtn');
+        
+        if (!container || !toggleBtn) return;
+
+        if (container.classList.contains('hidden')) {
+            container.classList.remove('hidden');
+            toggleBtn.textContent = 'Hide';
+            this.renderAuctionChatMessages();
+        } else {
+            container.classList.add('hidden');
+            toggleBtn.textContent = 'Show';
+        }
+    }
+
+    async sendAuctionChatMessage() {
+        const chatInput = document.getElementById('auctionChatInput');
+        if (!chatInput) return;
+
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        try {
+            await window.mobileAPI.sendChatMessage(message);
+            chatInput.value = '';
+        } catch (error) {
+            console.error('Error sending auction chat message:', error);
+            this.showToast('Failed to send message', 'error');
+        }
+    }
+
+    renderAuctionChatMessages() {
+        const container = document.getElementById('auctionChatMessages');
+        if (!container) return;
+
+        if (this.chatMessages.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 12px; font-size: 12px;">No messages yet...</div>';
+            return;
+        }
+
+        // Show last 5 messages for the auction chat
+        const recentMessages = this.chatMessages.slice(-5);
+        
+        container.innerHTML = recentMessages.map(msg => {
+            let timeString = 'Now';
+            try {
+                if (msg.created_at) {
+                    let date;
+                    if (typeof msg.created_at === 'object' && msg.created_at._seconds) {
+                        date = new Date(msg.created_at._seconds * 1000);
+                    } else {
+                        date = new Date(msg.created_at);
+                    }
+                    if (!isNaN(date.getTime())) {
+                        timeString = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    }
+                }
+            } catch (error) {
+                console.warn('Error formatting date:', error);
+            }
+
+            return `
+                <div style="padding: 4px 0; border-bottom: 1px solid #f3f4f6;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                        <span style="font-size: 11px; font-weight: 600; color: #4b5563;">${msg.team_name || 'Unknown'}</span>
+                        <span style="font-size: 10px; color: #9ca3af;">${timeString}</span>
+                    </div>
+                    <div style="font-size: 12px; color: #1f2937;">${this.escapeHtml(msg.message || '')}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Scroll to bottom
+        container.scrollTop = container.scrollHeight;
     }
 
     // Handle app lifecycle events
