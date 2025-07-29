@@ -614,10 +614,8 @@ class MobileApp {
             return;
         }
 
-        // Show only last 5 messages
-        const recentMessages = this.chatMessages.slice(-5);
-        
-        container.innerHTML = recentMessages.map(msg => {
+        // Show ALL messages, not just last 5
+        container.innerHTML = this.chatMessages.map(msg => {
             let timeString = 'Now';
             try {
                 if (msg.created_at) {
