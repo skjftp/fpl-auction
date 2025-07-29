@@ -7,7 +7,7 @@ class SocketManager {
 
     connect() {
         // Use environment-specific socket URL
-        const PRODUCTION_SOCKET_URL = 'https://fpl-auction-backend-150582227311.us-central1.run.app';
+        const PRODUCTION_SOCKET_URL = 'https://fpl-auction-backend-ofkn6rpg3a-uc.a.run.app';
         
         const socketURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001'

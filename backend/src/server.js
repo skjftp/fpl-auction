@@ -24,13 +24,19 @@ const allowedOrigins = [
   'http://127.0.0.1:8080',
   'http://[::]:3000',
   'https://fpl-auction.netlify.app',
-  'https://fpl-auction-2025.netlify.app'
+  'https://fpl-auction-2025.netlify.app',
+  // Add variations of Netlify domains
+  'https://main--fpl-auction.netlify.app',
+  'https://deploy-preview--fpl-auction.netlify.app'
 ];
 
 // Add production frontend URL if available
 if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
 }
+
+// Log allowed origins for debugging
+console.log('Allowed CORS origins:', allowedOrigins);
 
 const app = express();
 const server = createServer(app);
@@ -50,14 +56,24 @@ const PORT = process.env.PORT || 8080;
 // Enable CORS with specific configuration
 app.use(cors({
   origin: function (origin, callback) {
+    // Log the origin for debugging
+    console.log('Request origin:', origin);
+    
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
+    // Check if origin is in allowed list
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      // Allow any origin in production for now
-      callback(null, true);
+      // For production, allow any HTTPS origin temporarily for debugging
+      if (process.env.NODE_ENV === 'production' && origin.startsWith('https://')) {
+        console.log('Allowing HTTPS origin in production:', origin);
+        callback(null, true);
+      } else {
+        console.log('Blocking origin:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,
@@ -68,21 +84,6 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 app.use(express.json());
-
-// Add CORS headers to all responses
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', '86400');
-  next();
-});
 
 // Make io available to routes
 app.use((req, res, next) => {
@@ -99,14 +100,7 @@ app.use('/api/scoring', authenticateToken, scoringRoutes);
 app.use('/api/draft', authenticateToken, draftRoutes);
 app.use('/api/autobid', authenticateToken, autobidRoutes);
 
-// Handle preflight requests explicitly
-app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.sendStatus(204);
-});
+// Preflight requests are handled by cors() middleware above
 
 // Health check
 app.get('/api/health', async (req, res) => {

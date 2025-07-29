@@ -2,12 +2,15 @@
 class API {
     constructor() {
         // Use environment-specific API URL
-        const PRODUCTION_API_URL = 'https://fpl-auction-backend-150582227311.us-central1.run.app/api';
+        // Update this URL after deployment if it changes
+        const PRODUCTION_API_URL = 'https://fpl-auction-backend-ofkn6rpg3a-uc.a.run.app/api';
         
         this.baseURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api'
             : PRODUCTION_API_URL;
         this.token = localStorage.getItem('fpl_token');
+        
+        console.log('API Base URL:', this.baseURL);
     }
 
     setToken(token) {
@@ -35,7 +38,8 @@ class API {
         try {
             const response = await fetch(url, {
                 ...options,
-                headers
+                headers,
+                credentials: 'include' // Include cookies for CORS requests
             });
 
             if (!response.ok) {
