@@ -475,19 +475,33 @@ body {
 .chat-messages-mini {
     flex: 1;
     padding: 8px 12px;
-    overflow-y: auto;
+    overflow-y: scroll; /* Force scroll to always be available */
     overflow-x: hidden;
     background: #f8fafc;
     font-size: 12px;
     scroll-behavior: smooth;
     min-height: 100px;
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    position: relative;
 }
 
-/* Hide scrollbar on mobile but keep functionality */
+/* Style scrollbar for better visibility */
 .chat-messages-mini::-webkit-scrollbar {
-    width: 0px;
-    background: transparent;
+    width: 4px;
+}
+
+.chat-messages-mini::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.chat-messages-mini::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.chat-messages-mini::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .chat-input-bar {
@@ -1159,6 +1173,13 @@ body {
     border-radius: 6px;
     border: 1px solid #e5e7eb;
     font-size: 12px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Ensure messages don't overflow */
+.chat-messages-mini .chat-message:last-child {
+    margin-bottom: 0;
 }
 
 .message-header {
