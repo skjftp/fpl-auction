@@ -452,7 +452,7 @@ body {
 .tab-content {
     flex: 1;
     overflow-y: auto;
-    padding-top: 150px; /* Reduced padding - just enough for header */
+    padding-top: 170px; /* Increased from 150px to account for Next Turn line */
     padding-bottom: 80px; /* Space for fixed tab nav */
     position: relative;
 }
@@ -463,9 +463,9 @@ body {
     padding: 0;
     display: none; /* Hidden by default */
     flex-direction: column;
-    height: calc(100vh - 150px - 65px); /* Full height minus header and tab nav */
+    height: calc(100vh - 170px - 65px); /* Full height minus header and tab nav */
     position: fixed;
-    top: 150px; /* After fixed header */
+    top: 170px; /* After fixed header */
     left: 0;
     right: 0;
     bottom: 65px; /* Above tab nav */
@@ -912,7 +912,7 @@ body {
 
 .players-header {
     position: fixed;
-    top: 150px; /* Below the main header */
+    top: 170px; /* Below the main header */
     left: 0;
     right: 0;
     z-index: 20;
@@ -1052,7 +1052,7 @@ body {
 
 .team-header {
     position: fixed;
-    top: 150px; /* Below the main header */
+    top: 170px; /* Below the main header */
     left: 0;
     right: 0;
     z-index: 20;
@@ -1129,7 +1129,7 @@ body {
 }
 
 .team-squad {
-    padding: 160px 16px 80px; /* Top padding for header, bottom for nav */
+    padding: 180px 16px 80px; /* Top padding for header, bottom for nav */
     height: 100%;
     overflow: hidden; /* No scrolling - static layout */
 }
