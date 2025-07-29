@@ -291,10 +291,15 @@ let autoBidInterval = null;
 function startAutoBidding() {
     if (autoBidInterval) return;
     
+    console.log('Starting auto-bid interval');
+    
     // Check for bidding opportunities every 2 seconds
     autoBidInterval = setInterval(() => {
         checkAndPlaceAutoBids();
     }, 2000);
+    
+    // Also check immediately
+    checkAndPlaceAutoBids();
 }
 
 // Stop auto-bidding
@@ -307,16 +312,38 @@ function stopAutoBidding() {
 
 // Check and place auto-bids
 async function checkAndPlaceAutoBids() {
+    console.log('Checking auto-bid:', {
+        enabled: autoBidEnabled,
+        hasAuctionManager: !!window.auctionManager,
+        hasCurrentAuction: !!(window.auctionManager && window.auctionManager.currentAuction)
+    });
+    
     if (!autoBidEnabled || !window.auctionManager || !window.auctionManager.currentAuction) return;
 
     const auction = window.auctionManager.currentAuction;
-    const playerId = auction.player ? auction.player.id : null;
     
-    if (!playerId) return;
+    // Only auto-bid on player auctions, not clubs
+    if (auction.type !== 'player' || !auction.player) return;
+    
+    // Try to get player ID from different possible locations
+    const playerId = auction.player.id || auction.playerId || auction.player_id;
+    
+    console.log('Current auction:', auction);
+    console.log('Player ID:', playerId);
+    console.log('Auto-bid config:', autoBidConfig);
+    
+    if (!playerId) {
+        console.log('No player ID found in auction data');
+        return;
+    }
     
     const playerConfig = autoBidConfig.players[playerId];
+    console.log('Player config for ID', playerId, ':', playerConfig);
     
-    if (!playerConfig || !playerConfig.maxBid) return;
+    if (!playerConfig || !playerConfig.maxBid) {
+        console.log('No config or max bid for this player');
+        return;
+    }
 
     // Apply global and player-specific rules
     const config = {
@@ -325,20 +352,31 @@ async function checkAndPlaceAutoBids() {
     };
 
     // Check if we should bid
-    if (!shouldAutoBid(auction, config)) return;
+    if (!shouldAutoBid(auction, config)) {
+        console.log('Should not auto-bid based on rules');
+        return;
+    }
 
     // Calculate next bid amount
     const currentBid = auction.currentBid || 0;
     const nextBid = currentBid + 5;
 
+    console.log('Current bid:', currentBid, 'Next bid would be:', nextBid, 'Max bid:', playerConfig.maxBid);
+
     // Check if within max bid limit
-    if (nextBid > playerConfig.maxBid) return;
+    if (nextBid > playerConfig.maxBid) {
+        console.log('Next bid exceeds max bid limit');
+        return;
+    }
 
     // Get current team info
     const currentTeam = JSON.parse(localStorage.getItem('fpl_team') || '{}');
     
     // Check if we're already the highest bidder
-    if (auction.currentBidderId === currentTeam.id) return;
+    if (auction.currentBidder === currentTeam.name) {
+        console.log('Already the highest bidder');
+        return;
+    }
 
     // Place bid
     try {
