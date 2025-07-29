@@ -199,10 +199,14 @@ class App {
     }
 
     async loadMyTeam(teamId = null) {
-        if (!this.currentUser) return;
+        if (!this.currentUser) {
+            console.error('No current user found');
+            return;
+        }
         
         // Use provided teamId or default to current user's team
         const selectedTeamId = teamId || this.currentUser.id;
+        console.log('Loading team with ID:', selectedTeamId);
         
         try {
             // Load team selector options first time
@@ -211,6 +215,16 @@ class App {
             }
             
             const squad = await api.getTeamSquad(selectedTeamId);
+            console.log('Squad loaded:', squad);
+            
+            if (!squad) {
+                console.error('No squad data returned');
+                const container = document.getElementById('mySquad');
+                if (container) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-500">No squad data available</div>';
+                }
+                return;
+            }
             
             // Get team name if viewing another team
             let teamName = null;
@@ -223,6 +237,12 @@ class App {
         } catch (error) {
             console.error('Error loading team:', error);
             showNotification('Failed to load team data', 'error');
+            
+            // Show error in UI
+            const container = document.getElementById('mySquad');
+            if (container) {
+                container.innerHTML = '<div class="text-center py-8 text-red-500">Failed to load team data</div>';
+            }
         }
     }
 
@@ -278,7 +298,12 @@ class App {
     displayMyTeam(squadData, selectedTeamId = null, teamName = null) {
         const container = document.getElementById('mySquad');
         
-        if (!container) return;
+        if (!container) {
+            console.error('My squad container not found');
+            return;
+        }
+        
+        console.log('DisplayMyTeam called with:', squadData);
         
         // Parse the squad data - it comes as arrays of players and clubs
         const players = squadData.players || [];
@@ -324,18 +349,15 @@ class App {
         
         // Update header to show which team is being viewed
         const isMyTeam = !selectedTeamId || selectedTeamId === this.currentUser.id;
-        const headerText = isMyTeam ? 'Team Squad' : `${teamName || 'Team'} Squad`;
         
-        // Update the header in the HTML structure
-        const headerElement = document.querySelector('#myTeamTab .flex.justify-between.items-center h3');
-        if (headerElement) {
-            headerElement.textContent = headerText;
-        }
-
-        // Update the dropdown selection
+        // Update the dropdown selection if viewing another team
         const selector = document.getElementById('teamSelector');
-        if (selector && selectedTeamId) {
-            selector.value = selectedTeamId;
+        if (selector) {
+            if (selectedTeamId && selectedTeamId !== this.currentUser.id) {
+                selector.value = selectedTeamId;
+            } else {
+                selector.value = ''; // My Squad
+            }
         }
         
         // Update squad counts
@@ -363,8 +385,9 @@ class App {
         });
         
         allPlayers.forEach(player => {
-            if (player && player.club_name && !clubColorMap.has(player.club_name)) {
-                clubColorMap.set(player.club_name, clubColors[colorIndex % clubColors.length]);
+            const clubName = player?.team_name || player?.club_name;
+            if (player && clubName && !clubColorMap.has(clubName)) {
+                clubColorMap.set(clubName, clubColors[colorIndex % clubColors.length]);
                 colorIndex++;
             }
         });
@@ -437,12 +460,13 @@ class App {
             if (!player) {
                 return `<div class="player-card empty"><div class="player-name">Empty</div></div>`;
             }
-            const clubColor = clubColorMap.get(player.club_name) || '#6b7280';
+            const clubName = player.team_name || player.club_name || '';
+            const clubColor = clubColorMap.get(clubName) || '#6b7280';
             return `
                 <div class="player-card" style="border-color: ${clubColor};">
-                    <div class="player-name">${player.web_name || player.name || 'Unknown'}</div>
+                    <div class="player-name">${player.web_name || player.player_name || player.name || 'Unknown'}</div>
                     <div class="player-price">£${player.price_paid || 0}m</div>
-                    <div class="player-club" style="color: ${clubColor};">${player.club_name || ''}</div>
+                    <div class="player-club" style="color: ${clubColor};">${clubName}</div>
                 </div>
             `;
         };
@@ -453,51 +477,56 @@ class App {
             return filled;
         };
 
-        container.innerHTML = formationStyles + `
-            <div class="formation-container">
-                <!-- Goalkeepers -->
-                <div class="formation-row">
-                    ${fillSlots(squad.positions[1] || [], 2).map(p => renderPlayer(p)).join('')}
-                </div>
-                <!-- Defenders -->
-                <div class="formation-row">
-                    ${fillSlots(squad.positions[2] || [], 5).map(p => renderPlayer(p)).join('')}
-                </div>
-                <!-- Midfielders -->
-                <div class="formation-row">
-                    ${fillSlots(squad.positions[3] || [], 5).map(p => renderPlayer(p)).join('')}
-                </div>
-                <!-- Forwards -->
-                <div class="formation-row">
-                    ${fillSlots(squad.positions[4] || [], 3).map(p => renderPlayer(p)).join('')}
+        try {
+            container.innerHTML = formationStyles + `
+                <div class="formation-container">
+                    <!-- Goalkeepers -->
+                    <div class="formation-row">
+                        ${fillSlots(squad.positions[1] || [], 2).map(p => renderPlayer(p)).join('')}
+                    </div>
+                    <!-- Defenders -->
+                    <div class="formation-row">
+                        ${fillSlots(squad.positions[2] || [], 5).map(p => renderPlayer(p)).join('')}
+                    </div>
+                    <!-- Midfielders -->
+                    <div class="formation-row">
+                        ${fillSlots(squad.positions[3] || [], 5).map(p => renderPlayer(p)).join('')}
+                    </div>
+                    <!-- Forwards -->
+                    <div class="formation-row">
+                        ${fillSlots(squad.positions[4] || [], 3).map(p => renderPlayer(p)).join('')}
+                    </div>
+                    
+                    <!-- Clubs Section -->
+                    ${squad.clubs.length > 0 ? `
+                        <div class="clubs-section">
+                            ${squad.clubs.map(club => `
+                                <div class="club-card">
+                                    <div class="font-semibold">${club.club_name || club.name || 'Unknown Club'}</div>
+                                    <div class="text-xs text-gray-600">${club.club_short_name || club.short_name || ''}</div>
+                                    <div class="text-sm text-emerald-600">£${club.price_paid || 0}m</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
                 </div>
                 
-                <!-- Clubs Section -->
-                ${squad.clubs.length > 0 ? `
-                    <div class="clubs-section">
-                        ${squad.clubs.map(club => `
-                            <div class="club-card">
-                                <div class="font-semibold">${club.club_name}</div>
-                                <div class="text-xs text-gray-600">${club.club_short_name}</div>
-                                <div class="text-sm text-emerald-600">£${club.price_paid}m</div>
-                            </div>
-                        `).join('')}
+                <!-- Budget Summary -->
+                <div class="mt-4 bg-gray-100 rounded-lg p-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium">Total Spent:</span>
+                        <span class="text-sm font-bold">£${totalSpent}m</span>
                     </div>
-                ` : ''}
-            </div>
-            
-            <!-- Budget Summary -->
-            <div class="mt-4 bg-gray-100 rounded-lg p-3">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-medium">Total Spent:</span>
-                    <span class="text-sm font-bold">£${totalSpent}m</span>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-sm font-medium">Remaining Budget:</span>
+                        <span class="text-sm font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}">£${remainingBudget}m</span>
+                    </div>
                 </div>
-                <div class="flex justify-between items-center mt-1">
-                    <span class="text-sm font-medium">Remaining Budget:</span>
-                    <span class="text-sm font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}">£${remainingBudget}m</span>
-                </div>
-            </div>
-        `;
+            `;
+        } catch (renderError) {
+            console.error('Error rendering team display:', renderError);
+            container.innerHTML = '<div class="text-center py-8 text-red-500">Error displaying team data</div>';
+        }
     }
 
     renderPositionSlots(players, maxSlots, positionName) {
