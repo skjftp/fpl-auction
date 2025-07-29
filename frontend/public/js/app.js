@@ -181,7 +181,7 @@ class App {
                 break;
                 
             case 'myTeam':
-                await this.loadMyTeam();
+                // Team content is now handled by TeamManager
                 break;
                 
             case 'scoring':
@@ -276,14 +276,14 @@ class App {
                 });
             }
             
-            // Add event listener for team selection changes (prevent duplicate listeners)
-            if (!selector.hasAttribute('data-listener-added')) {
-                selector.addEventListener('change', (e) => {
-                    const selectedTeamId = e.target.value || this.currentUser.id;
-                    this.loadMyTeam(selectedTeamId);
-                });
-                selector.setAttribute('data-listener-added', 'true');
-            }
+            // Team selector event listener is now handled by TeamManager
+            // if (!selector.hasAttribute('data-listener-added')) {
+            //     selector.addEventListener('change', (e) => {
+            //         const selectedTeamId = e.target.value || this.currentUser.id;
+            //         this.loadMyTeam(selectedTeamId);
+            //     });
+            //     selector.setAttribute('data-listener-added', 'true');
+            // }
             
         } catch (error) {
             console.error('Error loading teams for selector:', error);

@@ -8,7 +8,7 @@ class TeamManager {
     init() {
         document.addEventListener('DOMContentLoaded', () => {
             // Tab click listener
-            const myTeamTab = document.querySelector('[data-tab="team"]');
+            const myTeamTab = document.querySelector('[data-tab="myTeam"]');
             if (myTeamTab) {
                 myTeamTab.addEventListener('click', () => {
                     setTimeout(() => {
@@ -39,8 +39,10 @@ class TeamManager {
             try {
                 const teamData = await window.api.getTeamInfo(team.id);
                 this.currentUser = teamData;
-                window.app.currentUser = teamData;
-                window.app.updateNavbar();
+                if (window.app) {
+                    window.app.currentUser = teamData;
+                    window.app.updateNavbar();
+                }
                 
                 // Update localStorage
                 localStorage.setItem('fpl_team', JSON.stringify(teamData));
