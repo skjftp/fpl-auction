@@ -422,21 +422,21 @@
                         </div>
                         
                         <!-- Right: Team Chat -->
-                        <div class="lg:col-span-1">
-                            <div class="card overflow-hidden flex flex-col" style="height: calc(100vh - 280px);">
+                        <div class="lg:col-span-1" style="height: calc(100vh - 280px);">
+                            <div class="card h-full overflow-hidden flex flex-col">
                                 <!-- Chat Header -->
-                                <div class="p-3 border-b border-gray-200 flex-shrink-0">
+                                <div class="p-3 border-b border-gray-200" style="height: 50px; flex-shrink: 0;">
                                     <h3 class="text-sm font-semibold text-gray-900">💬 Chat</h3>
                                 </div>
                                 
                                 <!-- Chat Messages (Scrollable Area) -->
-                                <div id="chatMessages" class="flex-1 p-3 bg-gray-50 text-sm overflow-y-auto min-h-0">
+                                <div id="chatMessages" class="p-3 bg-gray-50 text-sm overflow-y-auto" style="height: calc(100% - 110px);">
                                     <div class="text-gray-500 text-center">No messages yet...</div>
                                 </div>
                                 
                                 <!-- Chat Input (Fixed at Bottom) -->
-                                <div class="p-3 border-t border-gray-200 bg-white flex-shrink-0">
-                                    <form id="chatForm" class="flex gap-2">
+                                <div class="p-3 border-t border-gray-200 bg-white" style="height: 60px; flex-shrink: 0;">
+                                    <form id="chatForm" class="flex gap-2 h-full items-center">
                                         <input type="text" id="chatInput" 
                                                placeholder="Type a message..." 
                                                class="flex-1 px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
