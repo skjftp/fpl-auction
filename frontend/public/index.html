@@ -340,105 +340,107 @@
 
             <!-- Auction Tab -->
             <div id="auctionTab" class="tab-content fade-in">
-                <!-- Auto-Bidding Controls -->
-                <div class="card p-2 mb-2">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <label class="flex items-center cursor-pointer">
-                                <input type="checkbox" id="autoBidToggle" class="mr-2 h-4 w-4 text-emerald-600 rounded focus:ring-emerald-500">
-                                <span class="text-sm font-medium text-gray-700">Auto-Bid</span>
-                            </label>
-                            <button id="autoBidConfigBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition-colors">
-                                Config
-                            </button>
-                        </div>
-                        <div id="autoBidStatus" class="hidden">
-                            <span class="animate-pulse bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-medium">
-                                🤖 Active
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Turn Indicator at the top -->
-                <div id="auctionTurnIndicator" class="card p-2 mb-2">
-                    <div class="text-center text-sm">
-                        <span class="text-gray-500">Loading turn info...</span>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                    <!-- Left: Players List -->
-                    <div class="lg:col-span-1">
-                        <div class="card p-3">
-                            <div class="flex justify-between items-center mb-2">
-                                <h3 class="text-sm font-semibold text-gray-900">Players</h3>
-                                <button id="syncDataBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
-                                    Sync
+                <div class="max-h-[calc(100vh-120px)] overflow-hidden">
+                    <!-- Auto-Bidding Controls -->
+                    <div class="card p-2 mb-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" id="autoBidToggle" class="mr-2 h-4 w-4 text-emerald-600 rounded focus:ring-emerald-500">
+                                    <span class="text-sm font-medium text-gray-700">Auto-Bid</span>
+                                </label>
+                                <button id="autoBidConfigBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition-colors">
+                                    Config
                                 </button>
                             </div>
-                            
-                            <!-- Compact Filters -->
-                            <div class="space-y-2 mb-2">
-                                <select id="positionFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                    <option value="">All Positions</option>
-                                    <option value="1">GKP</option>
-                                    <option value="2">DEF</option>
-                                    <option value="3">MID</option>
-                                    <option value="4">FWD</option>
-                                </select>
-                                <select id="teamFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                    <option value="">All Teams</option>
-                                </select>
-                                <input type="text" id="searchPlayers" placeholder="Search..." 
-                                       class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                            </div>
-                            
-                            <!-- Players List -->
-                            <div id="playersList" class="space-y-1 overflow-y-auto pr-1" style="max-height: calc(100vh - 280px);">
-                                <!-- Players will be loaded here -->
+                            <div id="autoBidStatus" class="hidden">
+                                <span class="animate-pulse bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                                    🤖 Active
+                                </span>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Middle: Current Auction and Clubs -->
-                    <div class="lg:col-span-1 space-y-3">
-                        <div class="card p-3">
-                            <h3 class="text-sm font-semibold mb-2 text-gray-900">Current Auction</h3>
-                            <div id="currentAuction">
-                                <p class="text-gray-500 text-center py-4 text-sm">No active auction</p>
+                    <!-- Turn Indicator at the top -->
+                    <div id="auctionTurnIndicator" class="card p-2 mb-2">
+                        <div class="text-center text-sm">
+                            <span class="text-gray-500">Loading turn info...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 max-h-[calc(100vh-240px)]">
+                        <!-- Left: Players List -->
+                        <div class="lg:col-span-1 h-full">
+                            <div class="card p-3 h-full flex flex-col">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h3 class="text-sm font-semibold text-gray-900">Players</h3>
+                                    <button id="syncDataBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
+                                        Sync
+                                    </button>
+                                </div>
+                                
+                                <!-- Compact Filters -->
+                                <div class="space-y-2 mb-2">
+                                    <select id="positionFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                        <option value="">All Positions</option>
+                                        <option value="1">GKP</option>
+                                        <option value="2">DEF</option>
+                                        <option value="3">MID</option>
+                                        <option value="4">FWD</option>
+                                    </select>
+                                    <select id="teamFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                        <option value="">All Teams</option>
+                                    </select>
+                                    <input type="text" id="searchPlayers" placeholder="Search..." 
+                                           class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                </div>
+                                
+                                <!-- Players List -->
+                                <div id="playersList" class="space-y-1 overflow-y-auto pr-1 flex-1">
+                                    <!-- Players will be loaded here -->
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Available Clubs -->
-                        <div class="card p-3">
-                            <h3 class="text-sm font-semibold mb-2 text-gray-900">Clubs</h3>
-                            <div id="clubsList" class="grid grid-cols-2 gap-2 overflow-y-auto pr-1" style="max-height: 120px;">
-                                <!-- Clubs will be loaded here -->
+                        <!-- Middle: Current Auction and Clubs -->
+                        <div class="lg:col-span-1 h-full flex flex-col space-y-3">
+                            <div class="card p-3 flex-1">
+                                <h3 class="text-sm font-semibold mb-2 text-gray-900">Current Auction</h3>
+                                <div id="currentAuction">
+                                    <p class="text-gray-500 text-center py-4 text-sm">No active auction</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Available Clubs -->
+                            <div class="card p-3 flex-1">
+                                <h3 class="text-sm font-semibold mb-2 text-gray-900">Clubs</h3>
+                                <div id="clubsList" class="grid grid-cols-2 gap-2 overflow-y-auto pr-1 h-full">
+                                    <!-- Clubs will be loaded here -->
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Right: Team Chat -->
-                    <div class="lg:col-span-1">
-                        <div class="card p-3 flex flex-col" style="height: calc(100vh - 240px);">
-                            <h3 class="text-sm font-semibold mb-2 text-gray-900">💬 Chat</h3>
-                            
-                            <!-- Chat Messages -->
-                            <div id="chatMessages" class="flex-1 overflow-y-auto border border-gray-200 rounded p-2 mb-2 bg-gray-50 text-sm">
-                                <div class="text-gray-500 text-center">No messages yet...</div>
+                        
+                        <!-- Right: Team Chat -->
+                        <div class="lg:col-span-1 h-full">
+                            <div class="card p-3 h-full flex flex-col">
+                                <h3 class="text-sm font-semibold mb-2 text-gray-900">💬 Chat</h3>
+                                
+                                <!-- Chat Messages -->
+                                <div id="chatMessages" class="flex-1 overflow-y-auto border border-gray-200 rounded p-2 mb-2 bg-gray-50 text-sm">
+                                    <div class="text-gray-500 text-center">No messages yet...</div>
+                                </div>
+                                
+                                <!-- Chat Input -->
+                                <form id="chatForm" class="flex gap-1">
+                                    <input type="text" id="chatInput" 
+                                           placeholder="Type a message..." 
+                                           class="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                           maxlength="500">
+                                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 text-sm rounded transition-colors">
+                                        Send
+                                    </button>
+                                </form>
                             </div>
-                            
-                            <!-- Chat Input -->
-                            <form id="chatForm" class="flex gap-1">
-                                <input type="text" id="chatInput" 
-                                       placeholder="Type a message..." 
-                                       class="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                       maxlength="500">
-                                <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 text-sm rounded transition-colors">
-                                    Send
-                                </button>
-                            </form>
                         </div>
                     </div>
                 </div>
