@@ -443,10 +443,12 @@ router.post('/handle-wait/:auctionId', requireAdmin, async (req, res) => {
         updated_at: admin.firestore.FieldValue.serverTimestamp()
       });
       
-      // Broadcast wait accepted
+      // Broadcast wait accepted with updated auction state
       req.io.to('auction-room').emit('wait-accepted', {
         auctionId,
-        message: 'Wait accepted - auction continues'
+        message: 'Wait accepted - auction continues',
+        sellingStage: null,
+        waitRequestedBy: null
       });
       
       res.json({ success: true, action: 'accepted' });

@@ -193,9 +193,12 @@ class MobileSocketManager {
     }
 
     handleWaitAccepted(data) {
-        if (window.mobileAuction) {
-            window.mobileAuction.clearWaitRequest();
-            window.mobileAuction.clearSellingStage();
+        if (window.mobileAuction && window.mobileAuction.currentAuction) {
+            // Update auction state with data from server
+            window.mobileAuction.currentAuction.selling_stage = data.sellingStage;
+            window.mobileAuction.currentAuction.wait_requested_by = data.waitRequestedBy;
+            // Update UI to reflect the new state
+            window.mobileAuction.updateControls(window.mobileAuction.currentAuction);
         }
         window.mobileApp.showToast(data.message, 'success');
     }
