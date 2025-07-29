@@ -149,10 +149,10 @@ class MobileAuctionManager {
         auctionCard.classList.remove('hidden');
         noAuction.classList.add('hidden');
 
-        // Update player/club info
-        if (auctionData.player) {
+        // Update player/club info - backend returns player_id or club_id, not nested objects
+        if (auctionData.player_id || auctionData.player_name) {
             this.displayPlayerAuction(auctionData);
-        } else if (auctionData.club) {
+        } else if (auctionData.club_id || auctionData.club_name) {
             this.displayClubAuction(auctionData);
         }
 
@@ -164,15 +164,20 @@ class MobileAuctionManager {
     }
 
     displayPlayerAuction(auctionData) {
-        const player = auctionData.player;
-        console.log('Displaying player auction:', player);
+        console.log('Displaying player auction:', auctionData);
+        
+        // The backend returns player data at the top level, not nested under 'player'
+        const playerName = auctionData.player_name || (auctionData.player && auctionData.player.web_name) || 'Unknown Player';
+        const playerPhoto = auctionData.photo || (auctionData.player && auctionData.player.photo);
+        const teamName = auctionData.team_name || (auctionData.player && auctionData.player.team_name) || '';
+        const position = auctionData.position || (auctionData.player && auctionData.player.position);
         
         // Player photo
         const photoEl = document.getElementById('playerPhoto');
         if (photoEl) {
-            if (player.photo) {
-                const photoUrl = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo.replace('.jpg', '')}.png`;
-                photoEl.innerHTML = `<img src="${photoUrl}" alt="${player.web_name || 'Player'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.parentNode.innerHTML='👤'">`;
+            if (playerPhoto) {
+                const photoUrl = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${playerPhoto.replace('.jpg', '')}.png`;
+                photoEl.innerHTML = `<img src="${photoUrl}" alt="${playerName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.parentNode.innerHTML='👤'">`;
             } else {
                 photoEl.innerHTML = '👤';
             }
@@ -181,21 +186,24 @@ class MobileAuctionManager {
         // Player name
         const nameEl = document.getElementById('playerName');
         if (nameEl) {
-            nameEl.textContent = player.web_name || player.name || 'Unknown Player';
+            nameEl.textContent = playerName;
         }
 
         // Player team and position
         const teamPosEl = document.getElementById('playerTeamPos');
         if (teamPosEl) {
-            const position = this.getPositionName(player.position, player);
-            const team = player.team_name || '';
-            const price = player.now_cost ? `£${player.now_cost}m` : '';
-            teamPosEl.textContent = `${position} - ${team} ${price}`.trim();
+            const positionName = this.getPositionName(position);
+            const priceText = auctionData.now_cost ? `£${auctionData.now_cost}m` : '';
+            teamPosEl.textContent = `${positionName} - ${teamName} ${priceText}`.trim();
         }
     }
 
     displayClubAuction(auctionData) {
-        const club = auctionData.club;
+        console.log('Displaying club auction:', auctionData);
+        
+        // The backend returns club data at the top level, not nested under 'club'
+        const clubName = auctionData.club_name || (auctionData.club && auctionData.club.name) || 'Unknown Club';
+        const clubShortName = auctionData.club_short_name || (auctionData.club && auctionData.club.short_name) || '';
         
         // Club logo/icon
         const photoEl = document.getElementById('playerPhoto');
@@ -206,13 +214,13 @@ class MobileAuctionManager {
         // Club name
         const nameEl = document.getElementById('playerName');
         if (nameEl) {
-            nameEl.textContent = club.name || 'Unknown Club';
+            nameEl.textContent = clubName;
         }
 
         // Club details
         const teamPosEl = document.getElementById('playerTeamPos');
         if (teamPosEl) {
-            teamPosEl.textContent = `Club - ${club.short_name || ''}`;
+            teamPosEl.textContent = `Club - ${clubShortName}`;
         }
     }
 
@@ -221,18 +229,20 @@ class MobileAuctionManager {
         const bidderEl = document.getElementById('currentBidder');
         const bidInput = document.getElementById('bidAmount');
 
+        // Backend uses current_bid and current_bidder_name
+        const currentBid = auctionData.current_bid || 0;
+        const bidderName = auctionData.current_bidder_name || '-';
+
         if (bidAmountEl) {
-            bidAmountEl.textContent = `£${auctionData.currentBid || auctionData.current_bid || 0}`;
+            bidAmountEl.textContent = `£${currentBid}`;
         }
 
         if (bidderEl) {
-            const bidderName = auctionData.currentBidder || auctionData.current_bidder_name || '-';
-            const isAutoBid = auctionData.isAutoBid;
+            const isAutoBid = auctionData.is_auto_bid || auctionData.isAutoBid;
             bidderEl.textContent = isAutoBid ? `🤖 ${bidderName}` : bidderName;
         }
 
         if (bidInput) {
-            const currentBid = auctionData.currentBid || auctionData.current_bid || 0;
             const nextBid = currentBid + 5;
             bidInput.value = nextBid;
             bidInput.min = nextBid;

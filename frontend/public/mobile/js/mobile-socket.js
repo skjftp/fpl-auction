@@ -9,7 +9,7 @@ class MobileSocketManager {
 
     connect() {
         // Production Socket URL
-        const PRODUCTION_SOCKET_URL = 'https://fpl-auction-backend-mrlyxa4xiq-uc.a.run.app';
+        const PRODUCTION_SOCKET_URL = 'https://fpl-auction-backend-945963649649.us-central1.run.app';
         
         const socketURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001'
@@ -138,8 +138,10 @@ class MobileSocketManager {
         if (window.mobileAuction) {
             window.mobileAuction.displayCurrentAuction(data);
         }
+        // Backend sends player_name and club_name at top level, not nested
+        const itemName = data.player_name || data.club_name || 'Unknown Item';
         window.mobileApp.showToast(
-            `New auction: ${data.player?.web_name || data.club?.name}`,
+            `New auction: ${itemName}`,
             'info'
         );
     }
