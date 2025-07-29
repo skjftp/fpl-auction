@@ -64,6 +64,9 @@ class MobileApp {
     showMainApp() {
         this.hideAllScreens();
         document.getElementById('mainApp').classList.remove('hidden');
+        
+        // Show chat loading state immediately for better UX
+        this.showChatLoadingState();
     }
 
     hideAllScreens() {
@@ -281,17 +284,30 @@ class MobileApp {
 
     async loadInitialData() {
         try {
-            // Load draft state and team squad first (critical data)
-            await this.loadDraftState();
-            await this.loadTeamSquad();
+            // Show chat loading state immediately
+            this.showChatLoadingState();
             
-            // Load teams data for draft display
-            await this.setupTeamSelector();
+            // Load critical data in parallel for better performance
+            const [draftState, teamSquad, teams] = await Promise.all([
+                this.loadDraftState(),
+                this.loadTeamSquad(), 
+                this.setupTeamSelector()
+            ]);
             
-            // Load chat messages asynchronously (non-blocking)
+            // Load chat messages in parallel (non-blocking)
             this.loadChatMessagesAsync();
         } catch (error) {
             console.error('Error loading initial data:', error);
+        }
+    }
+
+    // Show chat loading state immediately to prevent empty UI
+    showChatLoadingState() {
+        if (this.currentTab === 'auction') {
+            const container = document.getElementById('chatMessagesMini');
+            if (container) {
+                container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 12px; font-size: 12px;">Loading messages...</div>';
+            }
         }
     }
 
@@ -300,14 +316,22 @@ class MobileApp {
         try {
             const messages = await window.mobileAPI.getChatMessages();
             this.chatMessages = messages || [];
-            // Only render if we're currently on the auction tab
+            console.log(`💬 Mobile App: Loaded ${this.chatMessages.length} chat messages`);
+            
+            // Always render chat if on auction tab, regardless of message count
             if (this.currentTab === 'auction') {
                 this.renderChatMessagesMini();
             }
         } catch (error) {
             console.error('Error loading chat messages:', error);
-            // Show empty state if chat fails to load
+            // Show error state if chat fails to load
             this.chatMessages = [];
+            if (this.currentTab === 'auction') {
+                const container = document.getElementById('chatMessagesMini');
+                if (container) {
+                    container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 12px; font-size: 12px;">Failed to load messages</div>';
+                }
+            }
         }
     }
 
@@ -426,9 +450,9 @@ class MobileApp {
         const mainApp = document.getElementById('mainApp');
         if (tabName === 'auction') {
             mainApp.classList.add('auction-active');
-            // Delay chat rendering to ensure proper DOM setup
+            // Show chat immediately, then fix scroll
+            this.renderChatMessagesMini();
             setTimeout(() => {
-                this.renderChatMessagesMini();
                 this.fixChatScroll();
             }, 100);
         } else {
@@ -755,7 +779,7 @@ class MobileApp {
         if (!container) return;
 
         if (this.chatMessages.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 8px; font-size: 12px;">Loading messages...</div>';
+            container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 12px; font-size: 12px;">No messages yet</div>';
             return;
         }
 
