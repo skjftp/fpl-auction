@@ -387,19 +387,34 @@ class MobileApp {
         // Rounds 1,3,5,7,9,11,13,15,17 go 1→10
         // Rounds 2,4,6,8,10,12,14,16 go 10→1
         
-        const currentRound = draftState.current_round || 1;
-        const totalTeams = draftState.total_teams || 10;
+        // Calculate current round from position if not provided
+        let currentRound = draftState.current_round;
+        if (!currentRound && draftState.current_position) {
+            currentRound = Math.ceil(draftState.current_position / 10);
+        }
+        currentRound = currentRound || 1;
+        const totalTeams = 10; // Always 10 teams in FPL auction
         const teams = draftState.draft_order || draftState.teams || [];
         
         // Find current team's position in draft order
-        let currentPosition = draftState.current_position;
-        if (!currentPosition && draftState.current_team_id) {
+        let currentPosition;
+        
+        // Check if current_position is cumulative (across all rounds) or per-round
+        if (draftState.current_position && draftState.current_position > totalTeams) {
+            // current_position is cumulative, convert to position within current round
+            const positionInRound = ((draftState.current_position - 1) % totalTeams) + 1;
+            currentPosition = positionInRound;
+            console.log('🐍 Mobile: Converting cumulative position', draftState.current_position, 'to round position', currentPosition);
+        } else if (draftState.current_position) {
+            currentPosition = draftState.current_position;
+        } else if (draftState.current_team_id) {
             const currentTeamIndex = teams.findIndex(team => 
                 team.team_id === draftState.current_team_id || team.id === draftState.current_team_id
             );
             currentPosition = currentTeamIndex >= 0 ? currentTeamIndex + 1 : 1;
+        } else {
+            currentPosition = 1;
         }
-        currentPosition = currentPosition || 1;
         
         console.log('🐍 Mobile: calculateNextTurn input:', {
             currentRound,
