@@ -441,7 +441,7 @@ body {
 #auctionTab {
     overflow: hidden !important;
     padding: 0;
-    display: flex;
+    display: none; /* Hidden by default */
     flex-direction: column;
     height: calc(100vh - 150px - 65px); /* Full height minus header and tab nav */
     position: fixed;
@@ -450,6 +450,11 @@ body {
     right: 0;
     bottom: 65px; /* Above tab nav */
     padding-top: 8px; /* Small padding after auto-bid card */
+}
+
+/* Only show auction tab when active */
+#auctionTab.active {
+    display: flex;
 }
 
 /* Fixed Bottom Chat - inside auction tab */
@@ -506,9 +511,16 @@ body {
     display: block;
 }
 
-/* Override for auction tab - no scroll */
+/* Override for auction tab - no scroll and fixed position */
 #auctionTab.tab-pane {
     overflow: hidden !important;
+}
+
+/* Ensure other tabs stay normal */
+#playersTab, #teamTab, #historyTab {
+    position: relative !important;
+    top: auto !important;
+    height: 100% !important;
 }
 
 /* Auction Tab */
