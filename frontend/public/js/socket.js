@@ -110,6 +110,12 @@ class SocketManager {
                 currentAuction.classList.remove('new-bid');
             }, 500);
         }
+        
+        // Remove selling status immediately when new bid is placed
+        const sellingStatus = document.getElementById('sellingStatus');
+        if (sellingStatus) {
+            sellingStatus.remove();
+        }
 
         // Show notification with auto-bid indicator
         const bidMessage = data.isAutoBid 

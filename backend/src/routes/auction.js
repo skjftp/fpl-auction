@@ -287,11 +287,15 @@ router.post('/bid/:auctionId', async (req, res) => {
       }
     }
     
-    // Update auction
+    // Update auction and reset selling stage
     await collections.auctions.doc(auctionId).update({
       current_bid: bidAmount,
       current_bidder_id: teamId,
-      bid_count: admin.firestore.FieldValue.increment(1)
+      bid_count: admin.firestore.FieldValue.increment(1),
+      // Reset selling stage when a new bid is placed
+      selling_stage: null,
+      wait_requested_by: null,
+      wait_requested_at: null
     });
     
     // Record bid history

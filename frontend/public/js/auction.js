@@ -319,7 +319,7 @@ class AuctionManager {
                     <div id="currentBidAmount" class="text-xl font-bold text-green-600 mb-1">£${auction.currentBid}</div>
                     <div id="currentBidder" class="${auction.currentBidder ? 'text-xs font-medium' : 'text-xs text-gray-500'}">
                         ${auction.currentBidder ? 
-                            (auction.currentBidder.name || auction.currentBidder) :
+                            (auction.isAutoBid ? '🤖 ' : '') + (auction.currentBidder.name || auction.currentBidder) :
                             'No bids yet'
                         }
                     </div>
@@ -473,6 +473,17 @@ class AuctionManager {
         if (this.currentAuction && this.currentAuction.id === bidData.auctionId) {
             this.currentAuction.currentBid = bidData.bidAmount;
             this.currentAuction.currentBidder = bidData.teamName;
+            this.currentAuction.isAutoBid = bidData.isAutoBid;
+            
+            // Reset selling stage when a new bid is placed
+            if (this.currentAuction.selling_stage) {
+                this.currentAuction.selling_stage = null;
+                // Remove selling status display
+                const sellingStatus = document.getElementById('sellingStatus');
+                if (sellingStatus) {
+                    sellingStatus.remove();
+                }
+            }
             
             // Update the display using specific IDs
             const currentBidEl = document.getElementById('currentBidAmount');
@@ -484,7 +495,9 @@ class AuctionManager {
             }
             
             if (bidderEl) {
-                bidderEl.textContent = bidData.teamName;
+                // Add robot emoji for auto-bids
+                const bidderText = bidData.isAutoBid ? `🤖 ${bidData.teamName}` : bidData.teamName;
+                bidderEl.textContent = bidderText;
                 // Update classes to show it's now a real bidder
                 bidderEl.className = 'text-xs font-medium';
             }
