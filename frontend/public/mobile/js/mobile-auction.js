@@ -233,13 +233,17 @@ class MobileAuctionManager {
     }
 
     updateBidDisplay(auctionData) {
+        console.log('💰 Mobile: Updating bid display with data:', auctionData);
+        
         const bidAmountEl = document.getElementById('currentBidAmount');
         const bidderEl = document.getElementById('currentBidder');
         const bidInput = document.getElementById('bidAmount');
 
-        // Backend uses current_bid and current_bidder_name
-        const currentBid = auctionData.current_bid || 0;
-        const bidderName = auctionData.current_bidder_name || '-';
+        // Handle both naming conventions (socket vs API)
+        const currentBid = auctionData.currentBid || auctionData.current_bid || 0;
+        const bidderName = auctionData.currentBidder?.name || auctionData.current_bidder_name || '-';
+        
+        console.log('💰 Mobile: Bid details - Amount:', currentBid, 'Bidder:', bidderName);
 
         if (bidAmountEl) {
             bidAmountEl.textContent = `£${currentBid}`;
