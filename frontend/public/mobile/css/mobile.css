@@ -892,14 +892,18 @@ body {
     display: flex;
 }
 
+.players-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+    flex-shrink: 0;
+}
+
 .search-bar {
     padding: 16px;
     background: white;
     border-bottom: 1px solid #e5e7eb;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    flex-shrink: 0;
 }
 
 .search-input {
