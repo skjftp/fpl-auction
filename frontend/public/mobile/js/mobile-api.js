@@ -90,6 +90,25 @@ class MobileAPI {
         }
     }
 
+    async getAllTeams() {
+        try {
+            const response = await fetch(`${this.baseURL}/teams`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch teams');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Get all teams error:', error);
+            return [];
+        }
+    }
+
     // Players
     async getPlayers() {
         try {

@@ -237,6 +237,12 @@ class MobileApp {
             listViewBtn.addEventListener('click', () => this.switchView('list'));
         }
 
+        // Team selector dropdown
+        const teamSelector = document.getElementById('teamSelector');
+        if (teamSelector) {
+            teamSelector.addEventListener('change', (e) => this.loadSelectedTeamSquad(e.target.value));
+        }
+
         // History tab filters
         const filterBtns = document.querySelectorAll('.filter-btn');
         filterBtns.forEach(btn => {
@@ -378,6 +384,7 @@ class MobileApp {
         switch (tabName) {
             case 'team':
                 await this.loadTeamSquad();
+                await this.populateTeamDropdown();
                 break;
             case 'history':
                 await this.loadHistory();
@@ -385,6 +392,44 @@ class MobileApp {
             case 'auction':
                 this.renderChatMessagesMini();
                 break;
+        }
+    }
+
+    async populateTeamDropdown() {
+        try {
+            const teamSelector = document.getElementById('teamSelector');
+            if (!teamSelector) return;
+            
+            // Get all teams
+            const teams = await window.mobileAPI.getAllTeams();
+            
+            // Clear existing options
+            teamSelector.innerHTML = '';
+            
+            // Add current user's team first
+            const myOption = document.createElement('option');
+            myOption.value = this.currentUser.id;
+            myOption.textContent = 'My Squad';
+            myOption.selected = true;
+            teamSelector.appendChild(myOption);
+            
+            // Add separator
+            const separator = document.createElement('option');
+            separator.disabled = true;
+            separator.textContent = '──────────';
+            teamSelector.appendChild(separator);
+            
+            // Add other teams
+            teams.forEach(team => {
+                if (team.id !== this.currentUser.id) {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    teamSelector.appendChild(option);
+                }
+            });
+        } catch (error) {
+            console.error('Error populating team dropdown:', error);
         }
     }
 
@@ -396,6 +441,17 @@ class MobileApp {
             this.renderTeamSquad(squad);
         } catch (error) {
             console.error('Error loading team squad:', error);
+        }
+    }
+    
+    async loadSelectedTeamSquad(teamId) {
+        try {
+            const selectedTeamId = teamId || this.currentUser.id;
+            const squad = await window.mobileAPI.getTeamSquad(selectedTeamId);
+            this.renderTeamSquad(squad);
+        } catch (error) {
+            console.error('Error loading selected team squad:', error);
+            this.showToast('Failed to load team squad', 'error');
         }
     }
 
