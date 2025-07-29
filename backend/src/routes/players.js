@@ -103,6 +103,30 @@ router.get('/', async (req, res) => {
       clubsMap[club.id] = club;
     });
     
+    // Get sold players information
+    const soldPlayersSnapshot = await collections.teamSquads
+      .where('player_id', '!=', null)
+      .get();
+    const soldPlayersMap = {};
+    
+    // Get team names for sold players
+    const teamsSnapshot = await collections.teams.get();
+    const teamsMap = {};
+    teamsSnapshot.docs.forEach(doc => {
+      const team = doc.data();
+      teamsMap[team.id] = team;
+    });
+    
+    soldPlayersSnapshot.docs.forEach(doc => {
+      const soldPlayer = doc.data();
+      const team = teamsMap[soldPlayer.team_id];
+      soldPlayersMap[soldPlayer.player_id] = {
+        sold_to_team_id: soldPlayer.team_id,
+        sold_to_team_name: team ? team.name : 'Unknown Team',
+        price_paid: soldPlayer.price_paid
+      };
+    });
+    
     // Process players and add club info
     playersSnapshot.docs.forEach(doc => {
       const player = doc.data();
@@ -118,10 +142,13 @@ router.get('/', async (req, res) => {
         }
       }
       
+      const soldInfo = soldPlayersMap[player.id] || {};
+      
       players.push({
         ...player,
         team_name: club.name,
-        team_short_name: club.short_name
+        team_short_name: club.short_name,
+        ...soldInfo
       });
     });
     

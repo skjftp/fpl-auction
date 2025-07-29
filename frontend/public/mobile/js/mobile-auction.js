@@ -167,7 +167,8 @@ class MobileAuctionManager {
         const photoEl = document.getElementById('playerPhoto');
         if (photoEl) {
             if (player.photo) {
-                photoEl.innerHTML = `<img src="${player.photo}" alt="${player.web_name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                const photoUrl = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo.replace('.jpg', '')}.png`;
+                photoEl.innerHTML = `<img src="${photoUrl}" alt="${player.web_name || 'Player'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.parentNode.innerHTML='👤'">`;
             } else {
                 photoEl.innerHTML = '👤';
             }
@@ -557,7 +558,12 @@ class MobileAuctionManager {
 
     renderSoldItems() {
         const container = document.getElementById('soldItems');
-        if (!container) return;
+        if (!container) {
+            console.warn('soldItems container not found');
+            return;
+        }
+
+        console.log('Rendering sold items:', this.soldItems.length, 'items');
 
         if (this.soldItems.length === 0) {
             container.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">No recent sales</div>';
@@ -582,6 +588,15 @@ class MobileAuctionManager {
                 </div>
             </div>
         `).join('');
+        
+        // Auto-show sold items if there are any
+        if (this.soldItems.length > 0) {
+            container.classList.remove('hidden');
+            const toggleBtn = document.getElementById('toggleSoldBtn');
+            if (toggleBtn) {
+                toggleBtn.textContent = 'Hide';
+            }
+        }
     }
 
     toggleSoldItems() {
