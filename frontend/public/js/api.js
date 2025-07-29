@@ -3,7 +3,7 @@ class API {
     constructor() {
         // Use environment-specific API URL
         // Update this URL after deployment if it changes
-        const PRODUCTION_API_URL = 'https://fpl-auction-backend-ofkn6rpg3a-uc.a.run.app/api';
+        const PRODUCTION_API_URL = 'https://fpl-auction-backend-mrlyxa4xiq-uc.a.run.app/api';
         
         this.baseURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001/api'
