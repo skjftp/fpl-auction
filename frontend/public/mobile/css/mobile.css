@@ -552,6 +552,7 @@ body {
     padding: 10px 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    position: relative;
 }
 
 .player-info {
@@ -585,14 +586,35 @@ body {
 }
 
 .selling-status {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 8px 12px;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 6px 12px;
+    border-radius: 16px;
     text-align: center;
-    font-size: 14px;
-    font-weight: 600;
-    animation: pulse 2s infinite;
-    backdrop-filter: blur(20px);
+    font-size: 11px;
+    font-weight: 700;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    animation: blink 1s ease-in-out infinite;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.selling-status.selling1 {
+    color: #f59e0b;
+    border: 2px solid #f59e0b;
+}
+
+.selling-status.selling2 {
+    color: #ef4444;
+    border: 2px solid #ef4444;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+    50% { opacity: 0.4; transform: translateY(-50%) scale(0.95); }
 }
 
 .bid-info {

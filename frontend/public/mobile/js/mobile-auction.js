@@ -280,11 +280,14 @@ class MobileAuctionManager {
         const statusEl = document.getElementById('sellingStatus');
         if (statusEl) {
             if (sellingStage) {
-                const statusText = sellingStage === 'selling1' ? 'SELLING 1...' : 'SELLING 2...';
+                const statusText = sellingStage === 'selling1' ? 'SELLING 1' : 'SELLING 2';
                 statusEl.textContent = statusText;
                 statusEl.classList.remove('hidden');
+                // Add appropriate class for styling
+                statusEl.className = `selling-status ${sellingStage}`;
             } else {
                 statusEl.classList.add('hidden');
+                statusEl.className = 'selling-status hidden';
             }
         }
     }
