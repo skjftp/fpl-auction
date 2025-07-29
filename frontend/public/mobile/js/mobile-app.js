@@ -384,83 +384,46 @@ class MobileApp {
 
     calculateNextTurn(draftState) {
         // Snake draft logic: 17 rounds, 10 teams
-        // Rounds 1,3,5,7,9,11,13,15,17 go 1→10
-        // Rounds 2,4,6,8,10,12,14,16 go 10→1
+        // Positions 1-10: Round 1 (teams 1→10)
+        // Positions 11-20: Round 2 (teams 10→1) 
+        // Positions 21-30: Round 3 (teams 1→10)
+        // etc.
         
-        // Calculate current round from position if not provided
-        let currentRound = draftState.current_round;
-        if (!currentRound && draftState.current_position) {
-            currentRound = Math.ceil(draftState.current_position / 10);
-        }
-        currentRound = currentRound || 1;
         const totalTeams = 10; // Always 10 teams in FPL auction
         const teams = draftState.draft_order || draftState.teams || [];
         
-        // Find current team's position in draft order
-        let currentPosition;
+        // Get current cumulative position
+        const currentCumulativePosition = draftState.current_position || 1;
         
-        // Check if current_position is cumulative (across all rounds) or per-round
-        if (draftState.current_position && draftState.current_position > totalTeams) {
-            // current_position is cumulative, convert to position within current round
-            const positionInRound = ((draftState.current_position - 1) % totalTeams) + 1;
-            currentPosition = positionInRound;
-            console.log('🐍 Mobile: Converting cumulative position', draftState.current_position, 'to round position', currentPosition);
-        } else if (draftState.current_position) {
-            currentPosition = draftState.current_position;
-        } else if (draftState.current_team_id) {
-            const currentTeamIndex = teams.findIndex(team => 
-                team.team_id === draftState.current_team_id || team.id === draftState.current_team_id
-            );
-            currentPosition = currentTeamIndex >= 0 ? currentTeamIndex + 1 : 1;
-        } else {
-            currentPosition = 1;
-        }
+        // Calculate next cumulative position
+        const nextCumulativePosition = currentCumulativePosition + 1;
         
-        console.log('🐍 Mobile: calculateNextTurn input:', {
-            currentRound,
-            currentPosition,
-            current_team_id: draftState.current_team_id,
-            current_position: draftState.current_position,
-            derived_position: currentPosition
-        });
-        
-        // Determine if current round is ascending (1→10) or descending (10→1)
-        const isAscendingRound = currentRound % 2 === 1;
-        
-        let nextPosition, nextRound;
-        
-        console.log('🐍 Mobile: Round type:', isAscendingRound ? 'Ascending (1→10)' : 'Descending (10→1)');
-        
-        if (isAscendingRound) {
-            // Current round goes 1→10
-            if (currentPosition < totalTeams) {
-                // Next team in same round
-                nextPosition = currentPosition + 1;
-                nextRound = currentRound;
-            } else {
-                // End of ascending round, next round starts with position 10 (descending)
-                nextPosition = totalTeams; // Position 10 goes again
-                nextRound = currentRound + 1;
-            }
-        } else {
-            // Current round goes 10→1
-            if (currentPosition > 1) {
-                // Next team in same round
-                nextPosition = currentPosition - 1;
-                nextRound = currentRound;
-            } else {
-                // End of descending round, next round starts with position 1 (ascending)
-                nextPosition = 1; // Position 1 goes again
-                nextRound = currentRound + 1;
-            }
-        }
-        
-        console.log('🐍 Mobile: Calculated next position:', nextPosition, 'in round:', nextRound);
-        
-        // Handle case where draft is complete
-        if (nextRound > 17) {
+        // Check if draft is complete (17 rounds * 10 teams = 170 picks)
+        if (nextCumulativePosition > 170) {
             return { teamId: null, teamName: 'Draft Complete' };
         }
+        
+        // Calculate which round and position within that round
+        const nextRound = Math.ceil(nextCumulativePosition / totalTeams);
+        const positionInRound = ((nextCumulativePosition - 1) % totalTeams) + 1;
+        
+        // Determine team position based on snake draft
+        let teamPosition;
+        if (nextRound % 2 === 1) {
+            // Odd rounds go 1→10
+            teamPosition = positionInRound;
+        } else {
+            // Even rounds go 10→1
+            teamPosition = totalTeams - positionInRound + 1;
+        }
+        
+        console.log('🐍 Mobile: Snake draft calculation:', {
+            currentCumulativePosition,
+            nextCumulativePosition,
+            nextRound,
+            positionInRound,
+            teamPosition
+        });
         
         // Get team at the next position from draft_order (teams already declared above)
         
@@ -471,20 +434,25 @@ class MobileApp {
             index: teams.indexOf(t) + 1
         })));
         
-        // Find team at the next position (positions are 1-based, array is 0-based)
-        // Check if teams have position property, otherwise use array index
+        // Find team at the calculated team position
         let nextTeam;
         if (teams.length > 0 && teams[0].position !== undefined) {
-            nextTeam = teams.find(team => team.position === nextPosition);
+            nextTeam = teams.find(team => team.position === teamPosition);
         } else {
             // Use array index (position 1 = index 0, position 2 = index 1, etc.)
-            nextTeam = teams[nextPosition - 1];
+            nextTeam = teams[teamPosition - 1];
         }
         
-        const nextTeamName = nextTeam?.name || `Position ${nextPosition}`;
-        const nextTeamId = nextTeam?.team_id || nextTeam?.id || nextPosition;
+        const nextTeamName = nextTeam?.name || `Team ${teamPosition}`;
+        const nextTeamId = nextTeam?.team_id || nextTeam?.id || teamPosition;
             
-        return { teamId: nextTeamId, teamName: nextTeamName, position: nextPosition };
+        return { 
+            teamId: nextTeamId, 
+            teamName: nextTeamName, 
+            position: teamPosition,
+            cumulativePosition: nextCumulativePosition,
+            round: nextRound
+        };
     }
 
     switchTab(tabName) {
