@@ -49,22 +49,196 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
+    <!-- Modern UI Custom Styles -->
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --secondary: #3b82f6;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-light: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        /* Modern card styles */
+        .card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Glassmorphism effect for floating elements */
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        /* Bottom navigation styles */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-white);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+        }
+
+        /* Floating chat styles */
+        .floating-chat {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 380px;
+            max-height: 500px;
+            z-index: 999;
+        }
+
+        .chat-toggle {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.1);
+            background: var(--primary-dark);
+        }
+
+        /* Badge styles */
+        .badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: white;
+            border-radius: 9999px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Modern button styles */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        /* Smooth animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .floating-chat {
+                width: calc(100% - 40px);
+                left: 20px;
+                right: 20px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- Navigation -->
-    <nav id="navbar" class="bg-green-600 text-white shadow-lg">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
+<body class="bg-gray-50 min-h-screen pb-20">
+    <!-- Modern Top Navigation -->
+    <nav id="navbar" class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-6">
+            <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-4">
-                    <h1 class="text-2xl font-bold">🏆 FPL Auction</h1>
-                    <span id="teamName" class="text-green-200"></span>
+                    <h1 class="text-2xl font-bold text-gray-900">🏆 FPL Auction</h1>
+                    <span id="teamName" class="text-gray-600 font-medium"></span>
                 </div>
                 <div class="flex items-center space-x-6">
                     <div class="text-right">
-                        <div class="text-sm text-green-200">Budget</div>
-                        <div id="teamBudget" class="text-xl font-bold">£0</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-wide">Budget</div>
+                        <div id="teamBudget" class="text-xl font-bold text-emerald-600">£0</div>
                     </div>
-                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+                    <button id="logoutBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-all duration-200">
+                        <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
                         Logout
                     </button>
                 </div>
@@ -72,38 +246,40 @@
         </div>
     </nav>
 
-    <!-- Login Screen -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <!-- Modern Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center px-4">
+        <div class="card p-8 w-full max-w-md fade-in">
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">FPL Auction Login</h2>
-                <p class="text-gray-600">Enter your team credentials</p>
+                <div class="mb-4">
+                    <span class="text-6xl">🏆</span>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">FPL Auction</h2>
+                <p class="text-gray-600">Welcome back! Please login to continue.</p>
             </div>
             
             <form id="loginForm" class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
                     <input type="text" id="username" required autocomplete="username"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                            placeholder="team1">
                 </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
                     <input type="password" id="password" required autocomplete="current-password"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
                            placeholder="password123">
                 </div>
                 
-                <button type="submit" id="loginBtn"
-                        class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                <button type="submit" id="loginBtn" class="btn-primary w-full">
                     Login
                 </button>
             </form>
             
             <div class="mt-6 text-center">
                 <p class="text-sm text-gray-500">Demo credentials: team1 to team10, password: password123</p>
-                <a href="mobile.html" class="text-sm text-blue-600 hover:text-blue-800 underline mt-2 block">
+                <a href="mobile.html" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium mt-2 block">
                     View Mobile Version
                 </a>
             </div>
@@ -112,43 +288,81 @@
 
     <!-- Main App -->
     <div id="mainApp" class="hidden">
-        <!-- Tab Navigation -->
-        <div class="bg-white shadow">
-            <div class="container mx-auto px-4">
-                <div class="flex space-x-8">
-                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="draft">
-                        🎲 Draft
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="container mx-auto">
+                <div class="flex justify-around">
+                    <button class="nav-item flex-1" data-tab="draft">
+                        <span class="text-2xl mb-1">🎲</span>
+                        <span class="text-xs font-medium">Draft</span>
                     </button>
-                    <button class="tab-btn py-4 px-2 border-b-2 border-green-500 text-green-600 font-medium" data-tab="auction">
-                        🔨 Auction
+                    <button class="nav-item flex-1 active" data-tab="auction">
+                        <span class="text-2xl mb-1">🔨</span>
+                        <span class="text-xs font-medium">Auction</span>
                     </button>
-                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="myTeam">
-                        👥 My Team
+                    <button class="nav-item flex-1" data-tab="myTeam">
+                        <span class="text-2xl mb-1">👥</span>
+                        <span class="text-xs font-medium">My Team</span>
                     </button>
-                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="scoring">
-                        📊 Scoring
+                    <button class="nav-item flex-1" data-tab="scoring">
+                        <span class="text-2xl mb-1">📊</span>
+                        <span class="text-xs font-medium">Scoring</span>
                     </button>
-                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="leaderboard">
-                        🏅 Leaderboard
+                    <button class="nav-item flex-1" data-tab="leaderboard">
+                        <span class="text-2xl mb-1">🏅</span>
+                        <span class="text-xs font-medium">Leader</span>
                     </button>
-                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 admin-only" data-tab="admin" style="display: none;">
-                        ⚙️ Admin
+                    <button class="nav-item flex-1 admin-only" data-tab="admin" style="display: none;">
+                        <span class="text-2xl mb-1">⚙️</span>
+                        <span class="text-xs font-medium">Admin</span>
                     </button>
                 </div>
             </div>
         </div>
 
+        <!-- Floating Chat Button -->
+        <div class="chat-toggle" id="chatToggle" onclick="toggleFloatingChat()">
+            <span class="text-white text-2xl">💬</span>
+            <div class="badge hidden" id="chatBadge">0</div>
+        </div>
+
+        <!-- Floating Chat Window -->
+        <div class="floating-chat card hidden" id="floatingChat">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 class="font-semibold text-gray-900">Team Chat</h3>
+                <button onclick="toggleFloatingChat()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="floatingChatMessages" class="h-80 overflow-y-auto p-4 bg-gray-50">
+                <div class="text-gray-500 text-center">No messages yet...</div>
+            </div>
+            <form id="floatingChatForm" class="p-4 border-t">
+                <div class="flex gap-2">
+                    <input type="text" id="floatingChatInput" 
+                           placeholder="Type a message..." 
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                           maxlength="500">
+                    <button type="submit" class="btn-primary px-4 py-2">
+                        Send
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <!-- Tab Content -->
-        <div class="container mx-auto px-4 py-6">
+        <div class="container mx-auto px-6 py-4">
             <!-- Draft Tab -->
-            <div id="draftTab" class="tab-content hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div id="draftTab" class="tab-content hidden fade-in">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Draft Status and Controls -->
-                    <div class="lg:col-span-2">
-                        <div class="bg-white rounded-lg shadow p-6 mb-6">
-                            <h2 class="text-2xl font-bold mb-4">🎲 Snake Draft Status</h2>
+                    <div>
+                        <div class="card p-6 mb-6">
+                            <h2 class="text-xl font-bold mb-4 text-gray-900">🎲 Snake Draft Status</h2>
                             <div id="draftStatus" class="mb-4">
-                                <div class="bg-gray-100 border border-gray-400 text-gray-700 px-4 py-3 rounded">
+                                <div class="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-3 rounded-lg">
                                     Loading draft status...
                                 </div>
                             </div>
@@ -157,64 +371,51 @@
                             <div id="turnIndicator" class="mb-4"></div>
                             
                             <!-- Admin Controls -->
-                            <div class="space-x-2">
-                                <button id="initializeDraftBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                            <div class="flex gap-3">
+                                <button id="initializeDraftBtn" class="btn-secondary">
                                     🎲 Initialize Draft Order
                                 </button>
-                                <button id="startDraftBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                                <button id="startDraftBtn" class="btn-primary">
                                     🚀 Start Draft
                                 </button>
                             </div>
                         </div>
 
                         <!-- Draft Order -->
-                        <div class="bg-white rounded-lg shadow p-6">
-                            <h3 class="text-xl font-bold mb-4">📋 Draft Order</h3>
+                        <div class="card p-6">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-900">📋 Draft Order</h3>
                             <div id="draftOrder" class="space-y-2">
                                 <div class="text-gray-500">No draft order yet...</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Team Chat -->
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="text-xl font-bold mb-4">💬 Team Chat</h3>
-                        
-                        <!-- Chat Messages -->
-                        <div id="chatMessages" class="h-64 overflow-y-auto border border-gray-200 rounded p-3 mb-4 bg-gray-50">
-                            <div class="text-gray-500 text-center">No messages yet...</div>
+                    <!-- Recent Activity -->
+                    <div class="card p-6">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-900">📋 Recent Activity</h3>
+                        <div id="recentActivity" class="space-y-3">
+                            <div class="text-gray-500 text-center py-8">No recent activity</div>
                         </div>
-                        
-                        <!-- Chat Input -->
-                        <form id="chatForm" class="flex">
-                            <input type="text" id="chatInput" 
-                                   placeholder="Type a message..." 
-                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                                   maxlength="500">
-                            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600">
-                                Send
-                            </button>
-                        </form>
                     </div>
                 </div>
             </div>
 
             <!-- Auction Tab -->
-            <div id="auctionTab" class="tab-content">
+            <div id="auctionTab" class="tab-content fade-in">
                 <!-- Auto-Bidding Controls -->
-                <div class="bg-white rounded-lg shadow p-4 mb-4">
+                <div class="card p-4 mb-4">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-4">
                             <label class="flex items-center cursor-pointer">
-                                <input type="checkbox" id="autoBidToggle" class="mr-2 h-5 w-5 text-green-600">
-                                <span class="font-medium">Auto-Bidding</span>
+                                <input type="checkbox" id="autoBidToggle" class="mr-2 h-5 w-5 text-emerald-600 rounded focus:ring-emerald-500">
+                                <span class="font-medium text-gray-700">Auto-Bidding</span>
                             </label>
-                            <button id="autoBidConfigBtn" class="bg-blue-500 text-white px-3 py-1 text-sm rounded hover:bg-blue-600">
+                            <button id="autoBidConfigBtn" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
                                 Configure
                             </button>
                         </div>
                         <div id="autoBidStatus" class="hidden">
-                            <span class="animate-pulse bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                            <span class="animate-pulse bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">
                                 🤖 Auto-Bidding Active
                             </span>
                         </div>
@@ -222,98 +423,84 @@
                 </div>
                 
                 <!-- Turn Indicator at the top -->
-                <div id="auctionTurnIndicator" class="bg-white rounded-lg shadow p-4 mb-4">
+                <div id="auctionTurnIndicator" class="card p-4 mb-4">
                     <div class="text-center">
                         <span class="text-gray-500">Loading turn info...</span>
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <!-- Left: Players List (1 column) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left: Players List -->
                     <div class="lg:col-span-1">
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <div class="flex justify-between items-center mb-3">
-                                <h3 class="text-lg font-semibold">Available Players</h3>
-                                <button id="syncDataBtn" class="bg-blue-500 text-white px-3 py-1 text-sm rounded hover:bg-blue-600">
+                        <div class="card p-5">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Available Players</h3>
+                                <button id="syncDataBtn" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors">
                                     Sync
                                 </button>
                             </div>
                             
-                            <!-- Compact Filters -->
-                            <div class="space-y-2 mb-3">
-                                <select id="positionFilter" class="w-full border rounded px-2 py-1 text-sm">
+                            <!-- Modern Filters -->
+                            <div class="space-y-3 mb-4">
+                                <select id="positionFilter" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                     <option value="">All Positions</option>
                                     <option value="1">GKP</option>
                                     <option value="2">DEF</option>
                                     <option value="3">MID</option>
                                     <option value="4">FWD</option>
                                 </select>
-                                <select id="teamFilter" class="w-full border rounded px-2 py-1 text-sm">
+                                <select id="teamFilter" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                     <option value="">All Teams</option>
                                 </select>
                                 <input type="text" id="searchPlayers" placeholder="Search players..." 
-                                       class="w-full border rounded px-2 py-1 text-sm">
+                                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                             </div>
                             
-                            <!-- Players Single Column -->
-                            <div id="playersList" class="space-y-2 max-h-[calc(100vh-320px)] overflow-y-auto">
-                                <!-- Players will be loaded here in single column -->
+                            <!-- Players List -->
+                            <div id="playersList" class="space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
+                                <!-- Players will be loaded here -->
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Middle: Current Auction and Clubs (1 column) -->
-                    <div class="lg:col-span-1 space-y-4">
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <h3 class="text-lg font-semibold mb-3">Current Auction</h3>
+                    <!-- Middle: Current Auction and Clubs -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="card p-5">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-900">Current Auction</h3>
                             <div id="currentAuction">
-                                <p class="text-gray-500 text-center py-4">No active auction</p>
+                                <p class="text-gray-500 text-center py-8">No active auction</p>
                             </div>
                         </div>
                         
                         <!-- Available Clubs -->
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <h3 class="text-lg font-semibold mb-3">Available Clubs</h3>
-                            <div id="clubsList" class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                                <!-- Clubs will be loaded here in a compact grid -->
+                        <div class="card p-5">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-900">Available Clubs</h3>
+                            <div id="clubsList" class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2">
+                                <!-- Clubs will be loaded here -->
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Right: Chat (1 column) -->
+                    <!-- Right: Recent Sales -->
                     <div class="lg:col-span-1">
-                        <!-- Team Chat -->
-                        <div class="bg-white rounded-lg shadow p-4 h-full">
-                            <h3 class="text-lg font-semibold mb-3">💬 Team Chat</h3>
-                            
-                            <!-- Chat Messages -->
-                            <div id="auctionChatMessages" class="h-96 overflow-y-auto border border-gray-200 rounded p-2 mb-3 bg-gray-50 text-sm">
-                                <div class="text-gray-500 text-center">No messages yet...</div>
+                        <div class="card p-5">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-900">Recent Sales</h3>
+                            <div id="recentSales" class="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
+                                <div class="text-gray-500 text-center py-8">No recent sales</div>
                             </div>
-                            
-                            <!-- Chat Input -->
-                            <form id="auctionChatForm" class="flex">
-                                <input type="text" id="auctionChatInput" 
-                                       placeholder="Type a message..." 
-                                       class="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                                       maxlength="500">
-                                <button type="submit" class="bg-green-500 text-white px-3 py-1 text-sm rounded-r-md hover:bg-green-600">
-                                    Send
-                                </button>
-                            </form>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- My Team Tab -->
-            <div id="myTeamTab" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow p-6">
+            <div id="myTeamTab" class="tab-content hidden fade-in">
+                <div class="card p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-semibold">Team Squad</h3>
+                        <h3 class="text-xl font-bold text-gray-900">Team Squad</h3>
                         <div class="flex items-center gap-3">
                             <label class="text-sm font-medium text-gray-700">View Team:</label>
-                            <select id="teamSelector" class="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <select id="teamSelector" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                 <option value="">Loading teams...</option>
                             </select>
                         </div>
@@ -325,9 +512,9 @@
             </div>
 
             <!-- Scoring Tab -->
-            <div id="scoringTab" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold mb-6">Scoring</h3>
+            <div id="scoringTab" class="tab-content hidden fade-in">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-6 text-gray-900">Scoring</h3>
                     <div id="scoringContent">
                         <!-- Scoring content will be loaded here -->
                     </div>
@@ -335,9 +522,9 @@
             </div>
 
             <!-- Leaderboard Tab -->
-            <div id="leaderboardTab" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold mb-6">Leaderboard</h3>
+            <div id="leaderboardTab" class="tab-content hidden fade-in">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-6 text-gray-900">Leaderboard</h3>
                     <div id="leaderboardContent">
                         <!-- Leaderboard will be loaded here -->
                     </div>
@@ -345,14 +532,14 @@
             </div>
 
             <!-- Admin Tab -->
-            <div id="adminTab" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold mb-6">⚙️ Admin Panel</h3>
+            <div id="adminTab" class="tab-content hidden fade-in">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-6 text-gray-900">⚙️ Admin Panel</h3>
                     
                     <!-- Admin Management -->
                     <div class="mb-8">
-                        <h4 class="text-md font-semibold mb-4">Admin Access Management</h4>
-                        <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900">Admin Access Management</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <p class="text-sm text-gray-600 mb-4">Grant or revoke admin access to teams. Team10 is the super admin and cannot be modified.</p>
                             <div id="adminTeamsList" class="space-y-2">
                                 <!-- Teams list will be loaded here -->
@@ -362,13 +549,13 @@
                     
                     <!-- Draft Controls -->
                     <div class="mb-8">
-                        <h4 class="text-md font-semibold mb-4">Draft Controls</h4>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="space-y-2">
-                                <button onclick="window.draftManager.initializeDraft()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900">Draft Controls</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex gap-3">
+                                <button onclick="window.draftManager.initializeDraft()" class="btn-secondary">
                                     🎲 Initialize Draft Order
                                 </button>
-                                <button onclick="window.draftManager.startDraft()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                                <button onclick="window.draftManager.startDraft()" class="btn-primary">
                                     🚀 Start Draft
                                 </button>
                             </div>
@@ -380,10 +567,10 @@
     </div>
 
     <!-- Auto-Bid Configuration Modal -->
-    <div id="autoBidModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Auto-Bid Configuration</h3>
+    <div id="autoBidModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 w-full max-w-4xl">
+            <div class="card p-6">
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Auto-Bid Configuration</h3>
                 
                 <!-- Search and filters -->
                 <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -447,5 +634,125 @@
     <script src="js/scoring.js"></script>
     <script src="js/autobid.js"></script>
     <script src="js/app.js"></script>
+    
+    <!-- Modern UI Scripts -->
+    <script>
+        // Floating chat functionality
+        let chatOpen = false;
+        let unreadCount = 0;
+        
+        function toggleFloatingChat() {
+            const chat = document.getElementById('floatingChat');
+            const chatToggle = document.getElementById('chatToggle');
+            const badge = document.getElementById('chatBadge');
+            
+            chatOpen = !chatOpen;
+            
+            if (chatOpen) {
+                chat.classList.remove('hidden');
+                chatToggle.style.display = 'none';
+                unreadCount = 0;
+                badge.classList.add('hidden');
+                badge.textContent = '0';
+                
+                // Focus on input
+                setTimeout(() => {
+                    document.getElementById('floatingChatInput')?.focus();
+                }, 100);
+            } else {
+                chat.classList.add('hidden');
+                chatToggle.style.display = 'flex';
+            }
+        }
+        
+        function incrementChatBadge() {
+            if (!chatOpen) {
+                unreadCount++;
+                const badge = document.getElementById('chatBadge');
+                badge.textContent = unreadCount;
+                badge.classList.remove('hidden');
+            }
+        }
+        
+        // Override tab switching for bottom navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup bottom navigation
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const tab = this.getAttribute('data-tab');
+                    
+                    // Update active nav item
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Switch tab content
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabContents.forEach(content => content.classList.add('hidden'));
+                    
+                    const targetTab = document.getElementById(tab + 'Tab');
+                    if (targetTab) {
+                        targetTab.classList.remove('hidden');
+                        targetTab.classList.add('fade-in');
+                    }
+                });
+            });
+            
+            // Setup floating chat form
+            const floatingChatForm = document.getElementById('floatingChatForm');
+            if (floatingChatForm) {
+                floatingChatForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const input = document.getElementById('floatingChatInput');
+                    const message = input?.value?.trim();
+                    
+                    if (message && window.api) {
+                        try {
+                            await window.api.sendChatMessage(message);
+                            input.value = '';
+                        } catch (error) {
+                            console.error('Error sending message:', error);
+                        }
+                    }
+                });
+            }
+            
+            // Sync floating chat with main chat
+            const originalAddChatMessage = window.draftManager?.addChatMessage;
+            if (originalAddChatMessage) {
+                window.draftManager.addChatMessage = function(message) {
+                    originalAddChatMessage.call(this, message);
+                    
+                    // Update floating chat
+                    const floatingChatMessages = document.getElementById('floatingChatMessages');
+                    if (floatingChatMessages) {
+                        const isCurrentUser = message.username === window.app.currentUser?.username;
+                        const time = new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        
+                        const messageEl = document.createElement('div');
+                        messageEl.className = `mb-2 ${isCurrentUser ? 'text-right' : ''}`;
+                        messageEl.innerHTML = `
+                            <div class="inline-block max-w-xs px-3 py-2 rounded-lg ${
+                                isCurrentUser 
+                                    ? 'bg-emerald-500 text-white' 
+                                    : 'bg-gray-200 text-gray-800'
+                            }">
+                                <div class="text-xs opacity-75">${message.team_name} • ${time}</div>
+                                <div>${message.message}</div>
+                            </div>
+                        `;
+                        
+                        floatingChatMessages.appendChild(messageEl);
+                        floatingChatMessages.scrollTop = floatingChatMessages.scrollHeight;
+                        
+                        // Show notification if chat is closed
+                        if (!chatOpen) {
+                            incrementChatBadge();
+                        }
+                    }
+                };
+            }
+        });
+    </script>
 </body>
 </html>

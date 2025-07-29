@@ -88,6 +88,14 @@ class AuctionManager {
                 this.soldPlayers.clear();
                 this.soldClubs.clear();
                 
+                // Sort by created_at to get recent sales
+                const recentSales = squads
+                    .filter(item => item.created_at)
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                    .slice(0, 10);
+                
+                this.renderRecentSales(recentSales);
+                
                 squads.forEach(item => {
                     if (item.player_id) {
                         this.soldPlayers.add(item.player_id);
@@ -100,6 +108,45 @@ class AuctionManager {
         } catch (error) {
             console.error('Error loading sold items:', error);
         }
+    }
+
+    renderRecentSales(sales) {
+        const container = document.getElementById('recentSales');
+        if (!container) return;
+        
+        if (sales.length === 0) {
+            container.innerHTML = '<div class="text-gray-500 text-center py-8">No recent sales</div>';
+            return;
+        }
+        
+        container.innerHTML = sales.map(sale => {
+            const time = new Date(sale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const date = new Date(sale.created_at).toLocaleDateString();
+            
+            return `
+                <div class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-semibold text-gray-900">
+                                ${sale.player_name || sale.club_name || 'Unknown'}
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                ${sale.team_name || 'Unknown Team'}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                ${date} ${time}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-emerald-600">
+                                £${sale.price_paid || 0}m
+                            </div>
+                            ${sale.player_id ? `<div class="text-xs text-gray-500">${sale.position || ''}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     async loadPlayers() {

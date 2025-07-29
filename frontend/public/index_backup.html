@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPL Auction</title>
+    
+    <!-- Mobile Detection and Redirect -->
+    <script>
+        (function() {
+            // Check if user is on mobile device
+            function isMobileDevice() {
+                const userAgent = navigator.userAgent.toLowerCase();
+                const mobileKeywords = [
+                    'android', 'webos', 'iphone', 'ipad', 'ipod', 
+                    'blackberry', 'windows phone', 'mobile', 'opera mini'
+                ];
+                
+                // Check user agent
+                const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword));
+                
+                // Check screen size (less than 768px width)
+                const isSmallScreen = window.innerWidth < 768;
+                
+                // Check touch capability
+                const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                
+                return isMobileUA || (isSmallScreen && isTouchDevice);
+            }
+            
+            // Check if user explicitly wants desktop version
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceDesktop = urlParams.get('desktop') === 'true';
+            
+            // Redirect to mobile version if on mobile device and not forcing desktop
+            if (!forceDesktop && isMobileDevice() && !window.location.pathname.includes('mobile.html')) {
+                console.log('Mobile device detected, redirecting to mobile version');
+                const currentSearch = window.location.search;
+                window.location.href = 'mobile.html' + currentSearch;
+            }
+        })();
+    </script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation -->
+    <nav id="navbar" class="bg-green-600 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold">🏆 FPL Auction</h1>
+                    <span id="teamName" class="text-green-200"></span>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="text-right">
+                        <div class="text-sm text-green-200">Budget</div>
+                        <div id="teamBudget" class="text-xl font-bold">£0</div>
+                    </div>
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">FPL Auction Login</h2>
+                <p class="text-gray-600">Enter your team credentials</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="username" required autocomplete="username"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                           placeholder="team1">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" required autocomplete="current-password"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                           placeholder="password123">
+                </div>
+                
+                <button type="submit" id="loginBtn"
+                        class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    Login
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500">Demo credentials: team1 to team10, password: password123</p>
+                <a href="mobile.html" class="text-sm text-blue-600 hover:text-blue-800 underline mt-2 block">
+                    View Mobile Version
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <!-- Tab Navigation -->
+        <div class="bg-white shadow">
+            <div class="container mx-auto px-4">
+                <div class="flex space-x-8">
+                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="draft">
+                        🎲 Draft
+                    </button>
+                    <button class="tab-btn py-4 px-2 border-b-2 border-green-500 text-green-600 font-medium" data-tab="auction">
+                        🔨 Auction
+                    </button>
+                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="myTeam">
+                        👥 My Team
+                    </button>
+                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="scoring">
+                        📊 Scoring
+                    </button>
+                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="leaderboard">
+                        🏅 Leaderboard
+                    </button>
+                    <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 admin-only" data-tab="admin" style="display: none;">
+                        ⚙️ Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="container mx-auto px-4 py-6">
+            <!-- Draft Tab -->
+            <div id="draftTab" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Draft Status and Controls -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-lg shadow p-6 mb-6">
+                            <h2 class="text-2xl font-bold mb-4">🎲 Snake Draft Status</h2>
+                            <div id="draftStatus" class="mb-4">
+                                <div class="bg-gray-100 border border-gray-400 text-gray-700 px-4 py-3 rounded">
+                                    Loading draft status...
+                                </div>
+                            </div>
+                            
+                            <!-- Turn Indicator -->
+                            <div id="turnIndicator" class="mb-4"></div>
+                            
+                            <!-- Admin Controls -->
+                            <div class="space-x-2">
+                                <button id="initializeDraftBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                    🎲 Initialize Draft Order
+                                </button>
+                                <button id="startDraftBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                                    🚀 Start Draft
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Draft Order -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-xl font-bold mb-4">📋 Draft Order</h3>
+                            <div id="draftOrder" class="space-y-2">
+                                <div class="text-gray-500">No draft order yet...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Chat -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-xl font-bold mb-4">💬 Team Chat</h3>
+                        
+                        <!-- Chat Messages -->
+                        <div id="chatMessages" class="h-64 overflow-y-auto border border-gray-200 rounded p-3 mb-4 bg-gray-50">
+                            <div class="text-gray-500 text-center">No messages yet...</div>
+                        </div>
+                        
+                        <!-- Chat Input -->
+                        <form id="chatForm" class="flex">
+                            <input type="text" id="chatInput" 
+                                   placeholder="Type a message..." 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                   maxlength="500">
+                            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-r-md hover:bg-green-600">
+                                Send
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auction Tab -->
+            <div id="auctionTab" class="tab-content">
+                <!-- Auto-Bidding Controls -->
+                <div class="bg-white rounded-lg shadow p-4 mb-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="autoBidToggle" class="mr-2 h-5 w-5 text-green-600">
+                                <span class="font-medium">Auto-Bidding</span>
+                            </label>
+                            <button id="autoBidConfigBtn" class="bg-blue-500 text-white px-3 py-1 text-sm rounded hover:bg-blue-600">
+                                Configure
+                            </button>
+                        </div>
+                        <div id="autoBidStatus" class="hidden">
+                            <span class="animate-pulse bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                🤖 Auto-Bidding Active
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Turn Indicator at the top -->
+                <div id="auctionTurnIndicator" class="bg-white rounded-lg shadow p-4 mb-4">
+                    <div class="text-center">
+                        <span class="text-gray-500">Loading turn info...</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Left: Players List (1 column) -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-lg shadow p-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-lg font-semibold">Available Players</h3>
+                                <button id="syncDataBtn" class="bg-blue-500 text-white px-3 py-1 text-sm rounded hover:bg-blue-600">
+                                    Sync
+                                </button>
+                            </div>
+                            
+                            <!-- Compact Filters -->
+                            <div class="space-y-2 mb-3">
+                                <select id="positionFilter" class="w-full border rounded px-2 py-1 text-sm">
+                                    <option value="">All Positions</option>
+                                    <option value="1">GKP</option>
+                                    <option value="2">DEF</option>
+                                    <option value="3">MID</option>
+                                    <option value="4">FWD</option>
+                                </select>
+                                <select id="teamFilter" class="w-full border rounded px-2 py-1 text-sm">
+                                    <option value="">All Teams</option>
+                                </select>
+                                <input type="text" id="searchPlayers" placeholder="Search players..." 
+                                       class="w-full border rounded px-2 py-1 text-sm">
+                            </div>
+                            
+                            <!-- Players Single Column -->
+                            <div id="playersList" class="space-y-2 max-h-[calc(100vh-320px)] overflow-y-auto">
+                                <!-- Players will be loaded here in single column -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Middle: Current Auction and Clubs (1 column) -->
+                    <div class="lg:col-span-1 space-y-4">
+                        <div class="bg-white rounded-lg shadow p-4">
+                            <h3 class="text-lg font-semibold mb-3">Current Auction</h3>
+                            <div id="currentAuction">
+                                <p class="text-gray-500 text-center py-4">No active auction</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Available Clubs -->
+                        <div class="bg-white rounded-lg shadow p-4">
+                            <h3 class="text-lg font-semibold mb-3">Available Clubs</h3>
+                            <div id="clubsList" class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                                <!-- Clubs will be loaded here in a compact grid -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Chat (1 column) -->
+                    <div class="lg:col-span-1">
+                        <!-- Team Chat -->
+                        <div class="bg-white rounded-lg shadow p-4 h-full">
+                            <h3 class="text-lg font-semibold mb-3">💬 Team Chat</h3>
+                            
+                            <!-- Chat Messages -->
+                            <div id="auctionChatMessages" class="h-96 overflow-y-auto border border-gray-200 rounded p-2 mb-3 bg-gray-50 text-sm">
+                                <div class="text-gray-500 text-center">No messages yet...</div>
+                            </div>
+                            
+                            <!-- Chat Input -->
+                            <form id="auctionChatForm" class="flex">
+                                <input type="text" id="auctionChatInput" 
+                                       placeholder="Type a message..." 
+                                       class="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                       maxlength="500">
+                                <button type="submit" class="bg-green-500 text-white px-3 py-1 text-sm rounded-r-md hover:bg-green-600">
+                                    Send
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Team Tab -->
+            <div id="myTeamTab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold">Team Squad</h3>
+                        <div class="flex items-center gap-3">
+                            <label class="text-sm font-medium text-gray-700">View Team:</label>
+                            <select id="teamSelector" class="border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="">Loading teams...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="mySquad">
+                        <!-- Squad will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scoring Tab -->
+            <div id="scoringTab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-6">Scoring</h3>
+                    <div id="scoringContent">
+                        <!-- Scoring content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Tab -->
+            <div id="leaderboardTab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-6">Leaderboard</h3>
+                    <div id="leaderboardContent">
+                        <!-- Leaderboard will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Tab -->
+            <div id="adminTab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-6">⚙️ Admin Panel</h3>
+                    
+                    <!-- Admin Management -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-semibold mb-4">Admin Access Management</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-4">Grant or revoke admin access to teams. Team10 is the super admin and cannot be modified.</p>
+                            <div id="adminTeamsList" class="space-y-2">
+                                <!-- Teams list will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Draft Controls -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-semibold mb-4">Draft Controls</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="space-y-2">
+                                <button onclick="window.draftManager.initializeDraft()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                    🎲 Initialize Draft Order
+                                </button>
+                                <button onclick="window.draftManager.startDraft()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                                    🚀 Start Draft
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-Bid Configuration Modal -->
+    <div id="autoBidModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Auto-Bid Configuration</h3>
+                
+                <!-- Search and filters -->
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <input type="text" id="autoBidSearchPlayer" placeholder="Search player..." 
+                           class="px-3 py-2 border border-gray-300 rounded-md">
+                    <select id="autoBidFilterPosition" class="px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="">All Positions</option>
+                        <option value="GKP">GKP</option>
+                        <option value="DEF">DEF</option>
+                        <option value="MID">MID</option>
+                        <option value="FWD">FWD</option>
+                    </select>
+                    <select id="autoBidFilterClub" class="px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="">All Clubs</option>
+                    </select>
+                </div>
+                
+                <!-- Players Configuration List -->
+                <div id="autoBidPlayersList" class="max-h-96 overflow-y-auto border rounded-lg p-2 mb-4">
+                    <!-- Player configs will be dynamically added here -->
+                </div>
+                
+                <!-- Global Settings -->
+                <div class="border-t pt-4">
+                    <h4 class="font-medium mb-2">Global Settings</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="globalNeverSecondBidder" class="mr-2">
+                            <span>Never be the second bidder</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="globalOnlySellingStage" class="mr-2">
+                            <span>Only bid during selling stages</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="globalSkipIfTeamHasPlayer" class="mr-2">
+                            <span>Skip if any team already has a player from same club</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Modal Actions -->
+                <div class="flex justify-end mt-4 space-x-2">
+                    <button id="autoBidSaveBtn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        Save Configuration
+                    </button>
+                    <button id="autoBidCancelBtn" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/socket.js"></script>
+    <script src="js/draft.js"></script>
+    <script src="js/auction.js"></script>
+    <script src="js/team.js"></script>
+    <script src="js/scoring.js"></script>
+    <script src="js/autobid.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

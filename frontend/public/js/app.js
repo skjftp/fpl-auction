@@ -129,19 +129,28 @@ class App {
     }
 
     switchTab(tabName) {
-        // Update tab buttons
+        // Update tab buttons (old style)
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active');
             btn.classList.add('border-transparent', 'text-gray-500');
             btn.classList.remove('border-green-500', 'text-green-600');
         });
         
-        const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+        const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
         if (activeBtn) {
             activeBtn.classList.add('active');
             activeBtn.classList.remove('border-transparent', 'text-gray-500');
             activeBtn.classList.add('border-green-500', 'text-green-600');
         }
+        
+        // Update bottom navigation (new style)
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            if (btn.getAttribute('data-tab') === tabName) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        })
 
         // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => {
