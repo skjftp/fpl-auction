@@ -152,10 +152,10 @@ class MobileAuctionManager {
         auctionCard.classList.remove('hidden');
         noAuction.classList.add('hidden');
 
-        // Update player/club info - backend returns player_id or club_id, not nested objects
-        if (auctionData.player_id || auctionData.player_name) {
+        // Update player/club info - handle both nested and flat structures
+        if (auctionData.player || auctionData.player_id || auctionData.player_name) {
             this.displayPlayerAuction(auctionData);
-        } else if (auctionData.club_id || auctionData.club_name) {
+        } else if (auctionData.club || auctionData.club_id || auctionData.club_name) {
             this.displayClubAuction(auctionData);
         }
 
@@ -172,11 +172,12 @@ class MobileAuctionManager {
     displayPlayerAuction(auctionData) {
         console.log('Displaying player auction:', auctionData);
         
-        // The backend returns player data at the top level, not nested under 'player'
-        const playerName = auctionData.player_name || (auctionData.player && auctionData.player.web_name) || 'Unknown Player';
-        const playerPhoto = auctionData.photo || (auctionData.player && auctionData.player.photo);
-        const teamName = auctionData.team_name || (auctionData.player && auctionData.player.team_name) || '';
-        const position = auctionData.position || (auctionData.player && auctionData.player.position);
+        // Handle nested player object (from socket) or flat structure (from API)
+        const player = auctionData.player || auctionData;
+        const playerName = player.web_name || player.player_name || 'Unknown Player';
+        const playerPhoto = player.photo;
+        const teamName = player.team_name || '';
+        const position = player.position;
         
         // Player photo
         const photoEl = document.getElementById('playerPhoto');
@@ -207,9 +208,10 @@ class MobileAuctionManager {
     displayClubAuction(auctionData) {
         console.log('Displaying club auction:', auctionData);
         
-        // The backend returns club data at the top level, not nested under 'club'
-        const clubName = auctionData.club_name || (auctionData.club && auctionData.club.name) || 'Unknown Club';
-        const clubShortName = auctionData.club_short_name || (auctionData.club && auctionData.club.short_name) || '';
+        // Handle nested club object (from socket) or flat structure (from API)
+        const club = auctionData.club || auctionData;
+        const clubName = club.name || club.club_name || 'Unknown Club';
+        const clubShortName = club.short_name || club.club_short_name || '';
         
         // Club logo/icon
         const photoEl = document.getElementById('playerPhoto');

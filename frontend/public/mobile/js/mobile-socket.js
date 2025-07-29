@@ -170,8 +170,8 @@ class MobileSocketManager {
         } else {
             console.warn('⚠️ Mobile: mobileAuction not available for auction-started event');
         }
-        // Backend sends player_name and club_name at top level, not nested
-        const itemName = data.player_name || data.club_name || 'Unknown Item';
+        // Handle nested structure from socket events
+        const itemName = data.player?.web_name || data.club?.name || data.player_name || data.club_name || 'Unknown Item';
         window.mobileApp.showToast(
             `New auction: ${itemName}`,
             'info'
