@@ -19,9 +19,12 @@ const { authenticateToken } = require('./middleware/auth');
 // Configure CORS for production and development
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:8080',
   'http://127.0.0.1:3000', 
+  'http://127.0.0.1:8080',
   'http://[::]:3000',
-  'https://fpl-auction.netlify.app'
+  'https://fpl-auction.netlify.app',
+  'https://fpl-auction-2025.netlify.app'
 ];
 
 // Add production frontend URL if available
@@ -44,16 +47,42 @@ const PORT = process.env.PORT || 8080;
 // Temporarily disable helmet to debug CORS
 // app.use(helmet());
 
-// Enable CORS for all origins temporarily
+// Enable CORS with specific configuration
 app.use(cors({
-  origin: true,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      // Allow any origin in production for now
+      callback(null, true);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-JSON'],
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
 app.use(express.json());
+
+// Add CORS headers to all responses
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  next();
+});
 
 // Make io available to routes
 app.use((req, res, next) => {
