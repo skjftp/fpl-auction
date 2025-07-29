@@ -286,6 +286,16 @@ class App {
         if (selector && selectedTeamId) {
             selector.value = selectedTeamId;
         }
+        
+        // Update squad counts
+        const squadCount = document.getElementById('squadCount');
+        const clubCount = document.getElementById('clubCount');
+        if (squadCount) {
+            squadCount.textContent = `${squad.counts.players}/15 Players`;
+        }
+        if (clubCount) {
+            clubCount.textContent = `${squad.counts.clubs}/2 Clubs`;
+        }
 
         container.innerHTML = `
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -123,37 +123,6 @@
             background: var(--primary);
         }
 
-        /* Floating chat styles */
-        .floating-chat {
-            position: fixed;
-            bottom: 100px;
-            right: 20px;
-            width: 380px;
-            max-height: 500px;
-            z-index: 999;
-        }
-
-        .chat-toggle {
-            position: fixed;
-            bottom: 100px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 999;
-        }
-
-        .chat-toggle:hover {
-            transform: scale(1.1);
-            background: var(--primary-dark);
-        }
 
         /* Badge styles */
         .badge {
@@ -292,7 +261,7 @@
         <div class="bottom-nav">
             <div class="container mx-auto">
                 <div class="flex justify-around">
-                    <button class="nav-item flex-1" data-tab="draft">
+                    <button class="nav-item flex-1 admin-only" data-tab="draft" style="display: none;">
                         <span class="text-2xl mb-1">🎲</span>
                         <span class="text-xs font-medium">Draft</span>
                     </button>
@@ -301,16 +270,16 @@
                         <span class="text-xs font-medium">Auction</span>
                     </button>
                     <button class="nav-item flex-1" data-tab="myTeam">
-                        <span class="text-2xl mb-1">👥</span>
+                        <span class="text-2xl mb-1">⭐</span>
                         <span class="text-xs font-medium">My Team</span>
                     </button>
-                    <button class="nav-item flex-1" data-tab="scoring">
+                    <button class="nav-item flex-1" data-tab="history">
                         <span class="text-2xl mb-1">📊</span>
-                        <span class="text-xs font-medium">Scoring</span>
+                        <span class="text-xs font-medium">History</span>
                     </button>
-                    <button class="nav-item flex-1" data-tab="leaderboard">
-                        <span class="text-2xl mb-1">🏅</span>
-                        <span class="text-xs font-medium">Leader</span>
+                    <button class="nav-item flex-1" data-tab="scoring">
+                        <span class="text-2xl mb-1">🏆</span>
+                        <span class="text-xs font-medium">Scoring</span>
                     </button>
                     <button class="nav-item flex-1 admin-only" data-tab="admin" style="display: none;">
                         <span class="text-2xl mb-1">⚙️</span>
@@ -320,37 +289,6 @@
             </div>
         </div>
 
-        <!-- Floating Chat Button -->
-        <div class="chat-toggle" id="chatToggle" onclick="toggleFloatingChat()">
-            <span class="text-white text-2xl">💬</span>
-            <div class="badge hidden" id="chatBadge">0</div>
-        </div>
-
-        <!-- Floating Chat Window -->
-        <div class="floating-chat card hidden" id="floatingChat">
-            <div class="flex items-center justify-between p-4 border-b">
-                <h3 class="font-semibold text-gray-900">Team Chat</h3>
-                <button onclick="toggleFloatingChat()" class="text-gray-500 hover:text-gray-700">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div id="floatingChatMessages" class="h-80 overflow-y-auto p-4 bg-gray-50">
-                <div class="text-gray-500 text-center">No messages yet...</div>
-            </div>
-            <form id="floatingChatForm" class="p-4 border-t">
-                <div class="flex gap-2">
-                    <input type="text" id="floatingChatInput" 
-                           placeholder="Type a message..." 
-                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                           maxlength="500">
-                    <button type="submit" class="btn-primary px-4 py-2">
-                        Send
-                    </button>
-                </div>
-            </form>
-        </div>
 
         <!-- Tab Content -->
         <div class="container mx-auto px-6 py-4">
@@ -481,13 +419,26 @@
                         </div>
                     </div>
                     
-                    <!-- Right: Recent Sales -->
+                    <!-- Right: Team Chat -->
                     <div class="lg:col-span-1">
-                        <div class="card p-5">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-900">Recent Sales</h3>
-                            <div id="recentSales" class="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
-                                <div class="text-gray-500 text-center py-8">No recent sales</div>
+                        <div class="card p-5 h-full flex flex-col">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-900">💬 Team Chat</h3>
+                            
+                            <!-- Chat Messages -->
+                            <div id="chatMessages" class="flex-1 overflow-y-auto border border-gray-200 rounded-lg p-3 mb-3 bg-gray-50 min-h-[400px]">
+                                <div class="text-gray-500 text-center">No messages yet...</div>
                             </div>
+                            
+                            <!-- Chat Input -->
+                            <form id="chatForm" class="flex gap-2">
+                                <input type="text" id="chatInput" 
+                                       placeholder="Type a message..." 
+                                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                       maxlength="500">
+                                <button type="submit" class="btn-primary px-4 py-2">
+                                    Send
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -496,17 +447,46 @@
             <!-- My Team Tab -->
             <div id="myTeamTab" class="tab-content hidden fade-in">
                 <div class="card p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-bold text-gray-900">Team Squad</h3>
-                        <div class="flex items-center gap-3">
-                            <label class="text-sm font-medium text-gray-700">View Team:</label>
-                            <select id="teamSelector" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                <option value="">Loading teams...</option>
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <select id="teamSelector" class="text-lg font-bold bg-transparent border-none focus:outline-none cursor-pointer">
+                                <option value="">My Squad</option>
                             </select>
+                            <div class="flex gap-4 text-sm text-gray-600">
+                                <span id="squadCount" class="font-medium">0/15 Players</span>
+                                <span id="clubCount" class="font-medium">0/2 Clubs</span>
+                            </div>
                         </div>
                     </div>
                     <div id="mySquad">
                         <!-- Squad will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyTab" class="tab-content hidden fade-in">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold mb-6 text-gray-900">History</h3>
+                    
+                    <!-- Filters -->
+                    <div class="mb-6">
+                        <input type="text" id="historySearch" 
+                               placeholder="Search by player or team..." 
+                               class="w-full px-4 py-2 border border-gray-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <div class="flex gap-2">
+                            <button class="filter-btn px-4 py-2 rounded-lg bg-emerald-500 text-white" data-filter="bids">
+                                Bids
+                            </button>
+                            <button class="filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700" data-filter="sales">
+                                Sales
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- History List -->
+                    <div id="historyList" class="space-y-3 max-h-[calc(100vh-400px)] overflow-y-auto">
+                        <div class="text-gray-500 text-center py-8">No history data available</div>
                     </div>
                 </div>
             </div>
@@ -521,15 +501,6 @@
                 </div>
             </div>
 
-            <!-- Leaderboard Tab -->
-            <div id="leaderboardTab" class="tab-content hidden fade-in">
-                <div class="card p-6">
-                    <h3 class="text-xl font-bold mb-6 text-gray-900">Leaderboard</h3>
-                    <div id="leaderboardContent">
-                        <!-- Leaderboard will be loaded here -->
-                    </div>
-                </div>
-            </div>
 
             <!-- Admin Tab -->
             <div id="adminTab" class="tab-content hidden fade-in">
@@ -633,44 +604,43 @@
     <script src="js/team.js"></script>
     <script src="js/scoring.js"></script>
     <script src="js/autobid.js"></script>
+    <script src="js/history.js"></script>
     <script src="js/app.js"></script>
     
     <!-- Modern UI Scripts -->
     <script>
-        // Floating chat functionality
-        let chatOpen = false;
-        let unreadCount = 0;
+        // History filter functionality
+        let currentHistoryFilter = 'bids';
         
-        function toggleFloatingChat() {
-            const chat = document.getElementById('floatingChat');
-            const chatToggle = document.getElementById('chatToggle');
-            const badge = document.getElementById('chatBadge');
+        function setupHistoryFilters() {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentHistoryFilter = this.getAttribute('data-filter');
+                    
+                    // Update button styles
+                    filterBtns.forEach(b => {
+                        b.classList.remove('bg-emerald-500', 'text-white');
+                        b.classList.add('bg-gray-200', 'text-gray-700');
+                    });
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('bg-emerald-500', 'text-white');
+                    
+                    // Load filtered history
+                    if (window.historyManager) {
+                        window.historyManager.loadHistory(currentHistoryFilter);
+                    }
+                });
+            });
             
-            chatOpen = !chatOpen;
-            
-            if (chatOpen) {
-                chat.classList.remove('hidden');
-                chatToggle.style.display = 'none';
-                unreadCount = 0;
-                badge.classList.add('hidden');
-                badge.textContent = '0';
-                
-                // Focus on input
-                setTimeout(() => {
-                    document.getElementById('floatingChatInput')?.focus();
-                }, 100);
-            } else {
-                chat.classList.add('hidden');
-                chatToggle.style.display = 'flex';
-            }
-        }
-        
-        function incrementChatBadge() {
-            if (!chatOpen) {
-                unreadCount++;
-                const badge = document.getElementById('chatBadge');
-                badge.textContent = unreadCount;
-                badge.classList.remove('hidden');
+            // History search
+            const historySearch = document.getElementById('historySearch');
+            if (historySearch) {
+                historySearch.addEventListener('input', function() {
+                    if (window.historyManager) {
+                        window.historyManager.filterHistory(this.value);
+                    }
+                });
             }
         }
         
@@ -717,39 +687,34 @@
                 });
             }
             
-            // Sync floating chat with main chat
-            const originalAddChatMessage = window.draftManager?.addChatMessage;
-            if (originalAddChatMessage) {
-                window.draftManager.addChatMessage = function(message) {
-                    originalAddChatMessage.call(this, message);
-                    
-                    // Update floating chat
-                    const floatingChatMessages = document.getElementById('floatingChatMessages');
-                    if (floatingChatMessages) {
-                        const isCurrentUser = message.username === window.app.currentUser?.username;
-                        const time = new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        
-                        const messageEl = document.createElement('div');
-                        messageEl.className = `mb-2 ${isCurrentUser ? 'text-right' : ''}`;
-                        messageEl.innerHTML = `
-                            <div class="inline-block max-w-xs px-3 py-2 rounded-lg ${
-                                isCurrentUser 
-                                    ? 'bg-emerald-500 text-white' 
-                                    : 'bg-gray-200 text-gray-800'
-                            }">
-                                <div class="text-xs opacity-75">${message.team_name} • ${time}</div>
-                                <div>${message.message}</div>
-                            </div>
-                        `;
-                        
-                        floatingChatMessages.appendChild(messageEl);
-                        floatingChatMessages.scrollTop = floatingChatMessages.scrollHeight;
-                        
-                        // Show notification if chat is closed
-                        if (!chatOpen) {
-                            incrementChatBadge();
-                        }
+            // Update chat visibility based on active tab
+            const updateChatVisibility = () => {
+                const chatMessages = document.getElementById('chatMessages');
+                if (chatMessages && window.draftManager) {
+                    // Load chat messages when auction tab is active
+                    if (window.app?.currentTab === 'auction') {
+                        window.draftManager.updateChatUI();
                     }
+                }
+            };
+            
+            // Setup history filters
+            setupHistoryFilters();
+            
+            // Update draft tab visibility based on admin status
+            const updateAdminTabs = () => {
+                const draftTab = document.querySelector('.nav-item[data-tab="draft"]');
+                if (draftTab && window.app?.currentUser) {
+                    draftTab.style.display = window.app.currentUser.is_admin ? 'flex' : 'none';
+                }
+            };
+            
+            // Call after login
+            const originalShowMainApp = window.app?.showMainApp;
+            if (originalShowMainApp) {
+                window.app.showMainApp = function() {
+                    originalShowMainApp.call(this);
+                    updateAdminTabs();
                 };
             }
         });
