@@ -45,6 +45,9 @@ class HistoryManager {
     }
 
     async loadHistory() {
+        // Show loading state
+        this.showLoading();
+        
         try {
             // Load both sales and bid history in parallel
             const [soldItems, bidHistory] = await Promise.all([
@@ -179,10 +182,7 @@ class HistoryManager {
                                 ${item.is_club ? `<span class="text-xs px-2 py-0.5 bg-purple-200 text-purple-700 rounded">CLUB</span>` : ''}
                             </div>
                             <div class="text-sm text-gray-600 mt-1">
-                                Sold by ${item.seller_name || 'Team ' + item.sold_by_team_id}
-                            </div>
-                            <div class="text-sm text-gray-600">
-                                Bought by ${item.buyer_name || 'Team ' + item.sold_to_team_id}
+                                Bought by ${item.buyer_name || item.team_name || (item.sold_to_team_id ? 'Team ' + item.sold_to_team_id : 'Unknown Team')}
                             </div>
                             <div class="text-xs text-gray-500 mt-1">${time}</div>
                         </div>
@@ -210,7 +210,7 @@ class HistoryManager {
                                 ${item.type === 'auto-bid' ? `<span class="text-xs px-2 py-0.5 bg-blue-200 text-blue-700 rounded">AUTO</span>` : ''}
                             </div>
                             <div class="text-sm text-gray-600 mt-1">
-                                Bid by ${item.team_name || 'Team ' + item.team_id}
+                                Bid by ${item.team_name || (item.team_id ? 'Team ' + item.team_id : 'Unknown Team')}
                             </div>
                             <div class="text-xs text-gray-500 mt-1">${time}</div>
                         </div>
@@ -267,6 +267,18 @@ class HistoryManager {
         } catch (error) {
             console.error('Error formatting time:', error);
             return '';
+        }
+    }
+
+    showLoading() {
+        const container = document.getElementById('historyList');
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mb-4"></div>
+                    <div class="text-gray-500">Loading history...</div>
+                </div>
+            `;
         }
     }
 
