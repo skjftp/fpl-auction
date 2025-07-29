@@ -234,7 +234,7 @@ body {
 /* Status Bar */
 .status-bar {
     background: white;
-    padding: 8px 16px;
+    padding: 6px 16px; /* Reduced from 8px to 6px */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -246,7 +246,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 2px;
+    gap: 1px; /* Reduced from 2px to 1px */
 }
 
 .status-label {
@@ -262,7 +262,7 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    margin-top: 2px;
+    margin-top: 1px; /* Reduced from 2px to 1px */
 }
 
 .next-turn-label {
@@ -452,7 +452,7 @@ body {
 .tab-content {
     flex: 1;
     overflow-y: auto;
-    padding-top: 170px; /* Increased from 150px to account for Next Turn line */
+    padding-top: 165px; /* Reduced from 170px due to smaller header */
     padding-bottom: 80px; /* Space for fixed tab nav */
     position: relative;
 }
@@ -463,9 +463,9 @@ body {
     padding: 0;
     display: none; /* Hidden by default */
     flex-direction: column;
-    height: calc(100vh - 170px - 65px); /* Full height minus header and tab nav */
+    height: calc(100vh - 165px - 65px); /* Full height minus header and tab nav */
     position: fixed;
-    top: 170px; /* After fixed header */
+    top: 165px; /* After fixed header */
     left: 0;
     right: 0;
     bottom: 65px; /* Above tab nav */
@@ -912,7 +912,7 @@ body {
 
 .players-header {
     position: fixed;
-    top: 170px; /* Below the main header */
+    top: 165px; /* Below the main header */
     left: 0;
     right: 0;
     z-index: 20;
@@ -1052,7 +1052,7 @@ body {
 
 .team-header {
     position: fixed;
-    top: 170px; /* Below the main header */
+    top: 165px; /* Below the main header */
     left: 0;
     right: 0;
     z-index: 20;
@@ -1129,7 +1129,7 @@ body {
 }
 
 .team-squad {
-    padding: 180px 16px 80px; /* Top padding for header, bottom for nav */
+    padding: 175px 16px 80px; /* Top padding for header, bottom for nav */
     height: 100%;
     overflow: hidden; /* No scrolling - static layout */
 }
