@@ -443,32 +443,31 @@ body {
     padding: 0;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: calc(100vh - 150px - 65px); /* Full height minus header and tab nav */
+    position: fixed;
+    top: 150px; /* After fixed header */
+    left: 0;
+    right: 0;
+    bottom: 65px; /* Above tab nav */
     padding-top: 8px; /* Small padding after auto-bid card */
-}
-
-/* Spacer to push content above tab nav */
-#auctionTab::after {
-    content: '';
-    flex: 1;
-    min-height: 65px; /* Height of tab nav */
 }
 
 /* Fixed Bottom Chat - inside auction tab */
 #auctionTab .fixed-bottom-chat {
     background: white;
     border-top: 1px solid #e5e7eb;
-    height: 180px;
-    margin: 0 12px;
+    margin: 8px 12px 12px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    margin-bottom: 12px;
-    flex-shrink: 0;
+    flex: 1; /* Take remaining space */
+    display: flex;
+    flex-direction: column;
+    min-height: 180px;
 }
 
 .chat-messages-mini {
-    height: 120px;
+    flex: 1;
     padding: 8px 12px;
     overflow-y: auto;
     background: #f8fafc;
@@ -482,6 +481,7 @@ body {
     align-items: center;
     background: white;
     border-top: 1px solid #e5e7eb;
+    flex-shrink: 0;
 }
 
 .tab-pane {
@@ -492,6 +492,11 @@ body {
 
 .tab-pane.active {
     display: block;
+}
+
+/* Override for auction tab - no scroll */
+#auctionTab.tab-pane {
+    overflow: hidden !important;
 }
 
 /* Auction Tab */
