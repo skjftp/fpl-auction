@@ -299,10 +299,14 @@ class MobileAuctionManager {
                 statusEl.classList.remove('hidden');
                 // Add appropriate class for styling
                 statusEl.className = `selling-status ${sellingStage}`;
+                console.log('Updated selling status to:', statusText);
             } else {
                 statusEl.classList.add('hidden');
                 statusEl.className = 'selling-status hidden';
+                console.log('Hidden selling status');
             }
+        } else {
+            console.warn('sellingStatus element not found');
         }
     }
 
@@ -310,8 +314,13 @@ class MobileAuctionManager {
         const adminControls = document.getElementById('adminControls');
         const currentUser = window.mobileAPI.getCurrentUser();
         
-        if (!adminControls || !currentUser.is_admin) {
-            if (adminControls) adminControls.classList.add('hidden');
+        if (!adminControls) {
+            console.warn('adminControls element not found');
+            return;
+        }
+        
+        if (!currentUser.is_admin) {
+            adminControls.classList.add('hidden');
             return;
         }
 
@@ -393,9 +402,10 @@ class MobileAuctionManager {
 
     updateCurrentBid(bidData) {
         if (this.currentAuction && this.currentAuction.id === bidData.auctionId) {
-            this.currentAuction.currentBid = bidData.bidAmount;
-            this.currentAuction.currentBidder = bidData.teamName;
-            this.currentAuction.isAutoBid = bidData.isAutoBid;
+            // Update using backend format property names
+            this.currentAuction.current_bid = bidData.bidAmount;
+            this.currentAuction.current_bidder_name = bidData.teamName;
+            this.currentAuction.is_auto_bid = bidData.isAutoBid;
             
             // Reset selling stage when new bid placed
             if (this.currentAuction.selling_stage) {
