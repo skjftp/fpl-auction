@@ -185,6 +185,7 @@ body {
     right: 0;
     background: #f8fafc;
     z-index: 200;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* Top Bar */
@@ -277,10 +278,9 @@ body {
 /* Auto-Bid Card */
 .auto-bid-card {
     background: white;
-    margin: 16px;
+    margin: 0;
     padding: 16px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -432,7 +432,7 @@ body {
 .tab-content {
     flex: 1;
     overflow-y: auto;
-    padding-top: 164px; /* Space for fixed header (top bar + status bar + auto-bid) */
+    padding-top: 200px; /* Space for fixed header - increased to prevent cutoff */
     padding-bottom: 80px; /* Space for fixed tab nav */
     position: relative;
 }
@@ -466,9 +466,19 @@ body {
     border-top: 1px solid #e5e7eb;
 }
 
-/* Auction tab specific padding when chat is shown */
+/* Auction tab specific - no scroll, fixed layout */
+#auctionTab {
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+    gap: 12px;
+}
+
 #mainApp.auction-active .tab-content {
     padding-bottom: 240px; /* Space for tab nav + chat */
+    overflow: hidden;
 }
 
 .tab-pane {
@@ -484,10 +494,11 @@ body {
 /* Auction Tab */
 .auction-card {
     background: white;
-    margin: 12px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    flex-shrink: 0;
+    margin: 0;
 }
 
 .auction-header {
@@ -666,14 +677,18 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
+    padding: 40px 20px;
     text-align: center;
     color: #6b7280;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin: 0;
 }
 
 .no-auction-icon {
-    font-size: 60px;
-    margin-bottom: 16px;
+    font-size: 48px;
+    margin-bottom: 12px;
     opacity: 0.7;
 }
 
@@ -685,7 +700,7 @@ body {
 }
 
 .sold-section {
-    margin: 16px;
+    margin: 0;
 }
 
 .section-header {
