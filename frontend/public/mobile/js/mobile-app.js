@@ -149,11 +149,9 @@ class MobileApp {
             // Connect to socket
             window.mobileSocket.connect();
             
-            // Show bottom chat on auction tab
-            const bottomChat = document.querySelector('.fixed-bottom-chat');
+            // Show auction tab active state
             const mainApp = document.getElementById('mainApp');
             if (this.currentTab === 'auction') {
-                bottomChat.style.display = 'block';
                 mainApp.classList.add('auction-active');
             }
             
@@ -342,15 +340,12 @@ class MobileApp {
         });
         document.getElementById(`${tabName}Tab`).classList.add('active');
         
-        // Show/hide bottom chat based on tab
-        const bottomChat = document.querySelector('.fixed-bottom-chat');
+        // Show auction tab with chat
         const mainApp = document.getElementById('mainApp');
         if (tabName === 'auction') {
-            bottomChat.style.display = 'block';
             mainApp.classList.add('auction-active');
             this.renderChatMessagesMini();
         } else {
-            bottomChat.style.display = 'none';
             mainApp.classList.remove('auction-active');
         }
         

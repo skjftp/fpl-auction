@@ -155,7 +155,19 @@
                     <p>Waiting for next auction to start...</p>
                 </div>
 
-
+                <!-- Fixed Bottom Chat (inside auction tab) -->
+                <div class="fixed-bottom-chat">
+                    <div class="chat-messages-mini" id="chatMessagesMini"></div>
+                    <div class="chat-input-bar">
+                        <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="200">
+                        <button id="sendChatBtn" class="send-chat-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Players Tab -->
@@ -258,20 +270,6 @@
                 <button id="saveConfigBtn" class="save-btn">Save Configuration</button>
                 <button id="cancelConfigBtn" class="cancel-btn">Cancel</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Fixed Bottom Chat -->
-    <div class="fixed-bottom-chat">
-        <div class="chat-messages-mini" id="chatMessagesMini"></div>
-        <div class="chat-input-bar">
-            <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="200">
-            <button id="sendChatBtn" class="send-chat-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
-                </svg>
-            </button>
         </div>
     </div>
 
