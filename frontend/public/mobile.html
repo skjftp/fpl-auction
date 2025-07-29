@@ -56,47 +56,50 @@
 
     <!-- Main App -->
     <div id="mainApp" class="screen hidden">
-        <!-- Top Bar -->
-        <div class="top-bar">
-            <div class="team-info">
-                <span id="teamName" class="team-name"></span>
-                <span id="teamBudget" class="team-budget">£0</span>
-            </div>
-            <button id="logoutBtn" class="logout-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M16 17l5-5-5-5M19.8 12H9M10 3H6a2 2 0 00-2 2v14a2 2 0 002 2h4"/>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <div id="draftStatus" class="draft-status">
-                <span class="status-label">Turn:</span>
-                <span id="currentTurn" class="current-turn">Loading...</span>
-            </div>
-            <div id="connectionStatus" class="connection-status connected">
-                <div class="status-dot"></div>
-                <span>Connected</span>
-            </div>
-        </div>
-
-        <!-- Auto-Bid Toggle -->
-        <div class="auto-bid-card">
-            <div class="card-header">
-                <div class="auto-bid-toggle">
-                    <input type="checkbox" id="autoBidToggle" class="toggle-input">
-                    <label for="autoBidToggle" class="toggle-label">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-text">Auto-Bidding</span>
+        <!-- Fixed Header Section -->
+        <div class="fixed-header">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="team-info">
+                    <span id="teamName" class="team-name"></span>
+                    <span id="teamBudget" class="team-budget">£0</span>
                 </div>
-                <div id="autoBidStatus" class="auto-bid-status hidden">
-                    <span class="status-icon">🤖</span>
-                    <span>Active</span>
+                <button id="logoutBtn" class="logout-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 17l5-5-5-5M19.8 12H9M10 3H6a2 2 0 00-2 2v14a2 2 0 002 2h4"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div id="draftStatus" class="draft-status">
+                    <span class="status-label">Turn:</span>
+                    <span id="currentTurn" class="current-turn">Loading...</span>
+                </div>
+                <div id="connectionStatus" class="connection-status connected">
+                    <div class="status-dot"></div>
+                    <span>Connected</span>
                 </div>
             </div>
-            <button id="autoBidConfigBtn" class="config-btn">Configure</button>
+
+            <!-- Auto-Bid Toggle -->
+            <div class="auto-bid-card">
+                <div class="card-header">
+                    <div class="auto-bid-toggle">
+                        <input type="checkbox" id="autoBidToggle" class="toggle-input">
+                        <label for="autoBidToggle" class="toggle-label">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-text">Auto-Bidding</span>
+                    </div>
+                    <div id="autoBidStatus" class="auto-bid-status hidden">
+                        <span class="status-icon">🤖</span>
+                        <span>Active</span>
+                    </div>
+                </div>
+                <button id="autoBidConfigBtn" class="config-btn">Configure</button>
+            </div>
         </div>
 
         <!-- Tab Content -->
@@ -152,25 +155,6 @@
                     <p>Waiting for next auction to start...</p>
                 </div>
 
-                <!-- Auction Chat Section -->
-                <div class="auction-chat-section">
-                    <div class="section-header">
-                        <h3>Team Chat</h3>
-                        <button id="toggleAuctionChatBtn" class="toggle-btn">Show</button>
-                    </div>
-                    <div id="auctionChatContainer" class="auction-chat-container hidden">
-                        <div id="auctionChatMessages" class="auction-chat-messages"></div>
-                        <div class="auction-chat-input-section">
-                            <input type="text" id="auctionChatInput" class="auction-chat-input" placeholder="Type a message..." maxlength="200">
-                            <button id="sendAuctionChatBtn" class="send-auction-chat-btn">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                                    <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Sold Items -->
                 <div class="sold-section">
@@ -218,19 +202,18 @@
                 <div id="teamSquad" class="team-squad"></div>
             </div>
 
-            <!-- Chat Tab -->
-            <div id="chatTab" class="tab-pane">
-                <div class="chat-container">
-                    <div id="chatMessages" class="chat-messages"></div>
-                    <div class="chat-input-section">
-                        <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="200">
-                        <button id="sendChatBtn" class="send-chat-btn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
-                            </svg>
-                        </button>
+            <!-- History Tab -->
+            <div id="historyTab" class="tab-pane">
+                <div class="history-container">
+                    <div class="history-filters">
+                        <input type="text" id="historySearch" class="history-search" placeholder="Search by player or team...">
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="bids">Bids</button>
+                            <button class="filter-btn" data-filter="sales">Sales</button>
+                        </div>
                     </div>
+                    <div id="historyList" class="history-list"></div>
                 </div>
             </div>
         </div>
@@ -286,6 +269,20 @@
         </div>
     </div>
 
+    <!-- Fixed Bottom Chat -->
+    <div class="fixed-bottom-chat">
+        <div class="chat-messages-mini" id="chatMessagesMini"></div>
+        <div class="chat-input-bar">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="200">
+            <button id="sendChatBtn" class="send-chat-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <!-- Tab Navigation (Bottom Fixed) -->
     <div class="tab-nav">
         <button class="tab-btn active" data-tab="auction">
@@ -300,10 +297,9 @@
             <div class="tab-icon">⭐</div>
             <span>My Team</span>
         </button>
-        <button class="tab-btn" data-tab="chat">
-            <div class="tab-icon">💬</div>
-            <span>Chat</span>
-            <div id="chatNotification" class="notification-badge hidden">0</div>
+        <button class="tab-btn" data-tab="history">
+            <div class="tab-icon">📊</div>
+            <span>History</span>
         </button>
     </div>
 

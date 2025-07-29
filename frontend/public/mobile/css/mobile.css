@@ -174,6 +174,17 @@ body {
     height: 100vh;
     background: #f8fafc;
     overflow: hidden;
+    position: relative;
+}
+
+/* Fixed Header Section */
+.fixed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #f8fafc;
+    z-index: 200;
 }
 
 /* Top Bar */
@@ -184,9 +195,6 @@ body {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    position: sticky;
-    top: 0;
-    z-index: 100;
 }
 
 .team-info {
@@ -423,7 +431,9 @@ body {
 .tab-content {
     flex: 1;
     overflow-y: auto;
+    padding-top: 164px; /* Space for fixed header (top bar + status bar + auto-bid) */
     padding-bottom: 90px; /* Space for fixed tab nav */
+    position: relative;
 }
 
 .tab-pane {
@@ -439,7 +449,7 @@ body {
 /* Auction Tab */
 .auction-card {
     background: white;
-    margin: 16px;
+    margin: 12px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
@@ -459,14 +469,14 @@ body {
 }
 
 .player-photo {
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     backdrop-filter: blur(20px);
 }
 
@@ -968,35 +978,108 @@ body {
     color: #10b981;
 }
 
-/* Chat Tab */
-#chatTab {
-    padding-bottom: 0 !important; /* Override general tab padding for chat */
-    position: relative;
+/* History Tab */
+.history-container {
     height: 100%;
-    overflow: hidden !important; /* Completely prevent any scrolling */
+    display: flex;
+    flex-direction: column;
 }
 
-.chat-container {
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-.chat-messages {
-    height: calc(100% - 150px); /* Full height minus space for input */
-    max-height: 60vh; /* 60% of screen maximum */
+.history-filters {
     padding: 16px;
-    overflow-y: auto;
-    background: #f8fafc;
-    scroll-behavior: smooth;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.chat-message {
-    margin-bottom: 12px;
-    padding: 8px 12px;
-    background: white;
+.history-search {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.filter-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filter-btn.active {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+.history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.history-item {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-item-info {
+    flex: 1;
+}
+
+.history-item-type {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+
+.history-item-type.bid {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.history-item-type.auto-bid {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.history-item-type.sale {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* Chat Messages Styling */
+.chat-message {
+    margin-bottom: 6px;
+    padding: 6px 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    font-size: 12px;
 }
 
 .message-header {
@@ -1023,25 +1106,10 @@ body {
     line-height: 1.4;
 }
 
-.chat-input-section {
-    position: absolute;
-    bottom: 90px; /* Above bottom navigation */
-    left: 0;
-    right: 0;
-    padding: 16px;
-    background: white;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 50;
-}
-
 .chat-input {
     flex: 1;
-    padding: 12px;
-    border: 2px solid #e5e7eb;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
     border-radius: 20px;
     font-size: 14px;
     background: #f9fafb;
@@ -1057,8 +1125,8 @@ body {
     background: #10b981;
     color: white;
     border: none;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
