@@ -371,35 +371,32 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 h-[calc(100vh-280px)]">
                         <!-- Left: Players List -->
                         <div class="lg:col-span-1">
-                            <div class="card h-full flex flex-col">
-                                <!-- Fixed Header with Filters -->
-                                <div class="p-3 border-b border-gray-200 flex-shrink-0">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <h3 class="text-sm font-semibold text-gray-900">Players</h3>
-                                        <button id="syncDataBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
-                                            Sync
-                                        </button>
-                                    </div>
-                                    
-                                    <!-- Compact Filters -->
-                                    <div class="space-y-2">
-                                        <select id="positionFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                            <option value="">All Positions</option>
-                                            <option value="1">GKP</option>
-                                            <option value="2">DEF</option>
-                                            <option value="3">MID</option>
-                                            <option value="4">FWD</option>
-                                        </select>
-                                        <select id="teamFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                            <option value="">All Teams</option>
-                                        </select>
-                                        <input type="text" id="searchPlayers" placeholder="Search..." 
-                                               class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                    </div>
+                            <div class="card p-3" style="height: calc(100vh - 280px);">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h3 class="text-sm font-semibold text-gray-900">Players</h3>
+                                    <button id="syncDataBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
+                                        Sync
+                                    </button>
                                 </div>
                                 
-                                <!-- Scrollable Players List -->
-                                <div id="playersList" class="space-y-1 overflow-y-auto p-3 pr-1 flex-1">
+                                <!-- Filters -->
+                                <div class="space-y-2 mb-2">
+                                    <select id="positionFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                        <option value="">All Positions</option>
+                                        <option value="1">GKP</option>
+                                        <option value="2">DEF</option>
+                                        <option value="3">MID</option>
+                                        <option value="4">FWD</option>
+                                    </select>
+                                    <select id="teamFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                        <option value="">All Teams</option>
+                                    </select>
+                                    <input type="text" id="searchPlayers" placeholder="Search..." 
+                                           class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                </div>
+                                
+                                <!-- Players List with Fixed Height -->
+                                <div id="playersList" class="space-y-1 overflow-y-auto pr-1" style="height: calc(100% - 140px);">
                                     <!-- Players will be loaded here -->
                                 </div>
                             </div>
@@ -426,29 +423,24 @@
                         
                         <!-- Right: Team Chat -->
                         <div class="lg:col-span-1">
-                            <div class="card flex flex-col" style="height: calc(100vh - 280px);">
-                                <!-- Fixed Chat Header -->
-                                <div class="p-3 border-b border-gray-200 flex-shrink-0">
-                                    <h3 class="text-sm font-semibold text-gray-900">💬 Chat</h3>
-                                </div>
+                            <div class="card p-3" style="height: calc(100vh - 280px); display: flex; flex-direction: column;">
+                                <h3 class="text-sm font-semibold mb-2 text-gray-900">💬 Chat</h3>
                                 
-                                <!-- Scrollable Chat Messages -->
-                                <div id="chatMessages" class="flex-1 overflow-y-auto p-3 bg-gray-50 text-sm min-h-0">
+                                <!-- Chat Messages - Fixed Height with Scroll -->
+                                <div id="chatMessages" class="border border-gray-200 rounded p-2 bg-gray-50 text-sm" style="height: calc(100% - 80px); overflow-y: auto; margin-bottom: 8px;">
                                     <div class="text-gray-500 text-center">No messages yet...</div>
                                 </div>
                                 
-                                <!-- Fixed Chat Input -->
-                                <div class="p-3 border-t border-gray-200 bg-white flex-shrink-0">
-                                    <form id="chatForm" class="flex gap-2">
-                                        <input type="text" id="chatInput" 
-                                               placeholder="Type a message..." 
-                                               class="flex-1 px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                               maxlength="500">
-                                        <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 text-sm rounded transition-colors flex-shrink-0">
-                                            Send
-                                        </button>
-                                    </form>
-                                </div>
+                                <!-- Chat Input - Always at Bottom -->
+                                <form id="chatForm" class="flex gap-1" style="height: 40px;">
+                                    <input type="text" id="chatInput" 
+                                           placeholder="Type a message..." 
+                                           class="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                           maxlength="500">
+                                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 text-sm rounded transition-colors">
+                                        Send
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
