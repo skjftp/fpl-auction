@@ -22,9 +22,17 @@ class MobileApp {
             if (token && userData) {
                 try {
                     this.currentUser = JSON.parse(userData);
-                    await this.initializeMainApp();
+                    if (this.currentUser && this.currentUser.id) {
+                        await this.initializeMainApp();
+                    } else {
+                        console.warn('Invalid user data in localStorage');
+                        this.showLoginScreen();
+                    }
                 } catch (error) {
                     console.error('Error with stored user data:', error);
+                    // Clear invalid data
+                    localStorage.removeItem('fpl_token');
+                    localStorage.removeItem('fpl_team');
                     this.showLoginScreen();
                 }
             } else {
@@ -81,25 +89,43 @@ class MobileApp {
             return;
         }
 
+        if (!loginBtn) {
+            console.error('Login button not found');
+            return;
+        }
+
         try {
-            // Show loading state
+            // Show loading state safely
             loginBtn.disabled = true;
-            loginBtn.querySelector('.btn-text').textContent = 'Signing In...';
-            loginBtn.querySelector('.btn-spinner').classList.remove('hidden');
+            const btnText = loginBtn.querySelector('.btn-text');
+            const btnSpinner = loginBtn.querySelector('.btn-spinner');
+            
+            if (btnText) btnText.textContent = 'Signing In...';
+            if (btnSpinner) btnSpinner.classList.remove('hidden');
 
             const response = await window.mobileAPI.login(username, password);
-            this.currentUser = response.user;
             
-            this.showToast(`Welcome, ${this.currentUser.name}!`, 'success');
+            if (!response || !response.team || !response.team.id) {
+                throw new Error('Invalid login response from server');
+            }
+            
+            this.currentUser = response.team;
+            
+            this.showToast(`Welcome, ${this.currentUser.name || 'User'}!`, 'success');
             await this.initializeMainApp();
         } catch (error) {
             console.error('Login error:', error);
             this.showToast(error.message || 'Login failed', 'error');
         } finally {
-            // Reset button state
-            loginBtn.disabled = false;
-            loginBtn.querySelector('.btn-text').textContent = 'Sign In';
-            loginBtn.querySelector('.btn-spinner').classList.add('hidden');
+            // Reset button state safely
+            if (loginBtn) {
+                loginBtn.disabled = false;
+                const btnText = loginBtn.querySelector('.btn-text');
+                const btnSpinner = loginBtn.querySelector('.btn-spinner');
+                
+                if (btnText) btnText.textContent = 'Sign In';
+                if (btnSpinner) btnSpinner.classList.add('hidden');
+            }
         }
     }
 

@@ -27,7 +27,7 @@ class MobileAPI {
             const data = await response.json();
             this.token = data.token;
             localStorage.setItem('fpl_token', this.token);
-            localStorage.setItem('fpl_team', JSON.stringify(data.user));
+            localStorage.setItem('fpl_team', JSON.stringify(data.team));
             
             return data;
         } catch (error) {
