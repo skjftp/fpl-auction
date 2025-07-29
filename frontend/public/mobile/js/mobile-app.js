@@ -762,13 +762,18 @@ class MobileApp {
             // Load both sales and bid history
             const [soldItems, bidHistory] = await Promise.all([
                 window.mobileAPI.getSoldItems(),
-                window.mobileAPI.getBidHistory ? window.mobileAPI.getBidHistory() : []
+                window.mobileAPI.getBidHistory()
             ]);
+            
+            console.log('Loaded bid history:', bidHistory);
+            console.log('Loaded sold items:', soldItems);
             
             this.historyItems = [
                 ...soldItems.map(item => ({ ...item, type: 'sale' })),
                 ...(Array.isArray(bidHistory) ? bidHistory.map(item => ({ ...item, type: item.isAutoBid ? 'auto-bid' : 'bid' })) : [])
             ].sort((a, b) => new Date(b.created_at || b.sold_at) - new Date(a.created_at || a.sold_at));
+            
+            console.log('Combined history items:', this.historyItems);
             
             this.renderHistory('bids');
         } catch (error) {
@@ -781,10 +786,13 @@ class MobileApp {
         if (!container) return;
         
         let items = this.historyItems || [];
+        console.log('Rendering history with filter:', filter);
+        console.log('All history items:', items);
         
         // Apply filter
         if (filter === 'bids') {
             items = items.filter(item => item.type === 'bid' || item.type === 'auto-bid');
+            console.log('Filtered bid items:', items);
         } else if (filter === 'sales') {
             items = items.filter(item => item.type === 'sale');
         }
@@ -844,7 +852,20 @@ class MobileApp {
     
     formatHistoryTime(timestamp) {
         try {
-            const date = new Date(timestamp);
+            let date;
+            
+            // Handle Firestore timestamp format
+            if (timestamp && typeof timestamp === 'object' && timestamp._seconds) {
+                date = new Date(timestamp._seconds * 1000);
+            } else {
+                date = new Date(timestamp);
+            }
+            
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                return '';
+            }
+            
             const now = new Date();
             const diffMs = now - date;
             const diffMins = Math.floor(diffMs / 60000);

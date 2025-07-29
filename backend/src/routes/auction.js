@@ -303,6 +303,7 @@ router.post('/bid/:auctionId', async (req, res) => {
       auction_id: auctionId,
       team_id: teamId,
       bid_amount: bidAmount,
+      is_auto_bid: isAutoBid || false,
       created_at: admin.firestore.FieldValue.serverTimestamp()
     });
     
@@ -615,7 +616,7 @@ router.get('/active', async (req, res) => {
 // Get bid history
 router.get('/bid-history', async (req, res) => {
   try {
-    const teamId = req.user.team.id;
+    const teamId = req.user.teamId;
     
     // Get all bids from bid history
     const bidsSnapshot = await collections.bidHistory
@@ -637,7 +638,7 @@ router.get('/bid-history', async (req, res) => {
           
           if (auctionData.player_id) {
             // Get player info
-            const playerDoc = await collections.players.doc(auctionData.player_id.toString()).get();
+            const playerDoc = await collections.fplPlayers.doc(auctionData.player_id.toString()).get();
             if (playerDoc.exists) {
               const player = playerDoc.data();
               bid.player_name = player.web_name || player.name;
@@ -645,7 +646,7 @@ router.get('/bid-history', async (req, res) => {
             }
           } else if (auctionData.club_id) {
             // Get club info
-            const clubDoc = await collections.clubs.doc(auctionData.club_id.toString()).get();
+            const clubDoc = await collections.fplClubs.doc(auctionData.club_id.toString()).get();
             if (clubDoc.exists) {
               const club = clubDoc.data();
               bid.club_name = club.name;
