@@ -882,22 +882,22 @@ body {
 
 /* Players Tab */
 #playersTab {
-    position: relative;
     height: 100%;
     overflow: hidden;
-    flex-direction: column;
-}
-
-#playersTab.active {
-    display: flex;
 }
 
 .players-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    position: fixed;
+    top: 150px; /* Below the main header */
+    left: 0;
+    right: 0;
+    z-index: 20;
     background: white;
-    flex-shrink: 0;
+    display: none;
+}
+
+#playersTab.active .players-header {
+    display: block;
 }
 
 .search-bar {
@@ -935,8 +935,8 @@ body {
 }
 
 .players-list {
-    padding: 0 16px 16px;
-    flex: 1;
+    padding: 140px 16px 80px; /* Top padding for header, bottom for nav */
+    height: 100%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
