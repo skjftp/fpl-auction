@@ -262,11 +262,19 @@ class MobileAuctionManager {
         // Update selling status
         this.updateSellingStatus(sellingStage);
 
-        // Update wait button
+        // Update wait button - show only during selling stages for non-admin users
         const waitBtn = document.getElementById('waitBtn');
         if (waitBtn) {
             if (sellingStage && !isAdmin && !waitRequested) {
                 waitBtn.classList.remove('hidden');
+                // Disable if already requested by someone
+                waitBtn.disabled = false;
+                waitBtn.textContent = 'Wait!';
+            } else if (waitRequested) {
+                // Show who requested wait
+                waitBtn.classList.remove('hidden');
+                waitBtn.disabled = true;
+                waitBtn.textContent = 'Wait...';
             } else {
                 waitBtn.classList.add('hidden');
             }

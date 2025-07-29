@@ -660,14 +660,15 @@ body {
 }
 
 .bid-input {
-    flex: 1;
-    padding: 12px;
+    flex: 0.6;
+    padding: 10px;
     border: 2px solid #e5e7eb;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     text-align: center;
     color: #1f2937;
+    min-width: 80px;
 }
 
 .bid-input:focus {
@@ -676,10 +677,11 @@ body {
 }
 
 .place-bid-btn {
+    flex: 1;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
     border: none;
-    padding: 12px 20px;
+    padding: 10px 16px;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
@@ -687,7 +689,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     transition: all 0.2s ease;
     min-width: 100px;
 }
@@ -702,22 +704,28 @@ body {
 }
 
 .wait-btn {
-    width: 100%;
-    background: #3b82f6;
+    flex: 0.4;
+    background: #f59e0b;
     color: white;
     border: none;
-    padding: 12px;
+    padding: 10px 12px;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-bottom: 8px;
+    min-width: 60px;
 }
 
 .wait-btn:active {
-    background: #2563eb;
+    background: #dc2626;
     transform: scale(0.98);
+}
+
+.wait-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .admin-controls {
