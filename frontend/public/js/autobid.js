@@ -325,10 +325,12 @@ async function checkAndPlaceAutoBids() {
     // Only auto-bid on player auctions, not clubs
     if (auction.type !== 'player' || !auction.player) return;
     
-    // Try to get player ID from different possible locations
-    const playerId = auction.player.id || auction.playerId || auction.player_id;
-    
     console.log('Current auction:', auction);
+    console.log('Player object:', auction.player);
+    
+    // Try to get player ID from different possible locations
+    const playerId = auction.player.id || auction.player.player_id || auction.playerId || auction.player_id;
+    
     console.log('Player ID:', playerId);
     console.log('Auto-bid config:', autoBidConfig);
     

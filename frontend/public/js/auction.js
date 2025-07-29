@@ -541,6 +541,7 @@ class AuctionManager {
                 
                 if (auction.auction_type === 'player') {
                     auctionData.player = {
+                        id: auction.player_id,
                         web_name: auction.player_name,
                         team_name: auction.team_name,
                         position: auction.position,
