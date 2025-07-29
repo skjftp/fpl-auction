@@ -180,7 +180,7 @@ class MobileSocketManager {
 
     handleSellingStageUpdate(data) {
         if (window.mobileAuction) {
-            window.mobileAuction.updateSellingStage(data);
+            window.mobileAuction.receiveSellingStageUpdate(data);
         }
         window.mobileApp.showToast(data.message, 'info');
     }

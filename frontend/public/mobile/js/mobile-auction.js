@@ -428,7 +428,7 @@ class MobileAuctionManager {
         }
     }
 
-    updateSellingStage(data) {
+    receiveSellingStageUpdate(data) {
         if (this.currentAuction && this.currentAuction.id === data.auctionId) {
             this.currentAuction.selling_stage = data.stage;
             this.updateSellingStatus(data.stage);
