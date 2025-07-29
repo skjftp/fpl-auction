@@ -297,118 +297,155 @@ class App {
             clubCount.textContent = `${squad.counts.clubs}/2 Clubs`;
         }
 
-        container.innerHTML = `
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Squad Overview -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-semibold mb-4">Squad Overview</h4>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span>Players:</span>
-                            <span>${squad.counts.players}/15</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Clubs:</span>
-                            <span>${squad.counts.clubs}/2</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Goalkeepers:</span>
-                            <span>${squad.counts.gkp}/2</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Defenders:</span>
-                            <span>${squad.counts.def}/5</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Midfielders:</span>
-                            <span>${squad.counts.mid}/5</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Forwards:</span>
-                            <span>${squad.counts.fwd}/3</span>
-                        </div>
-                        <hr class="my-2">
-                        <div class="flex justify-between font-semibold">
-                            <span>Total Spent:</span>
-                            <span>£${totalSpent}</span>
-                        </div>
-                        <div class="flex justify-between font-semibold">
-                            <span>Remaining:</span>
-                            <span class="${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}">£${remainingBudget}</span>
-                        </div>
-                    </div>
+        // Create club color mapping
+        const clubColors = [
+            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', 
+            '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+        ];
+        const clubColorMap = new Map();
+        let colorIndex = 0;
+
+        // Assign colors to clubs
+        const allPlayers = [];
+        Object.values(squad.positions).forEach(players => {
+            allPlayers.push(...players);
+        });
+        
+        allPlayers.forEach(player => {
+            if (player && player.club_name && !clubColorMap.has(player.club_name)) {
+                clubColorMap.set(player.club_name, clubColors[colorIndex % clubColors.length]);
+                colorIndex++;
+            }
+        });
+
+        // Formation View Style
+        const formationStyles = `
+            <style>
+                .formation-container {
+                    background: linear-gradient(to bottom, #059669, #10b981);
+                    border-radius: 12px;
+                    padding: 20px;
+                    min-height: 400px;
+                    position: relative;
+                }
+                .formation-row {
+                    display: flex;
+                    justify-content: center;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                }
+                .player-card {
+                    background: white;
+                    border-radius: 8px;
+                    padding: 8px;
+                    text-align: center;
+                    width: 80px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    border: 2px solid;
+                    transition: transform 0.2s;
+                }
+                .player-card:hover {
+                    transform: scale(1.05);
+                }
+                .player-card.empty {
+                    background: rgba(255,255,255,0.3);
+                    border: 2px dashed #fff;
+                }
+                .player-name {
+                    font-size: 11px;
+                    font-weight: 600;
+                    margin-bottom: 2px;
+                }
+                .player-price {
+                    font-size: 10px;
+                    color: #059669;
+                }
+                .player-club {
+                    font-size: 9px;
+                    margin-top: 2px;
+                }
+                .clubs-section {
+                    display: flex;
+                    justify-content: center;
+                    gap: 20px;
+                    margin-top: 20px;
+                    padding-top: 20px;
+                    border-top: 2px solid rgba(255,255,255,0.3);
+                }
+                .club-card {
+                    background: white;
+                    border-radius: 8px;
+                    padding: 10px 20px;
+                    text-align: center;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+            </style>
+        `;
+
+        const renderPlayer = (player) => {
+            if (!player) {
+                return `<div class="player-card empty"><div class="player-name">Empty</div></div>`;
+            }
+            const clubColor = clubColorMap.get(player.club_name) || '#6b7280';
+            return `
+                <div class="player-card" style="border-color: ${clubColor};">
+                    <div class="player-name">${player.web_name || player.name || 'Unknown'}</div>
+                    <div class="player-price">£${player.price_paid || 0}m</div>
+                    <div class="player-club" style="color: ${clubColor};">${player.club_name || ''}</div>
+                </div>
+            `;
+        };
+
+        const fillSlots = (players, max) => {
+            const filled = [...players];
+            while (filled.length < max) filled.push(null);
+            return filled;
+        };
+
+        container.innerHTML = formationStyles + `
+            <div class="formation-container">
+                <!-- Goalkeepers -->
+                <div class="formation-row">
+                    ${fillSlots(squad.positions[1] || [], 2).map(p => renderPlayer(p)).join('')}
+                </div>
+                <!-- Defenders -->
+                <div class="formation-row">
+                    ${fillSlots(squad.positions[2] || [], 5).map(p => renderPlayer(p)).join('')}
+                </div>
+                <!-- Midfielders -->
+                <div class="formation-row">
+                    ${fillSlots(squad.positions[3] || [], 5).map(p => renderPlayer(p)).join('')}
+                </div>
+                <!-- Forwards -->
+                <div class="formation-row">
+                    ${fillSlots(squad.positions[4] || [], 3).map(p => renderPlayer(p)).join('')}
                 </div>
                 
-                <!-- Squad Formation -->
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h4 class="font-semibold mb-4">Formation</h4>
-                    <div class="squad-formation">
-                        <!-- Goalkeepers -->
-                        <div class="formation-row">
-                            ${this.renderPositionSlots(squad.positions[1] || [], 2, 'GKP')}
-                        </div>
-                        <!-- Defenders -->
-                        <div class="formation-row">
-                            ${this.renderPositionSlots(squad.positions[2] || [], 5, 'DEF')}
-                        </div>
-                        <!-- Midfielders -->
-                        <div class="formation-row">
-                            ${this.renderPositionSlots(squad.positions[3] || [], 5, 'MID')}
-                        </div>
-                        <!-- Forwards -->
-                        <div class="formation-row">
-                            ${this.renderPositionSlots(squad.positions[4] || [], 3, 'FWD')}
-                        </div>
+                <!-- Clubs Section -->
+                ${squad.clubs.length > 0 ? `
+                    <div class="clubs-section">
+                        ${squad.clubs.map(club => `
+                            <div class="club-card">
+                                <div class="font-semibold">${club.club_name}</div>
+                                <div class="text-xs text-gray-600">${club.club_short_name}</div>
+                                <div class="text-sm text-emerald-600">£${club.price_paid}m</div>
+                            </div>
+                        `).join('')}
                     </div>
-                </div>
+                ` : ''}
             </div>
             
-            <!-- Players List -->
-            ${squad.players.length > 0 ? `
-                <div class="mt-6">
-                    <h4 class="font-semibold mb-4">My Players</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        ${squad.players.map(player => `
-                            <div class="bg-white p-4 rounded border">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                                        ${player.photo ? 
-                                            `<img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo.replace('.jpg', '')}.png" 
-                                                  alt="${player.web_name}" class="w-full h-full object-cover rounded-full">` :
-                                            '<span class="text-xs font-bold">' + player.web_name.substring(0, 2) + '</span>'
-                                        }
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="font-medium">${player.web_name}</div>
-                                        <div class="text-sm text-gray-500">${player.team_name || 'Unknown'}</div>
-                                        <div class="text-sm font-semibold text-green-600">£${player.price_paid}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
+            <!-- Budget Summary -->
+            <div class="mt-4 bg-gray-100 rounded-lg p-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium">Total Spent:</span>
+                    <span class="text-sm font-bold">£${totalSpent}m</span>
                 </div>
-            ` : ''}
-            
-            <!-- Clubs -->
-            ${squad.clubs.length > 0 ? `
-                <div class="mt-6">
-                    <h4 class="font-semibold mb-4">My Clubs</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${squad.clubs.map(club => `
-                            <div class="bg-white p-4 rounded border">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <div class="font-medium">${club.club_name}</div>
-                                        <div class="text-sm text-gray-500">${club.club_short_name}</div>
-                                    </div>
-                                    <div class="text-sm font-semibold text-green-600">£${club.price_paid}</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
+                <div class="flex justify-between items-center mt-1">
+                    <span class="text-sm font-medium">Remaining Budget:</span>
+                    <span class="text-sm font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}">£${remainingBudget}m</span>
                 </div>
-            ` : ''}
+            </div>
         `;
     }
 
