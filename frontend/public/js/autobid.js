@@ -11,12 +11,26 @@ let autoBidConfig = {
 
 // Initialize auto-bid functionality
 function initAutoBid() {
-    // Toggle auto-bidding
-    document.getElementById('autoBidToggle').addEventListener('change', (e) => {
-        autoBidEnabled = e.target.checked;
+    // Load initial state
+    loadAutoBidConfig().then(() => {
+        // Set toggle state from loaded config
+        document.getElementById('autoBidToggle').checked = autoBidEnabled;
         updateAutoBidStatus();
         if (autoBidEnabled) {
-            loadAutoBidConfig();
+            startAutoBidding();
+        }
+    });
+    
+    // Toggle auto-bidding
+    document.getElementById('autoBidToggle').addEventListener('change', async (e) => {
+        autoBidEnabled = e.target.checked;
+        updateAutoBidStatus();
+        
+        // Save enabled state immediately
+        autoBidConfig.enabled = autoBidEnabled;
+        await saveAutoBidEnabledState();
+        
+        if (autoBidEnabled) {
             startAutoBidding();
         } else {
             stopAutoBidding();
@@ -222,6 +236,9 @@ async function saveAutoBidConfig() {
 
     autoBidConfig.players = playerConfigs;
     
+    // Ensure enabled state is included
+    autoBidConfig.enabled = autoBidEnabled;
+    
     // Save to backend
     try {
         await api.saveAutoBidConfig(autoBidConfig);
@@ -240,13 +257,30 @@ async function loadAutoBidConfig() {
         if (config) {
             autoBidConfig = config;
             
-            // Update global settings UI
-            document.getElementById('globalNeverSecondBidder').checked = config.global.neverSecondBidder;
-            document.getElementById('globalOnlySellingStage').checked = config.global.onlySellingStage;
-            document.getElementById('globalSkipIfTeamHasPlayer').checked = config.global.skipIfTeamHasPlayer;
+            // Set enabled state
+            autoBidEnabled = config.enabled || false;
+            
+            // Update global settings UI if modal is open
+            const modal = document.getElementById('autoBidModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                document.getElementById('globalNeverSecondBidder').checked = config.global.neverSecondBidder;
+                document.getElementById('globalOnlySellingStage').checked = config.global.onlySellingStage;
+                document.getElementById('globalSkipIfTeamHasPlayer').checked = config.global.skipIfTeamHasPlayer;
+            }
         }
     } catch (error) {
         console.error('Error loading auto-bid config:', error);
+    }
+}
+
+// Save just the enabled state
+async function saveAutoBidEnabledState() {
+    try {
+        await api.saveAutoBidConfig(autoBidConfig);
+        console.log('Auto-bid enabled state saved');
+    } catch (error) {
+        console.error('Error saving auto-bid enabled state:', error);
+        showNotification('Failed to save auto-bid state', 'error');
     }
 }
 
@@ -273,9 +307,13 @@ function stopAutoBidding() {
 
 // Check and place auto-bids
 async function checkAndPlaceAutoBids() {
-    if (!autoBidEnabled || !window.currentAuction) return;
+    if (!autoBidEnabled || !window.auctionManager || !window.auctionManager.currentAuction) return;
 
-    const playerId = window.currentAuction.playerId;
+    const auction = window.auctionManager.currentAuction;
+    const playerId = auction.player ? auction.player.id : null;
+    
+    if (!playerId) return;
+    
     const playerConfig = autoBidConfig.players[playerId];
     
     if (!playerConfig || !playerConfig.maxBid) return;
@@ -287,21 +325,24 @@ async function checkAndPlaceAutoBids() {
     };
 
     // Check if we should bid
-    if (!shouldAutoBid(window.currentAuction, config)) return;
+    if (!shouldAutoBid(auction, config)) return;
 
     // Calculate next bid amount
-    const currentBid = window.currentAuction.currentBid || 0;
+    const currentBid = auction.currentBid || 0;
     const nextBid = currentBid + 5;
 
     // Check if within max bid limit
     if (nextBid > playerConfig.maxBid) return;
 
+    // Get current team info
+    const currentTeam = JSON.parse(localStorage.getItem('fpl_team') || '{}');
+    
     // Check if we're already the highest bidder
-    if (window.currentAuction.highestBidder === window.currentTeam.id) return;
+    if (auction.currentBidderId === currentTeam.id) return;
 
     // Place bid
     try {
-        await api.placeBid(window.currentAuction.id, nextBid, true);
+        await api.placeBid(auction.id, nextBid, true);
         console.log(`Auto-bid placed: £${nextBid} for player ${playerId}`);
     } catch (error) {
         console.error('Auto-bid failed:', error);
