@@ -206,6 +206,11 @@ class MobileSocketManager {
             }
         }
         
+        // Reload draft state to show updated turn info after auction
+        if (window.mobileApp) {
+            window.mobileApp.loadDraftState();
+        }
+        
         window.mobileApp.showToast('Auction completed!', 'success');
         this.vibrate([100, 50, 100]);
     }

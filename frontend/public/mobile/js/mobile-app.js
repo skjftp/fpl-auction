@@ -357,6 +357,14 @@ class MobileApp {
                         nextTurnEl.textContent = nextTurnInfo.teamName;
                     }
                 }
+            } else if (draftState.draft_order && draftState.draft_order.length > 0) {
+                // Draft initialized but not started - show first team
+                const firstTeam = draftState.draft_order[0];
+                currentTurnEl.textContent = firstTeam.name || 'Team1';
+                if (nextTurnEl) {
+                    const secondTeam = draftState.draft_order[1];
+                    nextTurnEl.textContent = secondTeam ? secondTeam.name : '-';
+                }
             } else {
                 currentTurnEl.textContent = 'Draft not active';
                 if (nextTurnEl) {
@@ -409,10 +417,10 @@ class MobileApp {
             return { teamId: null, teamName: 'Draft Complete' };
         }
         
-        // Get team name (assuming teams are named Team1, Team2, etc.)
-        const nextTeamName = draftState.teams ? 
-            draftState.teams.find(team => team.id === nextTeamId)?.name || `Team${nextTeamId}` :
-            `Team${nextTeamId}`;
+        // Get team name from draft_order or teams array
+        const teams = draftState.draft_order || draftState.teams || [];
+        const nextTeam = teams.find(team => team.team_id === nextTeamId || team.id === nextTeamId);
+        const nextTeamName = nextTeam?.name || `Team${nextTeamId}`;
             
         return { teamId: nextTeamId, teamName: nextTeamName };
     }
