@@ -770,25 +770,23 @@ class MobileApp {
                 ...(Array.isArray(bidHistory) ? bidHistory.map(item => ({ ...item, type: item.isAutoBid ? 'auto-bid' : 'bid' })) : [])
             ].sort((a, b) => new Date(b.created_at || b.sold_at) - new Date(a.created_at || a.sold_at));
             
-            this.renderHistory();
+            this.renderHistory('bids');
         } catch (error) {
             console.error('Error loading history:', error);
         }
     }
     
-    renderHistory(filter = 'all', search = '') {
+    renderHistory(filter = 'bids', search = '') {
         const container = document.getElementById('historyList');
         if (!container) return;
         
         let items = this.historyItems || [];
         
         // Apply filter
-        if (filter !== 'all') {
-            if (filter === 'bids') {
-                items = items.filter(item => item.type === 'bid' || item.type === 'auto-bid');
-            } else if (filter === 'sales') {
-                items = items.filter(item => item.type === 'sale');
-            }
+        if (filter === 'bids') {
+            items = items.filter(item => item.type === 'bid' || item.type === 'auto-bid');
+        } else if (filter === 'sales') {
+            items = items.filter(item => item.type === 'sale');
         }
         
         // Apply search
@@ -839,7 +837,7 @@ class MobileApp {
     }
     
     searchHistory() {
-        const filter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+        const filter = document.querySelector('.filter-btn.active')?.dataset.filter || 'bids';
         const search = document.getElementById('historySearch')?.value || '';
         this.renderHistory(filter, search);
     }

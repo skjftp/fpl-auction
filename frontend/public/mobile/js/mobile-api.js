@@ -346,6 +346,27 @@ class MobileAPI {
         }
     }
 
+    // Get bid history
+    async getBidHistory() {
+        try {
+            const response = await fetch(`${this.baseURL}/auction/bid-history`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch bid history');
+            }
+
+            const data = await response.json();
+            return data.bids || [];
+        } catch (error) {
+            console.error('Get bid history error:', error);
+            return [];
+        }
+    }
+
     // Auto-bid
     async getAutoBidConfig() {
         try {

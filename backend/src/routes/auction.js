@@ -612,4 +612,72 @@ router.get('/active', async (req, res) => {
   }
 });
 
+// Get bid history
+router.get('/bid-history', async (req, res) => {
+  try {
+    const teamId = req.user.team.id;
+    
+    // Get all bids from bid history
+    const bidsSnapshot = await collections.bidHistory
+      .orderBy('created_at', 'desc')
+      .limit(100)
+      .get();
+    
+    const bids = [];
+    
+    for (const doc of bidsSnapshot.docs) {
+      const bid = { id: doc.id, ...doc.data() };
+      
+      // Get player/club info
+      if (bid.auction_id) {
+        // Get auction details
+        const auctionDoc = await collections.auctions.doc(bid.auction_id).get();
+        if (auctionDoc.exists) {
+          const auctionData = auctionDoc.data();
+          
+          if (auctionData.player_id) {
+            // Get player info
+            const playerDoc = await collections.players.doc(auctionData.player_id.toString()).get();
+            if (playerDoc.exists) {
+              const player = playerDoc.data();
+              bid.player_name = player.web_name || player.name;
+              bid.player_id = auctionData.player_id;
+            }
+          } else if (auctionData.club_id) {
+            // Get club info
+            const clubDoc = await collections.clubs.doc(auctionData.club_id.toString()).get();
+            if (clubDoc.exists) {
+              const club = clubDoc.data();
+              bid.club_name = club.name;
+              bid.club_id = auctionData.club_id;
+            }
+          }
+        }
+      }
+      
+      // Get team name
+      const teamQuery = await collections.teams
+        .where('id', '==', bid.team_id)
+        .limit(1)
+        .get();
+      
+      if (!teamQuery.empty) {
+        bid.team_name = teamQuery.docs[0].data().name;
+      }
+      
+      // Format bid amount
+      bid.bidAmount = bid.bid_amount;
+      bid.isAutoBid = bid.is_auto_bid || false;
+      
+      bids.push(bid);
+    }
+    
+    res.json({ bids });
+    
+  } catch (error) {
+    console.error('Error fetching bid history:', error);
+    res.status(500).json({ error: 'Failed to fetch bid history' });
+  }
+});
+
 module.exports = router;
