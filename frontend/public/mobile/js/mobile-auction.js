@@ -196,7 +196,7 @@ class MobileAuctionManager {
         const teamPosEl = document.getElementById('playerTeamPos');
         if (teamPosEl) {
             const positionName = this.getPositionName(position);
-            const priceText = auctionData.now_cost ? `£${auctionData.now_cost}m` : '';
+            const priceText = auctionData.now_cost ? `£${auctionData.now_cost / 10}m` : '';
             teamPosEl.textContent = `${positionName} - ${teamName} ${priceText}`.trim();
         }
     }
@@ -556,7 +556,7 @@ class MobileAuctionManager {
                         ${isSold ? `<p style="color: #ef4444; font-size: 11px;">Sold to ${player.sold_to_team_name || 'Unknown'}</p>` : ''}
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                        <span class="player-price">£${player.now_cost || player.price || 0}m</span>
+                        <span class="player-price">£${(player.now_cost || player.price || 0) / 10}m</span>
                         ${canStartAuction ? `
                             <button class="start-auction-btn" onclick="mobileAuction.startPlayerAuction(${player.id})">
                                 Start
