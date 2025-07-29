@@ -1,0 +1,584 @@
+// Mobile Auction Manager for FPL Auction
+class MobileAuctionManager {
+    constructor() {
+        this.currentAuction = null;
+        this.players = [];
+        this.clubs = [];
+        this.soldItems = [];
+        this.filteredPlayers = [];
+    }
+
+    async initialize() {
+        try {
+            // Load initial data
+            await this.loadPlayers();
+            await this.loadClubs();
+            await this.loadActiveAuctions();
+            await this.loadSoldItems();
+            
+            // Setup event listeners
+            this.setupEventListeners();
+            
+            console.log('Mobile auction manager initialized');
+        } catch (error) {
+            console.error('Failed to initialize auction manager:', error);
+            window.mobileApp.showToast('Failed to load auction data', 'error');
+        }
+    }
+
+    setupEventListeners() {
+        // Place bid button
+        const placeBidBtn = document.getElementById('placeBidBtn');
+        if (placeBidBtn) {
+            placeBidBtn.addEventListener('click', () => this.handlePlaceBid());
+        }
+
+        // Wait button
+        const waitBtn = document.getElementById('waitBtn');
+        if (waitBtn) {
+            waitBtn.addEventListener('click', () => this.handleWaitRequest());
+        }
+
+        // Player search and filters
+        const playerSearch = document.getElementById('playerSearch');
+        if (playerSearch) {
+            playerSearch.addEventListener('input', () => this.filterPlayers());
+        }
+
+        const positionFilter = document.getElementById('positionFilter');
+        if (positionFilter) {
+            positionFilter.addEventListener('change', () => this.filterPlayers());
+        }
+
+        const clubFilter = document.getElementById('clubFilter');
+        if (clubFilter) {
+            clubFilter.addEventListener('change', () => this.filterPlayers());
+        }
+
+        // Sold items toggle
+        const toggleSoldBtn = document.getElementById('toggleSoldBtn');
+        if (toggleSoldBtn) {
+            toggleSoldBtn.addEventListener('click', () => this.toggleSoldItems());
+        }
+
+        // Bid input Enter key
+        const bidInput = document.getElementById('bidAmount');
+        if (bidInput) {
+            bidInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handlePlaceBid();
+                }
+            });
+        }
+    }
+
+    async loadPlayers() {
+        try {
+            const players = await window.mobileAPI.getPlayers();
+            this.players = Array.isArray(players) ? players : (players.players || []);
+            this.filteredPlayers = [...this.players];
+            this.renderPlayers();
+            this.populateClubFilter();
+        } catch (error) {
+            console.error('Error loading players:', error);
+            throw error;
+        }
+    }
+
+    async loadClubs() {
+        try {
+            this.clubs = await window.mobileAPI.getClubs();
+        } catch (error) {
+            console.error('Error loading clubs:', error);
+            throw error;
+        }
+    }
+
+    async loadActiveAuctions() {
+        try {
+            const auctions = await window.mobileAPI.getActiveAuctions();
+            if (auctions && auctions.length > 0) {
+                this.displayCurrentAuction(auctions[0]);
+            } else {
+                this.clearCurrentAuction();
+            }
+        } catch (error) {
+            console.error('Error loading active auctions:', error);
+        }
+    }
+
+    async loadSoldItems() {
+        try {
+            this.soldItems = await window.mobileAPI.getSoldItems();
+            this.renderSoldItems();
+        } catch (error) {
+            console.error('Error loading sold items:', error);
+        }
+    }
+
+    displayCurrentAuction(auctionData) {
+        this.currentAuction = auctionData;
+        
+        const auctionCard = document.getElementById('currentAuction');
+        const noAuction = document.getElementById('noAuction');
+        
+        if (!auctionCard || !noAuction) return;
+
+        // Show auction card, hide no auction message
+        auctionCard.classList.remove('hidden');
+        noAuction.classList.add('hidden');
+
+        // Update player/club info
+        if (auctionData.player) {
+            this.displayPlayerAuction(auctionData);
+        } else if (auctionData.club) {
+            this.displayClubAuction(auctionData);
+        }
+
+        // Update bid info
+        this.updateBidDisplay(auctionData);
+        
+        // Update controls
+        this.updateControls(auctionData);
+    }
+
+    displayPlayerAuction(auctionData) {
+        const player = auctionData.player;
+        
+        // Player photo
+        const photoEl = document.getElementById('playerPhoto');
+        if (photoEl) {
+            if (player.photo) {
+                photoEl.innerHTML = `<img src="${player.photo}" alt="${player.web_name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            } else {
+                photoEl.innerHTML = '👤';
+            }
+        }
+
+        // Player name
+        const nameEl = document.getElementById('playerName');
+        if (nameEl) {
+            nameEl.textContent = player.web_name || player.name || 'Unknown Player';
+        }
+
+        // Player team and position
+        const teamPosEl = document.getElementById('playerTeamPos');
+        if (teamPosEl) {
+            const position = player.position || player.element_type_name || '';
+            const team = player.team_name || '';
+            const price = player.now_cost ? `£${player.now_cost}m` : '';
+            teamPosEl.textContent = `${position} - ${team} ${price}`.trim();
+        }
+    }
+
+    displayClubAuction(auctionData) {
+        const club = auctionData.club;
+        
+        // Club logo/icon
+        const photoEl = document.getElementById('playerPhoto');
+        if (photoEl) {
+            photoEl.innerHTML = '🏟️';
+        }
+
+        // Club name
+        const nameEl = document.getElementById('playerName');
+        if (nameEl) {
+            nameEl.textContent = club.name || 'Unknown Club';
+        }
+
+        // Club details
+        const teamPosEl = document.getElementById('playerTeamPos');
+        if (teamPosEl) {
+            teamPosEl.textContent = `Club - ${club.short_name || ''}`;
+        }
+    }
+
+    updateBidDisplay(auctionData) {
+        const bidAmountEl = document.getElementById('currentBidAmount');
+        const bidderEl = document.getElementById('currentBidder');
+        const bidInput = document.getElementById('bidAmount');
+
+        if (bidAmountEl) {
+            bidAmountEl.textContent = `£${auctionData.currentBid || auctionData.current_bid || 0}`;
+        }
+
+        if (bidderEl) {
+            const bidderName = auctionData.currentBidder || auctionData.current_bidder_name || '-';
+            const isAutoBid = auctionData.isAutoBid;
+            bidderEl.textContent = isAutoBid ? `🤖 ${bidderName}` : bidderName;
+        }
+
+        if (bidInput) {
+            const currentBid = auctionData.currentBid || auctionData.current_bid || 0;
+            const nextBid = currentBid + 5;
+            bidInput.value = nextBid;
+            bidInput.min = nextBid;
+            bidInput.placeholder = `£${nextBid}`;
+        }
+    }
+
+    updateControls(auctionData) {
+        const currentUser = window.mobileAPI.getCurrentUser();
+        const isAdmin = currentUser.is_admin;
+        const sellingStage = auctionData.selling_stage;
+        const waitRequested = auctionData.wait_requested_by;
+
+        // Update selling status
+        this.updateSellingStatus(sellingStage);
+
+        // Update wait button
+        const waitBtn = document.getElementById('waitBtn');
+        if (waitBtn) {
+            if (sellingStage && !isAdmin && !waitRequested) {
+                waitBtn.classList.remove('hidden');
+            } else {
+                waitBtn.classList.add('hidden');
+            }
+        }
+
+        // Update admin controls
+        this.updateAdminControls(auctionData);
+    }
+
+    updateSellingStatus(sellingStage) {
+        const statusEl = document.getElementById('sellingStatus');
+        if (statusEl) {
+            if (sellingStage) {
+                const statusText = sellingStage === 'selling1' ? 'SELLING 1...' : 'SELLING 2...';
+                statusEl.textContent = statusText;
+                statusEl.classList.remove('hidden');
+            } else {
+                statusEl.classList.add('hidden');
+            }
+        }
+    }
+
+    updateAdminControls(auctionData) {
+        const adminControls = document.getElementById('adminControls');
+        const currentUser = window.mobileAPI.getCurrentUser();
+        
+        if (!adminControls || !currentUser.is_admin) {
+            if (adminControls) adminControls.classList.add('hidden');
+            return;
+        }
+
+        adminControls.classList.remove('hidden');
+        
+        const sellingStage = auctionData.selling_stage;
+        const waitRequested = auctionData.wait_requested_by;
+
+        let controlsHTML = '';
+
+        // Wait request controls
+        if (waitRequested) {
+            controlsHTML += `
+                <div style="background: #dbeafe; padding: 8px; border-radius: 6px; margin-bottom: 8px; text-align: center;">
+                    <div style="font-size: 12px; font-weight: 600; color: #1e40af; margin-bottom: 4px;">Wait Requested</div>
+                    <div style="display: flex; gap: 4px;">
+                        <button onclick="mobileAuction.handleWaitResponse('accept')" 
+                                style="flex: 1; background: #10b981; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                            Accept
+                        </button>
+                        <button onclick="mobileAuction.handleWaitResponse('reject')" 
+                                style="flex: 1; background: #ef4444; color: white; border: none; padding: 6px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Selling stage controls
+        if (!sellingStage) {
+            controlsHTML += `
+                <button onclick="mobileAuction.updateSellingStage('selling1')" 
+                        style="background: #f59e0b; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; width: 100%; margin-bottom: 4px;">
+                    Selling 1
+                </button>
+            `;
+        } else if (sellingStage === 'selling1' && !waitRequested) {
+            controlsHTML += `
+                <button onclick="mobileAuction.updateSellingStage('selling2')" 
+                        style="background: #ea580c; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; width: 100%; margin-bottom: 4px;">
+                    Selling 2
+                </button>
+            `;
+        } else if (sellingStage === 'selling2' && !waitRequested) {
+            controlsHTML += `
+                <button onclick="mobileAuction.updateSellingStage('sold')" 
+                        style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; width: 100%; margin-bottom: 4px;">
+                    Sold
+                </button>
+            `;
+        }
+
+        // Always show "Sold (Skip wait)" if in any selling stage
+        if (sellingStage && !waitRequested) {
+            controlsHTML += `
+                <button onclick="mobileAuction.updateSellingStage('sold')" 
+                        style="background: #7c2d12; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; width: 100%;">
+                    Sold (Skip wait)
+                </button>
+            `;
+        }
+
+        adminControls.innerHTML = controlsHTML;
+    }
+
+    clearCurrentAuction() {
+        this.currentAuction = null;
+        
+        const auctionCard = document.getElementById('currentAuction');
+        const noAuction = document.getElementById('noAuction');
+        
+        if (auctionCard) auctionCard.classList.add('hidden');
+        if (noAuction) noAuction.classList.remove('hidden');
+    }
+
+    updateCurrentBid(bidData) {
+        if (this.currentAuction && this.currentAuction.id === bidData.auctionId) {
+            this.currentAuction.currentBid = bidData.bidAmount;
+            this.currentAuction.currentBidder = bidData.teamName;
+            this.currentAuction.isAutoBid = bidData.isAutoBid;
+            
+            // Reset selling stage when new bid placed
+            if (this.currentAuction.selling_stage) {
+                this.currentAuction.selling_stage = null;
+                this.updateSellingStatus(null);
+                this.updateAdminControls(this.currentAuction);
+            }
+            
+            this.updateBidDisplay(this.currentAuction);
+        }
+    }
+
+    updateSellingStage(data) {
+        if (this.currentAuction && this.currentAuction.id === data.auctionId) {
+            this.currentAuction.selling_stage = data.stage;
+            this.updateSellingStatus(data.stage);
+            this.updateAdminControls(this.currentAuction);
+        }
+    }
+
+    updateWaitRequest(data) {
+        if (this.currentAuction && this.currentAuction.id === data.auctionId) {
+            this.currentAuction.wait_requested_by = data.teamId;
+            this.updateAdminControls(this.currentAuction);
+        }
+    }
+
+    clearWaitRequest() {
+        if (this.currentAuction) {
+            this.currentAuction.wait_requested_by = null;
+            this.updateAdminControls(this.currentAuction);
+        }
+    }
+
+    clearSellingStage() {
+        if (this.currentAuction) {
+            this.currentAuction.selling_stage = null;
+            this.updateSellingStatus(null);
+            this.updateAdminControls(this.currentAuction);
+        }
+    }
+
+    async handlePlaceBid() {
+        if (!this.currentAuction) {
+            window.mobileApp.showToast('No active auction', 'error');
+            return;
+        }
+
+        const bidInput = document.getElementById('bidAmount');
+        const placeBidBtn = document.getElementById('placeBidBtn');
+        
+        if (!bidInput || !placeBidBtn) return;
+
+        const bidAmount = parseInt(bidInput.value);
+        if (!bidAmount || bidAmount < 5) {
+            window.mobileApp.showToast('Invalid bid amount', 'error');
+            return;
+        }
+
+        try {
+            // Show loading state
+            placeBidBtn.disabled = true;
+            placeBidBtn.querySelector('.btn-text').textContent = 'Placing...';
+            placeBidBtn.querySelector('.btn-spinner').classList.remove('hidden');
+
+            await window.mobileAPI.placeBid(this.currentAuction.id, bidAmount);
+            
+            window.mobileApp.showToast(`Bid placed: £${bidAmount}`, 'success');
+        } catch (error) {
+            console.error('Error placing bid:', error);
+            window.mobileApp.showToast(error.message, 'error');
+        } finally {
+            // Reset button state
+            placeBidBtn.disabled = false;
+            placeBidBtn.querySelector('.btn-text').textContent = 'Place Bid';
+            placeBidBtn.querySelector('.btn-spinner').classList.add('hidden');
+        }
+    }
+
+    async handleWaitRequest() {
+        if (!this.currentAuction) return;
+
+        try {
+            await window.mobileAPI.requestWait(this.currentAuction.id);
+            window.mobileApp.showToast('Wait requested', 'info');
+        } catch (error) {
+            console.error('Error requesting wait:', error);
+            window.mobileApp.showToast(error.message, 'error');
+        }
+    }
+
+    async updateSellingStage(stage) {
+        if (!this.currentAuction) return;
+
+        try {
+            await window.mobileAPI.updateSellingStage(this.currentAuction.id, stage);
+            
+            if (stage === 'sold') {
+                window.mobileApp.showToast('Auction completed!', 'success');
+                this.clearCurrentAuction();
+                await this.loadSoldItems();
+            }
+        } catch (error) {
+            console.error('Error updating selling stage:', error);
+            window.mobileApp.showToast(error.message, 'error');
+        }
+    }
+
+    async handleWaitResponse(action) {
+        if (!this.currentAuction) return;
+
+        try {
+            await window.mobileAPI.handleWaitRequest(this.currentAuction.id, action);
+            const message = action === 'accept' ? 'Wait accepted' : 'Wait rejected';
+            window.mobileApp.showToast(message, 'success');
+        } catch (error) {
+            console.error('Error handling wait request:', error);
+            window.mobileApp.showToast(error.message, 'error');
+        }
+    }
+
+    // Player management
+    filterPlayers() {
+        const search = document.getElementById('playerSearch')?.value.toLowerCase() || '';
+        const position = document.getElementById('positionFilter')?.value || '';
+        const club = document.getElementById('clubFilter')?.value || '';
+
+        this.filteredPlayers = this.players.filter(player => {
+            const matchesSearch = !search || 
+                (player.web_name || player.name || '').toLowerCase().includes(search);
+            const matchesPosition = !position || 
+                (player.position || player.element_type_name || '') === position;
+            const matchesClub = !club || 
+                (player.team_name || '') === club;
+
+            return matchesSearch && matchesPosition && matchesClub;
+        });
+
+        this.renderPlayers();
+    }
+
+    renderPlayers() {
+        const container = document.getElementById('playersList');
+        if (!container) return;
+
+        if (this.filteredPlayers.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">No players found</div>';
+            return;
+        }
+
+        container.innerHTML = this.filteredPlayers.map(player => {
+            const isSold = player.sold_to_team_id;
+            const currentUser = window.mobileAPI.getCurrentUser();
+            const canStartAuction = !isSold && currentUser.id; // Add draft turn logic if needed
+
+            return `
+                <div class="player-item ${isSold ? 'sold' : ''}">
+                    <div class="player-item-info">
+                        <h4>${player.web_name || player.name || 'Unknown'}</h4>
+                        <p>${player.position || player.element_type_name || ''} - ${player.team_name || ''}</p>
+                        ${isSold ? `<p style="color: #ef4444; font-size: 11px;">Sold to ${player.sold_to_team_name || 'Unknown'}</p>` : ''}
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                        <span class="player-price">£${player.now_cost || player.price || 0}m</span>
+                        ${canStartAuction ? `
+                            <button class="start-auction-btn" onclick="mobileAuction.startPlayerAuction(${player.id})">
+                                Start
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    populateClubFilter() {
+        const clubFilter = document.getElementById('clubFilter');
+        if (!clubFilter) return;
+
+        const clubs = [...new Set(this.players.map(p => p.team_name).filter(Boolean))].sort();
+        
+        clubFilter.innerHTML = '<option value="">All Clubs</option>' + 
+            clubs.map(club => `<option value="${club}">${club}</option>`).join('');
+    }
+
+    async startPlayerAuction(playerId) {
+        try {
+            await window.mobileAPI.startPlayerAuction(playerId);
+            window.mobileApp.showToast('Auction started!', 'success');
+        } catch (error) {
+            console.error('Error starting auction:', error);
+            window.mobileApp.showToast(error.message, 'error');
+        }
+    }
+
+    renderSoldItems() {
+        const container = document.getElementById('soldItems');
+        if (!container) return;
+
+        if (this.soldItems.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">No recent sales</div>';
+            return;
+        }
+
+        // Show only last 10 sales
+        const recentSales = this.soldItems.slice(0, 10);
+        
+        container.innerHTML = recentSales.map(item => `
+            <div style="padding: 8px 12px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1f2937;">
+                        ${item.player_name || item.club_name || 'Unknown'}
+                    </div>
+                    <div style="font-size: 12px; color: #6b7280;">
+                        ${item.team_name || 'Unknown Team'}
+                    </div>
+                </div>
+                <div style="font-size: 14px; font-weight: 600; color: #10b981;">
+                    £${item.price_paid || 0}m
+                </div>
+            </div>
+        `).join('');
+    }
+
+    toggleSoldItems() {
+        const container = document.getElementById('soldItems');
+        const toggleBtn = document.getElementById('toggleSoldBtn');
+        
+        if (!container || !toggleBtn) return;
+
+        if (container.classList.contains('hidden')) {
+            container.classList.remove('hidden');
+            toggleBtn.textContent = 'Hide';
+        } else {
+            container.classList.add('hidden');
+            toggleBtn.textContent = 'Show';
+        }
+    }
+}
+
+// Global auction manager instance
+window.mobileAuction = new MobileAuctionManager();

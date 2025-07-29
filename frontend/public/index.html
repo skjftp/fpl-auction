@@ -5,6 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FPL Auction</title>
     
+    <!-- Mobile Detection and Redirect -->
+    <script>
+        (function() {
+            // Check if user is on mobile device
+            function isMobileDevice() {
+                const userAgent = navigator.userAgent.toLowerCase();
+                const mobileKeywords = [
+                    'android', 'webos', 'iphone', 'ipad', 'ipod', 
+                    'blackberry', 'windows phone', 'mobile', 'opera mini'
+                ];
+                
+                // Check user agent
+                const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword));
+                
+                // Check screen size (less than 768px width)
+                const isSmallScreen = window.innerWidth < 768;
+                
+                // Check touch capability
+                const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                
+                return isMobileUA || (isSmallScreen && isTouchDevice);
+            }
+            
+            // Check if user explicitly wants desktop version
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceDesktop = urlParams.get('desktop') === 'true';
+            
+            // Redirect to mobile version if on mobile device and not forcing desktop
+            if (!forceDesktop && isMobileDevice() && !window.location.pathname.includes('mobile.html')) {
+                console.log('Mobile device detected, redirecting to mobile version');
+                const currentSearch = window.location.search;
+                window.location.href = 'mobile.html' + currentSearch;
+            }
+        })();
+    </script>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -67,6 +103,9 @@
             
             <div class="mt-6 text-center">
                 <p class="text-sm text-gray-500">Demo credentials: team1 to team10, password: password123</p>
+                <a href="mobile.html" class="text-sm text-blue-600 hover:text-blue-800 underline mt-2 block">
+                    View Mobile Version
+                </a>
             </div>
         </div>
     </div>
