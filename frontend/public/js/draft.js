@@ -267,7 +267,10 @@ class DraftManager {
         const chatContainer = document.getElementById('chatMessages');
         if (!chatContainer) return;
 
-        chatContainer.innerHTML = this.chatMessages.map(msg => {
+        // Limit to latest 25 messages to prevent layout issues (like mobile does with 50)
+        const recentMessages = this.chatMessages.slice(-25);
+        
+        chatContainer.innerHTML = recentMessages.map(msg => {
             const isCurrentUser = msg.username === window.app.currentUser?.username;
             const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
