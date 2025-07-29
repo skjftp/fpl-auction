@@ -380,6 +380,7 @@ body {
     right: 0;
     z-index: 1000;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .tab-btn {
@@ -432,8 +433,42 @@ body {
     flex: 1;
     overflow-y: auto;
     padding-top: 164px; /* Space for fixed header (top bar + status bar + auto-bid) */
-    padding-bottom: 90px; /* Space for fixed tab nav */
+    padding-bottom: 80px; /* Space for fixed tab nav */
     position: relative;
+}
+
+/* Fixed Bottom Chat */
+.fixed-bottom-chat {
+    position: fixed;
+    bottom: calc(65px + env(safe-area-inset-bottom, 0)); /* Above tab navigation + safe area */
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    z-index: 100;
+    display: none; /* Hidden by default, shown only on auction tab */
+}
+
+.chat-messages-mini {
+    height: 120px;
+    padding: 8px 12px;
+    overflow-y: auto;
+    background: #f8fafc;
+    font-size: 12px;
+}
+
+.chat-input-bar {
+    padding: 8px 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Auction tab specific padding when chat is shown */
+#mainApp.auction-active .tab-content {
+    padding-bottom: 240px; /* Space for tab nav + chat */
 }
 
 .tab-pane {
