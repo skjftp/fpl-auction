@@ -318,6 +318,8 @@ class MobileApp {
 
     updateDraftStatus(draftState) {
         const currentTurnEl = document.getElementById('currentTurn');
+        const nextTurnEl = document.getElementById('nextTurn');
+        
         if (currentTurnEl && draftState) {
             if (draftState.is_active) {
                 const isMyTurn = this.currentUser && draftState.current_team_id === this.currentUser.id;
@@ -328,10 +330,76 @@ class MobileApp {
                 } else {
                     currentTurnEl.textContent = teamName;
                 }
+
+                // Calculate next turn with snake draft logic
+                if (nextTurnEl) {
+                    const nextTurnInfo = this.calculateNextTurn(draftState);
+                    const isMyNextTurn = this.currentUser && nextTurnInfo.teamId === this.currentUser.id;
+                    
+                    if (isMyNextTurn) {
+                        nextTurnEl.innerHTML = `<span style="color: #10b981; font-weight: 700;">You!</span>`;
+                    } else {
+                        nextTurnEl.textContent = nextTurnInfo.teamName;
+                    }
+                }
             } else {
                 currentTurnEl.textContent = 'Draft not active';
+                if (nextTurnEl) {
+                    nextTurnEl.textContent = '-';
+                }
             }
         }
+    }
+
+    calculateNextTurn(draftState) {
+        // Snake draft logic: 17 rounds, 10 teams
+        // Rounds 1,3,5,7,9,11,13,15,17 go 1→10
+        // Rounds 2,4,6,8,10,12,14,16 go 10→1
+        
+        const currentRound = draftState.current_round || 1;
+        const currentTeamId = draftState.current_team_id || 1;
+        const totalTeams = 10;
+        
+        // Determine if current round is ascending (1→10) or descending (10→1)
+        const isAscendingRound = currentRound % 2 === 1;
+        
+        let nextTeamId, nextRound;
+        
+        if (isAscendingRound) {
+            // Current round goes 1→10
+            if (currentTeamId < totalTeams) {
+                // Next team in same round
+                nextTeamId = currentTeamId + 1;
+                nextRound = currentRound;
+            } else {
+                // End of round, next round starts with team 10 (descending)
+                nextTeamId = totalTeams;
+                nextRound = currentRound + 1;
+            }
+        } else {
+            // Current round goes 10→1
+            if (currentTeamId > 1) {
+                // Next team in same round
+                nextTeamId = currentTeamId - 1;
+                nextRound = currentRound;
+            } else {
+                // End of round, next round starts with team 1 (ascending)
+                nextTeamId = 1;
+                nextRound = currentRound + 1;
+            }
+        }
+        
+        // Handle case where draft is complete
+        if (nextRound > 17) {
+            return { teamId: null, teamName: 'Draft Complete' };
+        }
+        
+        // Get team name (assuming teams are named Team1, Team2, etc.)
+        const nextTeamName = draftState.teams ? 
+            draftState.teams.find(team => team.id === nextTeamId)?.name || `Team${nextTeamId}` :
+            `Team${nextTeamId}`;
+            
+        return { teamId: nextTeamId, teamName: nextTeamName };
     }
 
     switchTab(tabName) {
