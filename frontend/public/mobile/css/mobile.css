@@ -516,13 +516,13 @@ body {
 }
 
 .tab-pane {
-    display: none;
+    display: none !important;
     height: 100%;
     overflow-y: auto;
 }
 
 .tab-pane.active {
-    display: block;
+    display: block !important;
 }
 
 /* Override for auction tab - no scroll and fixed position */
@@ -885,8 +885,11 @@ body {
     position: relative;
     height: 100%;
     overflow: hidden;
-    display: flex;
     flex-direction: column;
+}
+
+#playersTab.active {
+    display: flex;
 }
 
 .search-bar {
@@ -1018,8 +1021,11 @@ body {
     position: relative;
     height: 100%;
     overflow: hidden;
-    display: flex;
     flex-direction: column;
+}
+
+#teamTab.active {
+    display: flex;
 }
 
 .team-header {
