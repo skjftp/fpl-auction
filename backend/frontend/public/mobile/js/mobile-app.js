@@ -7,6 +7,7 @@ class MobileApp {
         this.chatMessages = [];
         this.unreadChatCount = 0;
         this.isInitialized = false;
+        this.allTeams = []; // Store all teams for draft display
     }
 
     async initialize() {
@@ -63,6 +64,9 @@ class MobileApp {
     showMainApp() {
         this.hideAllScreens();
         document.getElementById('mainApp').classList.remove('hidden');
+        
+        // Show chat loading state immediately for better UX
+        this.showChatLoadingState();
     }
 
     hideAllScreens() {
@@ -280,34 +284,54 @@ class MobileApp {
 
     async loadInitialData() {
         try {
-            // Load draft state and team squad first (critical data)
-            await Promise.all([
+            // Show chat loading state immediately
+            this.showChatLoadingState();
+            
+            // Load critical data in parallel for better performance
+            const [draftState, teamSquad, teams] = await Promise.all([
                 this.loadDraftState(),
-                this.loadTeamSquad()
+                this.loadTeamSquad(), 
+                this.setupTeamSelector()
             ]);
+            
+            // Load chat messages in parallel (non-blocking)
+            this.loadChatMessagesAsync();
         } catch (error) {
             console.error('Error loading initial data:', error);
-        } finally {
-            // Always load chat messages regardless of other errors
-            this.loadChatMessagesAsync();
+        }
+    }
+
+    // Show chat loading state immediately to prevent empty UI
+    showChatLoadingState() {
+        if (this.currentTab === 'auction') {
+            const container = document.getElementById('chatMessagesMini');
+            if (container) {
+                container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 12px; font-size: 12px;">Loading messages...</div>';
+            }
         }
     }
 
     // Load chat messages asynchronously to prevent blocking app initialization
     async loadChatMessagesAsync() {
         try {
-            console.log('💬 Mobile App: Starting to load chat messages...');
             const messages = await window.mobileAPI.getChatMessages();
             this.chatMessages = messages || [];
-            console.log(`💬 Mobile App: Successfully loaded ${this.chatMessages.length} chat messages`);
-            // Only render if we're currently on the auction tab
+            console.log(`💬 Mobile App: Loaded ${this.chatMessages.length} chat messages`);
+            
+            // Always render chat if on auction tab, regardless of message count
             if (this.currentTab === 'auction') {
                 this.renderChatMessagesMini();
             }
         } catch (error) {
             console.error('Error loading chat messages:', error);
-            // Show empty state if chat fails to load
+            // Show error state if chat fails to load
             this.chatMessages = [];
+            if (this.currentTab === 'auction') {
+                const container = document.getElementById('chatMessagesMini');
+                if (container) {
+                    container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 12px; font-size: 12px;">Failed to load messages</div>';
+                }
+            }
         }
     }
 
@@ -398,9 +422,9 @@ class MobileApp {
             return { teamId: null, teamName: 'Draft Complete' };
         }
         
-        // Get team name (assuming teams are named Team1, Team2, etc.)
-        const nextTeamName = draftState.teams ? 
-            draftState.teams.find(team => team.id === nextTeamId)?.name || `Team${nextTeamId}` :
+        // Get team name from stored teams data
+        const nextTeamName = this.allTeams.length > 0 ? 
+            this.allTeams.find(team => team.id === nextTeamId)?.name || `Team${nextTeamId}` :
             `Team${nextTeamId}`;
             
         return { teamId: nextTeamId, teamName: nextTeamName };
@@ -426,9 +450,9 @@ class MobileApp {
         const mainApp = document.getElementById('mainApp');
         if (tabName === 'auction') {
             mainApp.classList.add('auction-active');
-            // Delay chat rendering to ensure proper DOM setup
+            // Show chat immediately, then fix scroll
+            this.renderChatMessagesMini();
             setTimeout(() => {
-                this.renderChatMessagesMini();
                 this.fixChatScroll();
             }, 100);
         } else {
@@ -482,8 +506,9 @@ class MobileApp {
             const teamSelector = document.getElementById('teamSelector');
             if (!teamSelector) return;
             
-            // Get all teams
+            // Get all teams and store for draft display
             const teams = await window.mobileAPI.getAllTeams();
+            this.allTeams = teams; // Store for use in calculateNextTurn
             
             // Clear existing options
             teamSelector.innerHTML = '';
@@ -754,7 +779,7 @@ class MobileApp {
         if (!container) return;
 
         if (this.chatMessages.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 8px; font-size: 12px;">Loading messages...</div>';
+            container.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 12px; font-size: 12px;">No messages yet</div>';
             return;
         }
 
@@ -801,6 +826,8 @@ class MobileApp {
     }
 
     addChatMessage(message) {
+        console.log('💬 Mobile App: Adding chat message:', message, 'Current tab:', this.currentTab);
+        
         // Check for duplicates
         const exists = this.chatMessages.some(msg => 
             msg.team_id === message.team_id && 
@@ -810,10 +837,17 @@ class MobileApp {
         
         if (!exists) {
             this.chatMessages.push(message);
+            console.log(`💬 Mobile App: Added message, total messages: ${this.chatMessages.length}`);
+            
             // Update mini chat at bottom if on auction tab
             if (this.currentTab === 'auction') {
+                console.log('💬 Mobile App: Rendering mini chat for auction tab');
                 this.renderChatMessagesMini();
+            } else {
+                console.log(`💬 Mobile App: Not rendering mini chat, current tab: ${this.currentTab}`);
             }
+        } else {
+            console.log('💬 Mobile App: Duplicate message detected, skipping');
         }
     }
 

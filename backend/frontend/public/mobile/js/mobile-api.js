@@ -325,8 +325,6 @@ class MobileAPI {
     // Chat
     async getChatMessages() {
         try {
-            console.log('📡 Mobile API: Fetching chat messages from:', `${this.baseURL}/draft/chat`);
-            console.log('📡 Mobile API: Using token:', this.token ? 'Token present' : 'No token!');
             const response = await fetch(`${this.baseURL}/draft/chat`, {
                 headers: {
                     'Authorization': `Bearer ${this.token}`

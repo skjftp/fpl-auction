@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FPL Auction - Mobile</title>
+    
+    <!-- Mobile-optimized CSS -->
+    <link rel="stylesheet" href="mobile/css/mobile.css">
+    
+    <!-- Touch-friendly icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#10B981">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading FPL Auction...</div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <div class="logo">
+                <div class="logo-icon">⚽</div>
+                <h1>FPL Auction</h1>
+                <p>Mobile Edition</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="input-group">
+                    <input type="text" id="username" name="username" placeholder="Team Username" required autocomplete="username">
+                </div>
+                
+                <div class="input-group">
+                    <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <span class="btn-text">Sign In</span>
+                    <div class="btn-spinner hidden"></div>
+                </button>
+            </form>
+            
+            <div class="login-info">
+                <p>Use team1-team10 with password: password123</p>
+                <a href="index.html?desktop=true" style="color: rgba(255, 255, 255, 0.7); font-size: 14px; text-decoration: underline; margin-top: 12px; display: block;">
+                    View Desktop Version
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="screen hidden">
+        <!-- Fixed Header Section -->
+        <div class="fixed-header">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="team-info">
+                    <span id="teamName" class="team-name"></span>
+                    <span id="teamBudget" class="team-budget">£0</span>
+                </div>
+                <button id="logoutBtn" class="logout-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 17l5-5-5-5M19.8 12H9M10 3H6a2 2 0 00-2 2v14a2 2 0 002 2h4"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div id="draftStatus" class="draft-status">
+                    <span class="status-label">Turn:</span>
+                    <span id="currentTurn" class="current-turn">Loading...</span>
+                    <div class="next-turn-container">
+                        <span class="next-turn-label">Next:</span>
+                        <span id="nextTurn" class="next-turn">Loading...</span>
+                    </div>
+                </div>
+                <div id="connectionStatus" class="connection-status connected">
+                    <div class="status-dot"></div>
+                    <span>Connected</span>
+                </div>
+            </div>
+
+            <!-- Auto-Bid Toggle -->
+            <div class="auto-bid-card">
+                <div class="card-header">
+                    <div class="auto-bid-toggle">
+                        <input type="checkbox" id="autoBidToggle" class="toggle-input">
+                        <label for="autoBidToggle" class="toggle-label">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-text">Auto-Bidding</span>
+                    </div>
+                    <div id="autoBidStatus" class="auto-bid-status hidden">
+                        <span class="status-icon">🤖</span>
+                        <span>Active</span>
+                    </div>
+                </div>
+                <button id="autoBidConfigBtn" class="config-btn">Configure</button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Auction Tab -->
+            <div id="auctionTab" class="tab-pane active">
+                <!-- Current Auction -->
+                <div id="currentAuction" class="auction-card hidden">
+                    <div class="auction-header">
+                        <div class="player-info">
+                            <div id="playerPhoto" class="player-photo"></div>
+                            <div class="player-details">
+                                <h3 id="playerName" class="player-name"></h3>
+                                <p id="playerTeamPos" class="player-team-pos"></p>
+                            </div>
+                        </div>
+                        <div id="sellingStatus" class="selling-status hidden"></div>
+                    </div>
+                    
+                    <div class="bid-info">
+                        <div class="current-bid">
+                            <span class="bid-label">Current Bid</span>
+                            <span id="currentBidAmount" class="bid-amount">£0</span>
+                        </div>
+                        <div class="current-bidder">
+                            <span class="bidder-label">Bidder</span>
+                            <span id="currentBidder" class="bidder-name">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Bidding Controls -->
+                    <div class="bidding-controls">
+                        <div class="bid-input-section">
+                            <!-- Wait Button (left side) -->
+                            <button id="waitBtn" class="wait-btn hidden">Wait!</button>
+                            
+                            <input type="number" id="bidAmount" class="bid-input" placeholder="£" min="5" step="5">
+                            <button id="placeBidBtn" class="place-bid-btn">
+                                <span class="btn-text">Place Bid</span>
+                                <div class="btn-spinner hidden"></div>
+                            </button>
+                        </div>
+                        
+                        <!-- Admin Controls -->
+                        <div id="adminControls" class="admin-controls hidden"></div>
+                    </div>
+                </div>
+
+                <!-- No Auction Message -->
+                <div id="noAuction" class="no-auction">
+                    <div class="no-auction-icon">⏳</div>
+                    <h3>No Active Auction</h3>
+                    <p>Waiting for next auction to start...</p>
+                </div>
+
+                <!-- Fixed Bottom Chat (always visible in auction tab) -->
+                <div class="fixed-bottom-chat">
+                    <div class="chat-messages-mini" id="chatMessagesMini"></div>
+                    <div class="chat-input-bar">
+                        <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="200">
+                        <button id="sendChatBtn" class="send-chat-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players Tab -->
+            <div id="playersTab" class="tab-pane">
+                <div class="players-header">
+                    <div class="search-bar">
+                        <input type="text" id="playerSearch" class="search-input" placeholder="Search players...">
+                        <div class="filter-row">
+                            <select id="positionFilter" class="filter-select">
+                                <option value="">All Positions</option>
+                                <option value="GKP">GKP</option>
+                                <option value="DEF">DEF</option>
+                                <option value="MID">MID</option>
+                                <option value="FWD">FWD</option>
+                            </select>
+                            <select id="clubFilter" class="filter-select">
+                                <option value="">All Clubs</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="playersList" class="players-list"></div>
+            </div>
+
+            <!-- Team Tab -->
+            <div id="teamTab" class="tab-pane">
+                <div class="team-header">
+                    <select id="teamSelector" class="team-selector">
+                        <option value="">My Squad</option>
+                    </select>
+                    <div class="squad-stats">
+                        <span id="squadCount" class="stat">0/15 Players</span>
+                        <span id="clubCount" class="stat">0/2 Clubs</span>
+                    </div>
+                </div>
+                <div id="teamSquad" class="team-squad"></div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyTab" class="tab-pane">
+                <div class="history-container">
+                    <div class="history-filters">
+                        <input type="text" id="historySearch" class="history-search" placeholder="Search by player or team...">
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-filter="bids">Bids</button>
+                            <button class="filter-btn" data-filter="sales">Sales</button>
+                        </div>
+                    </div>
+                    <div id="historyList" class="history-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-Bid Configuration Modal -->
+    <div id="autoBidModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Auto-Bid Configuration</h3>
+                <button id="closeModalBtn" class="close-btn">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="global-settings">
+                    <h4>Global Settings</h4>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="globalNeverSecond">
+                            <span class="checkmark"></span>
+                            Never be second bidder
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="globalOnlySelling">
+                            <span class="checkmark"></span>
+                            Only bid during selling stages
+                        </label>
+                    </div>
+                </div>
+
+                <div class="players-config">
+                    <h4>Player Settings</h4>
+                    <div class="search-section">
+                        <input type="text" id="configPlayerSearch" class="search-input" placeholder="Search players...">
+                        <select id="configPositionFilter" class="filter-select">
+                            <option value="">All Positions</option>
+                            <option value="GKP">GKP</option>
+                            <option value="DEF">DEF</option>
+                            <option value="MID">MID</option>
+                            <option value="FWD">FWD</option>
+                        </select>
+                    </div>
+                    <div id="configPlayersList" class="config-players-list"></div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="saveConfigBtn" class="save-btn">Save Configuration</button>
+                <button id="cancelConfigBtn" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation (Bottom Fixed) -->
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="auction">
+            <div class="tab-icon">🔨</div>
+            <span>Auction</span>
+        </button>
+        <button class="tab-btn" data-tab="players">
+            <div class="tab-icon">👥</div>
+            <span>Players</span>
+        </button>
+        <button class="tab-btn" data-tab="team">
+            <div class="tab-icon">⭐</div>
+            <span>My Team</span>
+        </button>
+        <button class="tab-btn" data-tab="history">
+            <div class="tab-icon">📊</div>
+            <span>History</span>
+        </button>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="mobile/js/mobile-api.js"></script>
+    <script src="mobile/js/mobile-socket.js"></script>
+    <script src="mobile/js/mobile-auction.js"></script>
+    <script src="mobile/js/mobile-autobid.js"></script>
+    <script src="mobile/js/mobile-app.js"></script>
+</body>
+</html>

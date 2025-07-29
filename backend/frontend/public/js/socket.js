@@ -1,0 +1,231 @@
+// Socket.IO connection and real-time updates
+class SocketManager {
+    constructor() {
+        this.socket = null;
+        this.connected = false;
+    }
+
+    connect() {
+        // Production Socket URL - FPL Auction Backend on Google Cloud Run
+        const PRODUCTION_SOCKET_URL = 'https://fpl-auction-backend-945963649649.us-central1.run.app';
+        
+        const socketURL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3001'
+            : PRODUCTION_SOCKET_URL;
+        this.socket = io(socketURL);
+        
+        this.socket.on('connect', () => {
+            console.log('🔌 Connected to auction server');
+            this.connected = true;
+            this.joinAuction();
+        });
+
+        this.socket.on('disconnect', () => {
+            console.log('❌ Disconnected from auction server');
+            this.connected = false;
+        });
+
+        // Auction events
+        this.socket.on('auction-started', (data) => {
+            console.log('🔨 New auction started:', data);
+            this.handleAuctionStarted(data);
+        });
+
+        this.socket.on('new-bid', (data) => {
+            console.log('💰 New bid placed:', data);
+            this.handleNewBid(data);
+        });
+
+        this.socket.on('auction-completed', (data) => {
+            console.log('✅ Auction completed:', data);
+            this.handleAuctionCompleted(data);
+        });
+
+        // Selling stage events
+        this.socket.on('selling-stage-updated', (data) => {
+            console.log('🔔 Selling stage updated:', data);
+            this.handleSellingStageUpdate(data);
+        });
+
+        // Wait request events
+        this.socket.on('wait-requested', (data) => {
+            console.log('⏸️ Wait requested:', data);
+            this.handleWaitRequested(data);
+        });
+
+        this.socket.on('wait-accepted', (data) => {
+            console.log('✅ Wait accepted:', data);
+            this.handleWaitAccepted(data);
+        });
+
+        this.socket.on('wait-rejected', (data) => {
+            console.log('❌ Wait rejected:', data);
+            this.handleWaitRejected(data);
+        });
+
+        this.socket.on('error', (error) => {
+            console.error('Socket error:', error);
+            showNotification('Connection error', 'error');
+        });
+    }
+
+    disconnect() {
+        if (this.socket) {
+            this.socket.disconnect();
+            this.socket = null;
+            this.connected = false;
+        }
+    }
+
+    joinAuction() {
+        const team = JSON.parse(localStorage.getItem('fpl_team') || '{}');
+        if (team.id && this.socket) {
+            this.socket.emit('join-auction', team.id);
+            console.log(`👥 Joined auction room as ${team.name}`);
+        }
+    }
+
+    placeBid(bidData) {
+        if (this.socket && this.connected) {
+            this.socket.emit('place-bid', bidData);
+        }
+    }
+
+    async handleAuctionStarted(data) {
+        await window.auctionManager.displayCurrentAuction(data);
+        showNotification(
+            `New auction started: ${data.player?.web_name || data.club?.name}`,
+            'info'
+        );
+    }
+
+    handleNewBid(data) {
+        window.auctionManager.updateCurrentBid(data);
+        
+        // Add visual feedback for new bid
+        const currentAuction = document.getElementById('currentAuction');
+        if (currentAuction) {
+            currentAuction.classList.add('new-bid');
+            setTimeout(() => {
+                currentAuction.classList.remove('new-bid');
+            }, 500);
+        }
+        
+        // Remove selling status immediately when new bid is placed
+        const sellingStatus = document.getElementById('sellingStatus');
+        if (sellingStatus) {
+            sellingStatus.remove();
+        }
+
+        // Show notification with auto-bid indicator
+        const bidMessage = data.isAutoBid 
+            ? `🤖 ${data.teamName} auto-bid £${data.bidAmount}m`
+            : `${data.teamName} bid £${data.bidAmount}m`;
+            
+        showNotification(bidMessage, 'info');
+    }
+
+    handleAuctionCompleted(data) {
+        window.auctionManager.clearCurrentAuction();
+        showNotification('Auction completed!', 'success');
+        
+        // Refresh sold items and player display for everyone
+        window.auctionManager.loadSoldItems().then(() => {
+            window.auctionManager.displayPlayers(window.auctionManager.players);
+            window.auctionManager.displayClubs(window.auctionManager.clubs);
+        });
+        
+        // Refresh team data and budget for everyone (budget affects bidding ability)
+        if (window.app && window.app.refreshTeamBudget) {
+            window.app.refreshTeamBudget();
+        }
+        
+        // Refresh team squad if current user won
+        const team = JSON.parse(localStorage.getItem('fpl_team') || '{}');
+        if (team.id === data.winnerId && window.teamManager) {
+            window.teamManager.loadTeamData();
+        }
+    }
+
+    handleSellingStageUpdate(data) {
+        if (window.auctionManager && window.auctionManager.currentAuction) {
+            // Update the selling status display
+            const sellingStatus = document.getElementById('sellingStatus');
+            if (sellingStatus) {
+                sellingStatus.className = `bg-${data.stage === 'selling1' ? 'yellow' : 'orange'}-100 border border-${data.stage === 'selling1' ? 'yellow' : 'orange'}-400 text-${data.stage === 'selling1' ? 'yellow' : 'orange'}-700 px-3 py-2 rounded mb-3 text-sm font-bold text-center animate-pulse`;
+                sellingStatus.textContent = data.message;
+            } else if (window.auctionManager.currentAuction.id === data.auctionId) {
+                // Update the auction display to show selling status
+                window.auctionManager.currentAuction.selling_stage = data.stage;
+                window.auctionManager.displayCurrentAuction(window.auctionManager.currentAuction);
+            }
+            
+            showNotification(data.message, 'info');
+        }
+    }
+
+    handleWaitRequested(data) {
+        if (window.auctionManager && window.auctionManager.currentAuction && 
+            window.auctionManager.currentAuction.id === data.auctionId) {
+            // Update auction state with wait request
+            window.auctionManager.currentAuction.wait_requested_by = data.teamId;
+            window.auctionManager.displayCurrentAuction(window.auctionManager.currentAuction);
+            
+            showNotification(data.message, 'info');
+        }
+    }
+
+    handleWaitAccepted(data) {
+        if (window.auctionManager && window.auctionManager.currentAuction && 
+            window.auctionManager.currentAuction.id === data.auctionId) {
+            // Reset auction to normal state
+            window.auctionManager.currentAuction.selling_stage = null;
+            window.auctionManager.currentAuction.wait_requested_by = null;
+            window.auctionManager.displayCurrentAuction(window.auctionManager.currentAuction);
+            
+            showNotification(data.message, 'success');
+        }
+    }
+
+    handleWaitRejected(data) {
+        if (window.auctionManager && window.auctionManager.currentAuction && 
+            window.auctionManager.currentAuction.id === data.auctionId) {
+            // Clear wait request but keep selling stage
+            window.auctionManager.currentAuction.wait_requested_by = null;
+            window.auctionManager.displayCurrentAuction(window.auctionManager.currentAuction);
+            
+            showNotification(data.message, 'warning');
+        }
+    }
+}
+
+// Notification system
+function showNotification(message, type = 'success') {
+    // Remove existing notification
+    const existing = document.querySelector('.notification');
+    if (existing) {
+        existing.remove();
+    }
+
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Show notification
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    // Hide notification after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Global socket manager
+window.socketManager = new SocketManager();

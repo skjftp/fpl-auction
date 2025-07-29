@@ -1,0 +1,1829 @@
+/* Mobile-First CSS for FPL Auction */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Loading Screen */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Screen Management */
+.screen {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+/* Login Screen */
+.login-container {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.logo-icon {
+    font-size: 80px;
+    margin-bottom: 16px;
+}
+
+.logo h1 {
+    color: white;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.logo p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    backdrop-filter: blur(20px);
+}
+
+.input-group input::placeholder {
+    color: #999;
+}
+
+.input-group input:focus {
+    outline: none;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.login-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.login-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.login-info {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Main App Layout */
+#mainApp {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #f8fafc;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Fixed Header Section */
+.fixed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #f8fafc;
+    z-index: 200;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Top Bar */
+.top-bar {
+    background: white;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.team-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.team-budget {
+    font-size: 14px;
+    color: #10b981;
+    font-weight: 600;
+}
+
+.logout-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:active {
+    background: #f3f4f6;
+    transform: scale(0.95);
+}
+
+/* Status Bar */
+.status-bar {
+    background: white;
+    padding: 4px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 12px;
+}
+
+.draft-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px; /* Reduced from 2px to 1px */
+}
+
+.status-label {
+    color: #6b7280;
+}
+
+.current-turn {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.next-turn-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 1px; /* Reduced from 2px to 1px */
+}
+
+.next-turn-label {
+    font-size: 11px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.next-turn {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #6b7280;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+}
+
+.connection-status.connected .status-dot {
+    background: #10b981;
+}
+
+/* Auto-Bid Card */
+.auto-bid-card {
+    background: white;
+    margin: 0;
+    padding: 16px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.auto-bid-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-input {
+    display: none;
+}
+
+.toggle-label {
+    position: relative;
+    width: 48px;
+    height: 28px;
+    background: #d1d5db;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-input:checked + .toggle-label {
+    background: #10b981;
+}
+
+.toggle-input:checked + .toggle-label .toggle-slider {
+    transform: translateX(20px);
+}
+
+.toggle-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.auto-bid-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #dcfce7;
+    color: #166534;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    animation: pulse 2s infinite;
+}
+
+.config-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.config-btn:active {
+    background: #2563eb;
+    transform: scale(0.95);
+}
+
+/* Tab Navigation */
+.tab-nav {
+    display: flex;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.tab-btn.active {
+    color: #10b981;
+    background: #f0fdf4;
+}
+
+.tab-icon {
+    font-size: 20px;
+}
+
+.tab-btn span {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* Tab Content */
+.tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-top: 155px;
+    padding-bottom: 90px; /* Increased space for chat input on small screens */
+    position: relative;
+}
+
+/* Auction tab - NO SCROLL */
+#auctionTab {
+    overflow: hidden !important;
+    padding: 0;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    height: calc(100vh - 165px - 65px); /* Full height minus header and tab nav */
+    position: fixed;
+    top: 165px; /* After fixed header */
+    left: 0;
+    right: 0;
+    bottom: 65px; /* Above tab nav */
+    padding-top: 8px; /* Small padding after auto-bid card */
+}
+
+/* Only show auction tab when active */
+#auctionTab.active {
+    display: flex;
+}
+
+/* Fixed Bottom Chat - inside auction tab */
+#auctionTab .fixed-bottom-chat {
+    background: white;
+    border: 1px solid #e5e7eb;
+    margin: 20px 12px 12px; /* Increased top margin from 8px to 20px */
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    flex: 1; /* Take remaining space */
+    display: flex;
+    flex-direction: column;
+    min-height: 180px;
+    max-height: 300px; /* Limit max height */
+}
+
+.chat-messages-mini {
+    flex: 1;
+    padding: 8px 12px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    background: #f8fafc;
+    font-size: 12px;
+    scroll-behavior: smooth;
+    min-height: 100px;
+    max-height: 200px;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    /* Improve scroll performance */
+    will-change: scroll-position;
+    transform: translateZ(0);
+}
+
+/* Style scrollbar for better visibility */
+.chat-messages-mini::-webkit-scrollbar {
+    width: 4px;
+}
+
+.chat-messages-mini::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.chat-messages-mini::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.chat-messages-mini::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.chat-input-bar {
+    padding: 8px 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    height: 52px; /* Fixed height for input bar */
+}
+
+.tab-pane {
+    display: none !important;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.tab-pane.active {
+    display: block !important;
+}
+
+/* Override for auction tab - no scroll and fixed position */
+#auctionTab.tab-pane {
+    overflow: hidden !important;
+}
+
+/* Ensure other tabs stay normal */
+#playersTab, #teamTab, #historyTab {
+    position: relative !important;
+    top: auto !important;
+    height: 100% !important;
+}
+
+/* Auction Tab */
+#auctionTab .auction-card,
+#auctionTab .no-auction {
+    background: white;
+    margin: 8px 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.auction-header {
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    position: relative;
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.player-photo {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    backdrop-filter: blur(20px);
+}
+
+.player-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.player-team-pos {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.selling-status {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 6px 12px;
+    border-radius: 16px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    animation: blink 1s ease-in-out infinite;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.selling-status.selling1 {
+    color: #f59e0b;
+    border: 2px solid #f59e0b;
+}
+
+.selling-status.selling2 {
+    color: #ef4444;
+    border: 2px solid #ef4444;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+    50% { opacity: 0.4; transform: translateY(-50%) scale(0.95); }
+}
+
+.bid-info {
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.current-bid, .current-bidder {
+    text-align: center;
+}
+
+.bid-label, .bidder-label {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.bid-amount {
+    font-size: 24px;
+    font-weight: 700;
+    color: #10b981;
+}
+
+.bidder-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.bidding-controls {
+    padding: 8px 12px;
+}
+
+.bid-input-section {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.bid-input {
+    flex: 0.6;
+    padding: 10px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    color: #1f2937;
+    min-width: 80px;
+}
+
+.bid-input:focus {
+    outline: none;
+    border-color: #10b981;
+}
+
+.place-bid-btn {
+    flex: 1;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.place-bid-btn:active {
+    transform: scale(0.95);
+}
+
+.place-bid-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.wait-btn {
+    flex: 0.4;
+    background: #f59e0b;
+    color: white;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+}
+
+.wait-btn:active {
+    background: #dc2626;
+    transform: scale(0.98);
+}
+
+.wait-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.admin-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-controls button {
+    width: 100%;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-controls button:active {
+    transform: scale(0.98);
+}
+
+.no-auction {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.no-auction-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.7;
+}
+
+.no-auction h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+.sold-section {
+    margin: 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.section-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.toggle-btn {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-btn:active {
+    background: #e5e7eb;
+    transform: scale(0.95);
+}
+
+.sold-items {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Auction Chat Section */
+.auction-chat-section {
+    margin: 16px;
+}
+
+.auction-chat-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    max-height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+.auction-chat-messages {
+    height: 180px;
+    padding: 12px;
+    overflow-y: auto;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.auction-chat-input-section {
+    padding: 12px;
+    background: white;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.auction-chat-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    font-size: 14px;
+    background: #f9fafb;
+}
+
+.auction-chat-input:focus {
+    outline: none;
+    border-color: #10b981;
+    background: white;
+}
+
+.send-auction-chat-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.send-auction-chat-btn:active {
+    background: #059669;
+    transform: scale(0.95);
+}
+
+/* Players Tab */
+#playersTab {
+    height: 100%;
+    overflow: hidden;
+}
+
+.players-header {
+    position: fixed;
+    top: 165px; /* Below the main header */
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: white;
+    display: none;
+}
+
+#playersTab.active .players-header {
+    display: block;
+}
+
+.search-bar {
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #10b981;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.filter-select {
+    padding: 8px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+}
+
+.players-list {
+    padding: 140px 16px 80px; /* Top padding for header, bottom for nav */
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.player-item {
+    background: white;
+    margin-bottom: 8px;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.player-item.sold {
+    opacity: 0.7;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    position: relative;
+}
+
+.player-item.sold::before {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #10b981;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.player-item.sold h4 {
+    text-decoration: line-through;
+    color: #6b7280 !important;
+}
+
+.player-item.sold .player-price {
+    color: #6b7280 !important;
+}
+
+.player-item-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.player-item-info p {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.player-price {
+    font-size: 14px;
+    font-weight: 600;
+    color: #10b981;
+}
+
+.start-auction-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.start-auction-btn:active {
+    background: #059669;
+    transform: scale(0.95);
+}
+
+/* Team Tab */
+#teamTab {
+    height: 100%;
+    overflow: hidden;
+}
+
+.team-header {
+    position: fixed;
+    top: 165px; /* Below the main header */
+    left: 0;
+    right: 0;
+    z-index: 20;
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+    display: none;
+}
+
+#teamTab.active .team-header {
+    display: block;
+}
+
+.team-selector {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+    background: #f3f4f6;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 32px 8px 12px;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 20px;
+    cursor: pointer;
+    width: auto;
+    min-width: 200px;
+}
+
+.squad-stats {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.stat {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.view-toggle {
+    display: flex;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+.view-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.view-btn.active {
+    background: white;
+    color: #10b981;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.team-squad {
+    padding: 175px 16px 80px; /* Top padding for header, bottom for nav */
+    height: 100%;
+    overflow: hidden; /* No scrolling - static layout */
+}
+
+.position-group {
+    margin-bottom: 20px;
+}
+
+.position-header {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8px;
+    padding: 8px 0;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.squad-player {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.squad-player-info h5 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.squad-player-info p {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.squad-player-price {
+    font-size: 14px;
+    font-weight: 600;
+    color: #10b981;
+}
+
+/* History Tab */
+.history-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.history-filters {
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.history-search {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.filter-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.filter-btn.active {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+.history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.history-item {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.history-item-info {
+    flex: 1;
+}
+
+.history-item-type {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+
+.history-item-type.bid {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.history-item-type.auto-bid {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.history-item-type.sale {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* Chat Messages Styling */
+.chat-message {
+    margin-bottom: 6px;
+    padding: 6px 8px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    font-size: 12px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Ensure messages don't overflow */
+.chat-messages-mini .chat-message:last-child {
+    margin-bottom: 0;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.message-author {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3b82f6;
+}
+
+.message-time {
+    font-size: 10px;
+    color: #9ca3af;
+}
+
+.message-content {
+    font-size: 14px;
+    color: #1f2937;
+    line-height: 1.4;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    font-size: 14px;
+    background: #f9fafb;
+}
+
+.chat-input:focus {
+    outline: none;
+    border-color: #10b981;
+    background: white;
+}
+
+.send-chat-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.send-chat-btn:active {
+    background: #059669;
+    transform: scale(0.95);
+}
+
+/* Auto-Bid Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #6b7280;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:active {
+    background: #f3f4f6;
+}
+
+.modal-body {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.global-settings {
+    margin-bottom: 20px;
+}
+
+.global-settings h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.setting-item {
+    margin-bottom: 12px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #374151;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.players-config h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.search-section {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.config-players-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.config-player-item {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.config-player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.config-player-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.config-player-details {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.max-bid-input {
+    width: 80px;
+    padding: 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.player-settings {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.setting-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.modal-footer {
+    padding: 16px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 8px;
+}
+
+.save-btn {
+    flex: 1;
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.save-btn:active {
+    background: #059669;
+    transform: scale(0.98);
+}
+
+.cancel-btn {
+    flex: 1;
+    background: #6b7280;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn:active {
+    background: #4b5563;
+    transform: scale(0.98);
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.toast {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    border-left: 4px solid #10b981;
+    transform: translateY(-100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast.error {
+    border-left-color: #ef4444;
+}
+
+.toast.warning {
+    border-left-color: #f59e0b;
+}
+
+.toast.info {
+    border-left-color: #3b82f6;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Small Screen Support (iPhone SE and similar) */
+@media (max-height: 667px) {
+    .tab-content {
+        padding-bottom: 100px; /* Extra space for small screens */
+    }
+    
+    #auctionTab .fixed-bottom-chat .chat-input-bar {
+        position: relative;
+        z-index: 999;
+        background: white;
+        border-top: 2px solid #e5e7eb;
+    }
+    
+    /* Limit chat messages height on smaller screens */
+    .chat-messages-mini {
+        max-height: 120px; /* Reduced from 200px */
+        min-height: 60px; /* Reduced from 100px */
+    }
+}
+
+/* Extra small screens (iPhone SE) */
+@media (max-height: 568px) {
+    .tab-content {
+        padding-bottom: 110px; /* Even more space for very small screens */
+    }
+    
+    .fixed-bottom-chat {
+        margin-bottom: 20px !important; /* Ensure space above tabs */
+    }
+    
+    /* Further limit chat messages on very small screens */
+    .chat-messages-mini {
+        max-height: 80px; /* Even smaller for iPhone SE */
+        min-height: 40px;
+    }
+}
+
+/* Landscape mode on small screens */
+@media (max-height: 480px) {
+    .chat-messages-mini {
+        max-height: 60px; /* Very limited height in landscape */
+        min-height: 30px;
+    }
+}
+
+/* Safe Area Support for iPhone */
+@supports (padding: max(0px)) {
+    .top-bar {
+        padding-top: max(8px, env(safe-area-inset-top));
+    }
+    
+    .tab-nav {
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+    
+    .chat-input-section {
+        bottom: max(90px, calc(80px + env(safe-area-inset-bottom)));
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+    }
+}
+
+/* Formation View */
+.formation-view {
+    background: linear-gradient(180deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px;
+    position: relative;
+    min-height: 400px;
+}
+
+.formation-pitch {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.formation-line {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.formation-player {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 6px;
+    min-width: 60px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 3px solid #ffffff;
+}
+
+.formation-player.empty {
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px dashed rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.formation-player-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.formation-player-price {
+    font-size: 9px;
+    color: #10b981;
+    font-weight: 600;
+}
+
+.formation-player-club {
+    font-size: 8px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.formation-player.empty .formation-player-name {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.formation-clubs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.formation-club {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid #ffffff;
+    min-width: 80px;
+}
+
+.formation-club.empty {
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px dashed rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.formation-club-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.formation-club-price {
+    font-size: 10px;
+    color: #10b981;
+    font-weight: 600;
+}
+
+.formation-club.empty .formation-club-name {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* List View Styles */
+.list-view .position-group {
+    background: white;
+    margin: 8px 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.list-view .position-header {
+    background: #f8fafc;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.position-counter {
+    background: #10b981;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
