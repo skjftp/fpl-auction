@@ -186,18 +186,61 @@ class TeamManager {
 
         // Create club color mapping using actual team colors
         const getClubColor = (teamName) => {
-            // Try to match team name with Premier League colors
+            if (!teamName) return '#6b7280';
+            
+            const lowerTeamName = teamName.toLowerCase();
+            console.log('Matching team name:', teamName); // Debug log
+            
+            // Direct mapping for exact matches first
+            const directMatches = {
+                'liverpool': '#C8102E',
+                'arsenal': '#EF0107',
+                'chelsea': '#034694',
+                'manchester city': '#6CABDD',
+                'man city': '#6CABDD',
+                'manchester united': '#DA020E',
+                'man utd': '#DA020E',
+                'man united': '#DA020E',
+                'tottenham': '#132257',
+                'spurs': '#132257',
+                'newcastle': '#241F20',
+                'newcastle united': '#241F20',
+                'west ham': '#7A263A',
+                'west ham united': '#7A263A',
+                'aston villa': '#95BFE5',
+                'brighton': '#0057B8',
+                'fulham': '#FFFFFF',
+                'brentford': '#E30613',
+                'crystal palace': '#1B458F',
+                'nottingham forest': '#DD0000',
+                'everton': '#003399',
+                'bournemouth': '#DA020E',
+                'wolves': '#FDB913',
+                'wolverhampton': '#FDB913',
+                'sunderland': '#EB172B'
+            };
+            
+            // Check direct matches first
+            if (directMatches[lowerTeamName]) {
+                console.log('Direct match found:', lowerTeamName, '→', directMatches[lowerTeamName]);
+                return directMatches[lowerTeamName];
+            }
+            
+            // Then try partial matches
             for (const [club, color] of Object.entries(premierLeagueColors)) {
-                if (teamName && teamName.toLowerCase().includes(club.toLowerCase().replace('\'', ''))) {
+                if (lowerTeamName.includes(club.toLowerCase().replace('\'', ''))) {
+                    console.log('Partial match found:', lowerTeamName, 'contains', club.toLowerCase(), '→', color);
                     return color;
                 }
             }
+            
             // Fallback colors if no match found
+            console.log('No match found for:', teamName, 'using fallback');
             const fallbackColors = [
                 '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', 
                 '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
             ];
-            return fallbackColors[Math.abs(teamName ? teamName.length : 0) % fallbackColors.length];
+            return fallbackColors[Math.abs(teamName.length) % fallbackColors.length];
         };
 
         // Fill empty slots
@@ -221,11 +264,30 @@ class TeamManager {
             }
             
             const clubColor = getClubColor(player.team_name);
-            // Try multiple image sources for better fallback
-            const playerCode = player.code || player.id || 'default';
-            const playerImageUrl = player.photo 
-                ? `https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.photo.replace('.jpg', '')}.png`
-                : `https://resources.premierleague.com/premierleague/photos/players/250x250/p${playerCode}.png`;
+            
+            // Multiple fallback strategies for player images
+            const getPlayerImageUrl = (player) => {
+                // Try different URL formats for FPL player images
+                const baseUrls = [
+                    'https://resources.premierleague.com/premierleague/photos/players/250x250/',
+                    'https://fantasy.premierleague.com/dist/img/shirts/standard/'
+                ];
+                
+                if (player.photo) {
+                    // Remove .jpg extension and try different formats
+                    const photoCode = player.photo.replace('.jpg', '');
+                    return `${baseUrls[0]}p${photoCode}.png`;
+                } else if (player.code) {
+                    return `${baseUrls[0]}p${player.code}.png`;
+                } else if (player.id) {
+                    return `${baseUrls[0]}p${player.id}.png`;
+                }
+                
+                // Default fallback
+                return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiNGM0Y0RjYiLz4KPHN2ZyB4PSIxNiIgeT0iMTYiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjOUI5OUIzIj4KPHA+VXNlcjwvcD4KPC9zdmc+Cjwvc3ZnPgo=';
+            };
+            
+            const playerImageUrl = getPlayerImageUrl(player);
             
             // Use white border for dark colors, dark border for light colors
             const isLightColor = ['#FFFFFF', '#FDB913', '#95BFE5', '#6CABDD', '#3AAFDD'].includes(clubColor);
@@ -239,7 +301,7 @@ class TeamManager {
                             <img src="${playerImageUrl}" 
                                  alt="${player.web_name || player.name || 'Player'}"
                                  class="w-full h-full object-cover"
-                                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiNGM0Y0RjYiLz4KPHN2ZyB4PSIxNiIgeT0iMTYiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjOUI5OUIzIj4KPHA+VXNlcjwvcD4KPC9zdmc+Cjwvc3ZnPgo=';">
+                                 onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiNGM0Y0RjYiLz4KPHN2ZyB4PSIxNiIgeT0iMTYiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjOUI5OUIzIj4KPHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQ9IkFyaWFsIiBmb250LXNpemU9IjEwIj4/PC90ZXh0Pgo8L3N2Zz4KPC9zdmc+';">
                         </div>
                         <!-- Price badge -->
                         <div class="absolute -bottom-1 -right-1 bg-white border border-gray-300 rounded-full px-1.5 py-0.5 text-xs font-semibold text-gray-700 shadow-sm">
