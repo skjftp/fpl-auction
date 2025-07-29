@@ -7,6 +7,7 @@ class MobileApp {
         this.chatMessages = [];
         this.unreadChatCount = 0;
         this.isInitialized = false;
+        this.allTeams = []; // Store all teams for draft display
     }
 
     async initialize() {
@@ -284,6 +285,9 @@ class MobileApp {
             await this.loadDraftState();
             await this.loadTeamSquad();
             
+            // Load teams data for draft display
+            await this.setupTeamSelector();
+            
             // Load chat messages asynchronously (non-blocking)
             this.loadChatMessagesAsync();
         } catch (error) {
@@ -394,9 +398,9 @@ class MobileApp {
             return { teamId: null, teamName: 'Draft Complete' };
         }
         
-        // Get team name (assuming teams are named Team1, Team2, etc.)
-        const nextTeamName = draftState.teams ? 
-            draftState.teams.find(team => team.id === nextTeamId)?.name || `Team${nextTeamId}` :
+        // Get team name from stored teams data
+        const nextTeamName = this.allTeams.length > 0 ? 
+            this.allTeams.find(team => team.id === nextTeamId)?.name || `Team${nextTeamId}` :
             `Team${nextTeamId}`;
             
         return { teamId: nextTeamId, teamName: nextTeamName };
@@ -478,8 +482,9 @@ class MobileApp {
             const teamSelector = document.getElementById('teamSelector');
             if (!teamSelector) return;
             
-            // Get all teams
+            // Get all teams and store for draft display
             const teams = await window.mobileAPI.getAllTeams();
+            this.allTeams = teams; // Store for use in calculateNextTurn
             
             // Clear existing options
             teamSelector.innerHTML = '';
@@ -797,6 +802,8 @@ class MobileApp {
     }
 
     addChatMessage(message) {
+        console.log('💬 Mobile App: Adding chat message:', message, 'Current tab:', this.currentTab);
+        
         // Check for duplicates
         const exists = this.chatMessages.some(msg => 
             msg.team_id === message.team_id && 
@@ -806,10 +813,17 @@ class MobileApp {
         
         if (!exists) {
             this.chatMessages.push(message);
+            console.log(`💬 Mobile App: Added message, total messages: ${this.chatMessages.length}`);
+            
             // Update mini chat at bottom if on auction tab
             if (this.currentTab === 'auction') {
+                console.log('💬 Mobile App: Rendering mini chat for auction tab');
                 this.renderChatMessagesMini();
+            } else {
+                console.log(`💬 Mobile App: Not rendering mini chat, current tab: ${this.currentTab}`);
             }
+        } else {
+            console.log('💬 Mobile App: Duplicate message detected, skipping');
         }
     }
 

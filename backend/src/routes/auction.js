@@ -119,8 +119,8 @@ router.post('/start-player/:playerId', async (req, res) => {
       startedBy: team
     };
     
-    // Broadcast to all connected clients
-    req.io.emit('auction-started', responseData);
+    // Broadcast to all connected clients in auction room
+    req.io.to('auction-room').emit('auction-started', responseData);
     
     res.json({ success: true, auction: responseData });
     
@@ -230,8 +230,8 @@ router.post('/start-club/:clubId', async (req, res) => {
       startedBy: team
     };
     
-    // Broadcast to all connected clients
-    req.io.emit('auction-started', responseData);
+    // Broadcast to all connected clients in auction room
+    req.io.to('auction-room').emit('auction-started', responseData);
     
     res.json({ success: true, auction: responseData });
     

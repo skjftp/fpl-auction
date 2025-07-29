@@ -23,6 +23,9 @@ class MobileSocketManager {
             this.reconnectAttempts = 0;
             this.updateConnectionStatus(true);
             this.joinAuction();
+            
+            // Set up periodic room rejoin as a safety measure
+            this.setupPeriodicRejoin();
         });
 
         this.socket.on('disconnect', () => {
@@ -93,6 +96,10 @@ class MobileSocketManager {
     }
 
     disconnect() {
+        if (this.rejoinInterval) {
+            clearInterval(this.rejoinInterval);
+            this.rejoinInterval = null;
+        }
         if (this.socket) {
             this.socket.disconnect();
             this.socket = null;
@@ -115,10 +122,32 @@ class MobileSocketManager {
 
     joinAuction() {
         const team = window.mobileAPI.getCurrentUser();
-        if (team.id && this.socket) {
+        console.log('🔍 Mobile: Attempting to join auction room, team:', team);
+        if (team && team.id && this.socket) {
             this.socket.emit('join-auction', team.id);
-            console.log(`👥 Mobile: Joined auction room as ${team.name}`);
+            console.log(`👥 Mobile: Joined auction room as ${team.name || 'Team' + team.id}`);
+        } else {
+            console.warn('⚠️ Mobile: Cannot join auction room - missing team data or socket:', { team, socketConnected: !!this.socket });
+            // Retry after a short delay if team data is not available
+            if (this.socket && !team?.id) {
+                setTimeout(() => this.joinAuction(), 1000);
+            }
         }
+    }
+
+    setupPeriodicRejoin() {
+        // Clear any existing interval
+        if (this.rejoinInterval) {
+            clearInterval(this.rejoinInterval);
+        }
+        
+        // Rejoin room every 30 seconds as a safety measure
+        this.rejoinInterval = setInterval(() => {
+            if (this.connected && this.socket) {
+                console.log('🔄 Mobile: Periodic auction room rejoin');
+                this.joinAuction();
+            }
+        }, 30000);
     }
 
     updateConnectionStatus(connected) {
@@ -135,8 +164,11 @@ class MobileSocketManager {
     }
 
     handleAuctionStarted(data) {
+        console.log('🔨 Mobile: Received auction-started event:', data);
         if (window.mobileAuction) {
             window.mobileAuction.displayCurrentAuction(data);
+        } else {
+            console.warn('⚠️ Mobile: mobileAuction not available for auction-started event');
         }
         // Backend sends player_name and club_name at top level, not nested
         const itemName = data.player_name || data.club_name || 'Unknown Item';
@@ -217,11 +249,17 @@ class MobileSocketManager {
     }
 
     handleNewChatMessage(message) {
-        if (window.mobileApp && window.mobileApp.currentTab === 'chat') {
+        console.log('💬 Mobile: Received new chat message:', message);
+        if (window.mobileApp) {
+            // Always add the message to the chat array
             window.mobileApp.addChatMessage(message);
+            
+            // Show notification badge if not on auction tab (where mini-chat is visible)
+            if (window.mobileApp.currentTab !== 'auction') {
+                window.mobileApp.incrementChatNotification();
+            }
         } else {
-            // Show notification badge
-            window.mobileApp.incrementChatNotification();
+            console.warn('⚠️ Mobile: mobileApp not available for chat message');
         }
         
         // Vibrate for new messages

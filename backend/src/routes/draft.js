@@ -233,8 +233,8 @@ router.post('/chat', async (req, res) => {
       username: team.username
     };
     
-    // Broadcast to all clients
-    req.io.emit('new-chat-message', messageData);
+    // Broadcast to all clients in auction room
+    req.io.to('auction-room').emit('new-chat-message', messageData);
     res.json({ success: true, message: messageData });
     
   } catch (error) {
