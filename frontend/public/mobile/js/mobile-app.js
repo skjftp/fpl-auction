@@ -332,6 +332,8 @@ class MobileApp {
     }
 
     updateDraftStatus(draftState) {
+        console.log('📊 Mobile: Updating draft status with state:', draftState);
+        
         const currentTurnEl = document.getElementById('currentTurn');
         const nextTurnEl = document.getElementById('nextTurn');
         
@@ -349,6 +351,12 @@ class MobileApp {
                 // Calculate next turn with snake draft logic
                 if (nextTurnEl) {
                     const nextTurnInfo = this.calculateNextTurn(draftState);
+                    console.log('🐍 Mobile: Next turn calculation:', {
+                        currentRound: draftState.current_round,
+                        currentTeamId: draftState.current_team_id,
+                        currentTeamName: draftState.current_team_name,
+                        nextTurnInfo: nextTurnInfo
+                    });
                     const isMyNextTurn = this.currentUser && nextTurnInfo.teamId === this.currentUser.id;
                     
                     if (isMyNextTurn) {
@@ -380,34 +388,34 @@ class MobileApp {
         // Rounds 2,4,6,8,10,12,14,16 go 10→1
         
         const currentRound = draftState.current_round || 1;
-        const currentTeamId = draftState.current_team_id || 1;
-        const totalTeams = 10;
+        const currentPosition = draftState.current_position || draftState.current_team_id || 1;
+        const totalTeams = draftState.total_teams || 10;
         
         // Determine if current round is ascending (1→10) or descending (10→1)
         const isAscendingRound = currentRound % 2 === 1;
         
-        let nextTeamId, nextRound;
+        let nextPosition, nextRound;
         
         if (isAscendingRound) {
             // Current round goes 1→10
-            if (currentTeamId < totalTeams) {
+            if (currentPosition < totalTeams) {
                 // Next team in same round
-                nextTeamId = currentTeamId + 1;
+                nextPosition = currentPosition + 1;
                 nextRound = currentRound;
             } else {
-                // End of round, next round starts with team 10 (descending)
-                nextTeamId = totalTeams;
+                // End of ascending round, next round starts with position 10 (descending)
+                nextPosition = totalTeams; // Position 10 goes again
                 nextRound = currentRound + 1;
             }
         } else {
             // Current round goes 10→1
-            if (currentTeamId > 1) {
+            if (currentPosition > 1) {
                 // Next team in same round
-                nextTeamId = currentTeamId - 1;
+                nextPosition = currentPosition - 1;
                 nextRound = currentRound;
             } else {
-                // End of round, next round starts with team 1 (ascending)
-                nextTeamId = 1;
+                // End of descending round, next round starts with position 1 (ascending)
+                nextPosition = 1; // Position 1 goes again
                 nextRound = currentRound + 1;
             }
         }
@@ -417,12 +425,15 @@ class MobileApp {
             return { teamId: null, teamName: 'Draft Complete' };
         }
         
-        // Get team name from draft_order or teams array
+        // Get team at the next position from draft_order
         const teams = draftState.draft_order || draftState.teams || [];
-        const nextTeam = teams.find(team => team.team_id === nextTeamId || team.id === nextTeamId);
-        const nextTeamName = nextTeam?.name || `Team${nextTeamId}`;
+        
+        // Find team at the next position (positions are 1-based)
+        const nextTeam = teams.find(team => team.position === nextPosition) || teams[nextPosition - 1];
+        const nextTeamName = nextTeam?.name || `Position ${nextPosition}`;
+        const nextTeamId = nextTeam?.team_id || nextTeam?.id || nextPosition;
             
-        return { teamId: nextTeamId, teamName: nextTeamName };
+        return { teamId: nextTeamId, teamName: nextTeamName, position: nextPosition };
     }
 
     switchTab(tabName) {
