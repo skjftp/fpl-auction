@@ -904,21 +904,19 @@ body {
 /* Chat Tab */
 #chatTab {
     padding-bottom: 0 !important; /* Override general tab padding for chat */
-    display: flex;
-    flex-direction: column;
+    position: relative;
     height: 100%;
+    overflow: hidden; /* Prevent scroll on the tab itself */
 }
 
 .chat-container {
-    display: flex;
-    flex-direction: column;
     height: 100%;
-    max-height: calc(100vh - 180px); /* Account for top bars and bottom nav */
+    position: relative;
 }
 
 .chat-messages {
-    flex: 1;
-    max-height: 60vh; /* 60% of screen height */
+    height: calc(100% - 150px); /* Full height minus space for input */
+    max-height: 60vh; /* 60% of screen maximum */
     padding: 16px;
     overflow-y: auto;
     background: #f8fafc;
@@ -958,15 +956,18 @@ body {
 }
 
 .chat-input-section {
+    position: absolute;
+    bottom: 90px; /* Above bottom navigation */
+    left: 0;
+    right: 0;
     padding: 16px;
     background: white;
     border-top: 1px solid #e5e7eb;
     display: flex;
     gap: 8px;
     align-items: center;
-    flex-shrink: 0;
-    margin-top: auto;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 50;
 }
 
 .chat-input {
@@ -1294,6 +1295,12 @@ body {
     
     .tab-nav {
         padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+    
+    .chat-input-section {
+        bottom: max(90px, calc(80px + env(safe-area-inset-bottom)));
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
     }
 }
 
