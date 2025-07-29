@@ -423,24 +423,29 @@
                         
                         <!-- Right: Team Chat -->
                         <div class="lg:col-span-1">
-                            <div class="card p-3" style="height: calc(100vh - 280px); display: flex; flex-direction: column;">
-                                <h3 class="text-sm font-semibold mb-2 text-gray-900">💬 Chat</h3>
+                            <div class="card" style="height: calc(100vh - 280px);">
+                                <!-- Chat Header (Fixed) -->
+                                <div class="p-3 border-b border-gray-200">
+                                    <h3 class="text-sm font-semibold text-gray-900">💬 Chat</h3>
+                                </div>
                                 
-                                <!-- Chat Messages - Fixed Height with Scroll -->
-                                <div id="chatMessages" class="border border-gray-200 rounded p-2 bg-gray-50 text-sm" style="height: calc(100% - 80px); overflow-y: auto; margin-bottom: 8px;">
+                                <!-- Chat Messages (Scrollable) -->
+                                <div id="chatMessages" class="p-3 bg-gray-50 text-sm overflow-y-auto" style="height: calc(100% - 100px);">
                                     <div class="text-gray-500 text-center">No messages yet...</div>
                                 </div>
                                 
-                                <!-- Chat Input - Always at Bottom -->
-                                <form id="chatForm" class="flex gap-1" style="height: 40px;">
-                                    <input type="text" id="chatInput" 
-                                           placeholder="Type a message..." 
-                                           class="flex-1 px-2 py-1 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                           maxlength="500">
-                                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 text-sm rounded transition-colors">
-                                        Send
-                                    </button>
-                                </form>
+                                <!-- Chat Input (Fixed at Bottom) -->
+                                <div class="p-3 border-t border-gray-200">
+                                    <form id="chatForm" class="flex gap-2">
+                                        <input type="text" id="chatInput" 
+                                               placeholder="Type a message..." 
+                                               class="flex-1 px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                               maxlength="500">
+                                        <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 text-sm rounded transition-colors">
+                                            Send
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
