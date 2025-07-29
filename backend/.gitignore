@@ -1,7 +1,7 @@
 node_modules/
 .env
 *.log
+fpl_auction.db
 .DS_Store
 dist/
 coverage/
-*.db

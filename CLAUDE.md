@@ -37,14 +37,15 @@ A Fantasy Premier League (FPL) auction system that allows 10 teams to bid on pla
 ```
 fpl-auction/
 ├── backend/
-│   └── backend/            # Note: nested structure
-│       ├── src/
-│       │   ├── config/     # Firebase configuration
-│       │   ├── middleware/ # Auth middleware
-│       │   ├── models/     # Database models
-│       │   ├── routes/     # API routes
-│       │   └── server.js   # Main server file
-│       └── Dockerfile
+│   ├── src/
+│   │   ├── config/         # Firebase configuration
+│   │   ├── middleware/     # Auth middleware
+│   │   ├── models/         # Database models
+│   │   ├── routes/         # API routes
+│   │   └── server.js       # Main server file
+│   ├── package.json
+│   ├── Dockerfile
+│   └── .gcloudignore
 ├── frontend/
 │   └── public/
 │       ├── index.html      # Desktop UI
@@ -58,7 +59,10 @@ fpl-auction/
 │       └── mobile/         # Mobile-specific assets
 │           ├── js/         # Mobile JavaScript
 │           └── css/        # Mobile styles
-└── CLAUDE.md               # Project documentation
+├── functions/              # Firebase functions
+├── firebase.json
+├── .firebaserc
+└── CLAUDE.md              # Project documentation
 ```
 
 ## API Endpoints
@@ -80,7 +84,7 @@ git add -A && git commit -m "message" && git push origin main
 ### Backend Deployment (Manual)
 ```bash
 # Deploy backend to Google Cloud Run
-cd backend/backend && gcloud run deploy fpl-auction-backend --source . --region us-central1 --allow-unauthenticated --project fpl-auction-2025
+cd backend && gcloud run deploy fpl-auction-backend --source . --region us-central1 --allow-unauthenticated --project fpl-auction-2025
 ```
 
 ### Important Deployment Notes
