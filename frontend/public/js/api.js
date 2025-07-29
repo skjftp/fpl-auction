@@ -194,6 +194,23 @@ class API {
             body: JSON.stringify({ message })
         });
     }
+
+    // Admin auction management endpoints
+    async restartCompletedAuction(auctionId) {
+        return await this.request(`/admin/auction/restart/${auctionId}`, { method: 'POST' });
+    }
+
+    async cancelPreviousBid(auctionId) {
+        return await this.request(`/admin/auction/cancel-bid/${auctionId}`, { method: 'POST' });
+    }
+
+    async getCompletedAuctions() {
+        return await this.request('/admin/auctions/completed');
+    }
+
+    async getActiveAuctionWithBids() {
+        return await this.request('/admin/auction/current-with-bids');
+    }
 }
 
 // Global API instance

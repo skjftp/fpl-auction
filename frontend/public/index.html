@@ -545,6 +545,29 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Auction Management -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900">Auction Management</h4>
+                        
+                        <!-- Restart Completed Auctions -->
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
+                            <h5 class="font-medium text-blue-900 mb-3">🔄 Restart Completed Auctions</h5>
+                            <p class="text-sm text-blue-700 mb-3">Restart a completed auction from the exact same point where it ended.</p>
+                            <div id="completedAuctionsList" class="space-y-2 max-h-64 overflow-y-auto">
+                                <div class="text-gray-500 text-center py-4">Loading completed auctions...</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cancel Previous Bid -->
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                            <h5 class="font-medium text-red-900 mb-3">↩️ Cancel Previous Bid</h5>
+                            <p class="text-sm text-red-700 mb-3">Cancel the last bid in the current auction to go back one step.</p>
+                            <div id="currentAuctionBids" class="space-y-2">
+                                <div class="text-gray-500 text-center py-4">Loading current auction...</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

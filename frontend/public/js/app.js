@@ -614,8 +614,12 @@ class App {
         }
 
         try {
+            // Load teams list for admin access management
             const teams = await api.getTeamsLeaderboard();
             this.displayAdminTeams(teams);
+            
+            // Load auction management data
+            await this.loadAuctionManagement();
         } catch (error) {
             console.error('Error loading admin panel:', error);
             showNotification('Failed to load admin panel', 'error');
@@ -698,6 +702,128 @@ class App {
         } catch (error) {
             console.error('Error revoking admin:', error);
             showNotification('Failed to revoke admin access', 'error');
+        }
+    }
+
+    async loadAuctionManagement() {
+        try {
+            // Load completed auctions for restart functionality
+            const completedAuctions = await api.getCompletedAuctions();
+            this.displayCompletedAuctions(completedAuctions);
+            
+            // Load current auction with bids for cancel bid functionality
+            const currentAuction = await api.getActiveAuctionWithBids();
+            this.displayCurrentAuctionBids(currentAuction);
+        } catch (error) {
+            console.error('Error loading auction management data:', error);
+        }
+    }
+
+    displayCompletedAuctions(auctions) {
+        const container = document.getElementById('completedAuctionsList');
+        if (!container) return;
+        
+        if (!auctions || auctions.length === 0) {
+            container.innerHTML = '<div class="text-gray-500 text-center py-4">No completed auctions</div>';
+            return;
+        }
+        
+        container.innerHTML = auctions.slice(-10).map(auction => `
+            <div class="flex items-center justify-between p-3 bg-white rounded border">
+                <div class="flex-1">
+                    <div class="font-semibold">${auction.player_name || auction.club_name || 'Unknown'}</div>
+                    <div class="text-sm text-gray-600">
+                        Sold to ${auction.winning_team_name || 'Unknown'} for £${auction.final_price || 0}m
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        ${new Date(auction.completed_at).toLocaleString()}
+                    </div>
+                </div>
+                <button onclick="window.app.restartAuction('${auction.id}')" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                    Restart
+                </button>
+            </div>
+        `).join('');
+    }
+
+    displayCurrentAuctionBids(auction) {
+        const container = document.getElementById('currentAuctionBids');
+        if (!container) return;
+        
+        if (!auction || !auction.bids || auction.bids.length === 0) {
+            container.innerHTML = '<div class="text-gray-500 text-center py-4">No active auction or bids</div>';
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="mb-4">
+                <div class="font-semibold text-lg">${auction.player_name || auction.club_name || 'Unknown'}</div>
+                <div class="text-sm text-gray-600">Current Status: ${auction.stage || 'Unknown'}</div>
+            </div>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
+                ${auction.bids.slice(-5).map((bid, index) => `
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded ${index === auction.bids.length - 1 ? 'border-l-4 border-blue-500' : ''}">
+                        <div class="flex-1">
+                            <div class="font-medium">${bid.team_name || 'Unknown Team'}</div>
+                            <div class="text-sm text-gray-600">£${bid.amount || 0}m</div>
+                            <div class="text-xs text-gray-500">
+                                ${new Date(bid.created_at).toLocaleString()}
+                            </div>
+                        </div>
+                        ${index === auction.bids.length - 1 ? `
+                            <button onclick="window.app.cancelLastBid('${auction.id}')" 
+                                    class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">
+                                Cancel
+                            </button>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    async restartAuction(auctionId) {
+        if (!confirm('Are you sure you want to restart this completed auction? This will reopen it at the exact same point.')) {
+            return;
+        }
+        
+        try {
+            const response = await api.restartCompletedAuction(auctionId);
+            showNotification('Auction restarted successfully', 'success');
+            
+            // Refresh auction data
+            await this.loadAuctionManagement();
+            
+            // Notify other users via socket if available
+            if (window.socketManager?.socket) {
+                window.socketManager.socket.emit('auction-restarted', { auctionId });
+            }
+        } catch (error) {
+            console.error('Error restarting auction:', error);
+            showNotification('Failed to restart auction', 'error');
+        }
+    }
+
+    async cancelLastBid(auctionId) {
+        if (!confirm('Are you sure you want to cancel the last bid? This will go back one step in the auction.')) {
+            return;
+        }
+        
+        try {
+            const response = await api.cancelPreviousBid(auctionId);
+            showNotification('Last bid cancelled successfully', 'success');
+            
+            // Refresh auction data
+            await this.loadAuctionManagement();
+            
+            // Notify other users via socket if available
+            if (window.socketManager?.socket) {
+                window.socketManager.socket.emit('bid-cancelled', { auctionId });
+            }
+        } catch (error) {
+            console.error('Error cancelling bid:', error);
+            showNotification('Failed to cancel bid', 'error');
         }
     }
 }
