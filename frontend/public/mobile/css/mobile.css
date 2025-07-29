@@ -493,6 +493,9 @@ body {
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    position: sticky;
+    top: 150px; /* Same as tab-content padding-top */
+    z-index: 10;
 }
 
 .auction-header {
@@ -678,6 +681,9 @@ body {
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin: 12px;
+    position: sticky;
+    top: 150px; /* Same as tab-content padding-top */
+    z-index: 10;
 }
 
 .no-auction-icon {
