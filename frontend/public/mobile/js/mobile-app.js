@@ -447,8 +447,7 @@ class MobileApp {
             return { teamId: null, teamName: 'Draft Complete' };
         }
         
-        // Get team at the next position from draft_order
-        const teams = draftState.draft_order || draftState.teams || [];
+        // Get team at the next position from draft_order (teams already declared above)
         
         console.log('🐍 Mobile: Draft order teams:', teams.map(t => ({
             name: t.name,
