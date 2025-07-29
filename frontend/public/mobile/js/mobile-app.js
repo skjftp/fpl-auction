@@ -225,17 +225,7 @@ class MobileApp {
             sendChatBtn.addEventListener('click', () => this.sendChatMessage());
         }
 
-        // View toggle buttons
-        const formationViewBtn = document.getElementById('formationViewBtn');
-        const listViewBtn = document.getElementById('listViewBtn');
-        
-        if (formationViewBtn) {
-            formationViewBtn.addEventListener('click', () => this.switchView('formation'));
-        }
-        
-        if (listViewBtn) {
-            listViewBtn.addEventListener('click', () => this.switchView('list'));
-        }
+        // View toggle removed - always use formation view
 
         // Team selector dropdown
         const teamSelector = document.getElementById('teamSelector');
@@ -359,26 +349,7 @@ class MobileApp {
         this.loadTabData(tabName);
     }
 
-    switchView(viewName) {
-        // Update current view
-        this.currentView = viewName;
-        
-        // Update view buttons
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        if (viewName === 'formation') {
-            document.getElementById('formationViewBtn').classList.add('active');
-        } else {
-            document.getElementById('listViewBtn').classList.add('active');
-        }
-        
-        // Re-render team squad with new view
-        if (this.currentTab === 'team') {
-            this.loadTeamSquad();
-        }
-    }
+    // View switching removed - always use formation view
 
     async loadTabData(tabName) {
         switch (tabName) {
@@ -491,11 +462,8 @@ class MobileApp {
             }
         });
 
-        if (this.currentView === 'formation') {
-            container.innerHTML = this.renderFormationView(positions, squad.clubs);
-        } else {
-            container.innerHTML = this.renderListView(positions, squad.clubs);
-        }
+        // Always use formation view
+        container.innerHTML = this.renderFormationView(positions, squad.clubs);
     }
 
     renderFormationView(positions, clubs) {
@@ -503,6 +471,22 @@ class MobileApp {
         const defs = positions['DEF'] || [];
         const mids = positions['MID'] || [];
         const fwds = positions['FWD'] || [];
+
+        // Create club color mapping
+        const clubColors = [
+            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', 
+            '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+        ];
+        const clubColorMap = new Map();
+        let colorIndex = 0;
+
+        // Assign colors to clubs
+        [...gkps, ...defs, ...mids, ...fwds].forEach(player => {
+            if (player && player.team_name && !clubColorMap.has(player.team_name)) {
+                clubColorMap.set(player.team_name, clubColors[colorIndex % clubColors.length]);
+                colorIndex++;
+            }
+        });
 
         // Fill empty slots
         const fillEmptySlots = (players, maxCount) => {
@@ -521,10 +505,13 @@ class MobileApp {
                     </div>
                 `;
             }
+            
+            const clubColor = clubColorMap.get(player.team_name) || '#6b7280';
             return `
-                <div class="formation-player">
+                <div class="formation-player" style="border-color: ${clubColor};">
                     <div class="formation-player-name">${player.web_name || player.name || 'Unknown'}</div>
                     <div class="formation-player-price">£${player.price_paid || 0}m</div>
+                    <div class="formation-player-club" style="color: ${clubColor};">${player.team_name || ''}</div>
                 </div>
             `;
         };

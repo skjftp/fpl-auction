@@ -1022,25 +1022,25 @@ body {
 
 /* Team Tab */
 #teamTab {
-    position: relative;
     height: 100%;
     overflow: hidden;
-    flex-direction: column;
-}
-
-#teamTab.active {
-    display: flex;
 }
 
 .team-header {
+    position: fixed;
+    top: 150px; /* Below the main header */
+    left: 0;
+    right: 0;
+    z-index: 20;
     padding: 16px;
     background: white;
     border-bottom: 1px solid #e5e7eb;
     text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    flex-shrink: 0;
+    display: none;
+}
+
+#teamTab.active .team-header {
+    display: block;
 }
 
 .team-selector {
@@ -1105,10 +1105,9 @@ body {
 }
 
 .team-squad {
-    padding: 16px;
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    padding: 160px 16px 80px; /* Top padding for header, bottom for nav */
+    height: 100%;
+    overflow: hidden; /* No scrolling - static layout */
 }
 
 .position-group {
@@ -1655,7 +1654,7 @@ body {
     min-width: 60px;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    border: 2px solid #ffffff;
+    border: 3px solid #ffffff;
 }
 
 .formation-player.empty {
@@ -1678,6 +1677,12 @@ body {
     font-size: 9px;
     color: #10b981;
     font-weight: 600;
+}
+
+.formation-player-club {
+    font-size: 8px;
+    font-weight: 600;
+    margin-top: 2px;
 }
 
 .formation-player.empty .formation-player-name {
