@@ -218,4 +218,79 @@ router.post('/:teamId/revoke-admin', requireAdmin, async (req, res) => {
   }
 });
 
+// Get all sold items for recent sales display
+router.get('/sold-items', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    
+    // Get recent squad additions (sold items) with team and player/club info
+    const soldItemsSnapshot = await collections.teamSquads
+      .orderBy('acquired_at', 'desc')
+      .limit(limit)
+      .get();
+    
+    const soldItems = [];
+    
+    for (const doc of soldItemsSnapshot.docs) {
+      const item = doc.data();
+      
+      // Get team info
+      const teamQuery = await collections.teams
+        .where('id', '==', item.team_id)
+        .limit(1)
+        .get();
+      
+      const teamName = teamQuery.empty ? 'Unknown Team' : teamQuery.docs[0].data().name;
+      
+      // Get player or club info
+      let itemDetails = {};
+      
+      if (item.player_id) {
+        // It's a player
+        const playerDoc = await collections.fplPlayers.doc(item.player_id.toString()).get();
+        if (playerDoc.exists) {
+          const player = playerDoc.data();
+          itemDetails = {
+            type: 'player',
+            player_name: player.web_name,
+            position: player.position,
+            team_id: player.team_id
+          };
+          
+          // Get player's club name
+          if (player.team_id) {
+            const clubDoc = await collections.fplClubs.doc(player.team_id.toString()).get();
+            if (clubDoc.exists) {
+              itemDetails.club_name = clubDoc.data().name;
+            }
+          }
+        }
+      } else if (item.club_id) {
+        // It's a club
+        const clubDoc = await collections.fplClubs.doc(item.club_id.toString()).get();
+        if (clubDoc.exists) {
+          const club = clubDoc.data();
+          itemDetails = {
+            type: 'club',
+            club_name: club.name,
+            club_short_name: club.short_name
+          };
+        }
+      }
+      
+      soldItems.push({
+        ...item,
+        ...itemDetails,
+        team_name: teamName,
+        acquired_at: item.acquired_at
+      });
+    }
+    
+    res.json(soldItems);
+  } catch (error) {
+    console.error('Error fetching sold items:', error);
+    res.status(500).json({ error: 'Failed to fetch sold items' });
+  }
+});
+
 module.exports = router;

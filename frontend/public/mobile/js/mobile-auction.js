@@ -6,6 +6,24 @@ class MobileAuctionManager {
         this.clubs = [];
         this.soldItems = [];
         this.filteredPlayers = [];
+        
+        // Position mapping
+        this.positionMap = {
+            1: 'GKP',
+            2: 'DEF', 
+            3: 'MID',
+            4: 'FWD'
+        };
+    }
+
+    getPositionName(positionId, player) {
+        // Try to get from position mapping first
+        if (positionId && this.positionMap[positionId]) {
+            return this.positionMap[positionId];
+        }
+        
+        // Fallback to player.position or element_type_name
+        return player.position || player.element_type_name || 'Unknown';
     }
 
     async initialize() {
@@ -164,7 +182,7 @@ class MobileAuctionManager {
         // Player team and position
         const teamPosEl = document.getElementById('playerTeamPos');
         if (teamPosEl) {
-            const position = player.position || player.element_type_name || '';
+            const position = this.getPositionName(player.position, player);
             const team = player.team_name || '';
             const price = player.now_cost ? `£${player.now_cost}m` : '';
             teamPosEl.textContent = `${position} - ${team} ${price}`.trim();
@@ -470,8 +488,8 @@ class MobileAuctionManager {
         this.filteredPlayers = this.players.filter(player => {
             const matchesSearch = !search || 
                 (player.web_name || player.name || '').toLowerCase().includes(search);
-            const matchesPosition = !position || 
-                (player.position || player.element_type_name || '') === position;
+            const playerPosition = this.getPositionName(player.position, player);
+            const matchesPosition = !position || playerPosition === position;
             const matchesClub = !club || 
                 (player.team_name || '') === club;
 
@@ -495,11 +513,13 @@ class MobileAuctionManager {
             const currentUser = window.mobileAPI.getCurrentUser();
             const canStartAuction = !isSold && currentUser.id; // Add draft turn logic if needed
 
+            const position = this.getPositionName(player.position, player);
+            
             return `
                 <div class="player-item ${isSold ? 'sold' : ''}">
                     <div class="player-item-info">
                         <h4>${player.web_name || player.name || 'Unknown'}</h4>
-                        <p>${player.position || player.element_type_name || ''} - ${player.team_name || ''}</p>
+                        <p>${position} - ${player.team_name || ''}</p>
                         ${isSold ? `<p style="color: #ef4444; font-size: 11px;">Sold to ${player.sold_to_team_name || 'Unknown'}</p>` : ''}
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">

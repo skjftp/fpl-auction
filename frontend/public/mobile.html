@@ -10,7 +10,7 @@
     
     <!-- Touch-friendly icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#10B981">
 </head>
@@ -36,7 +36,7 @@
                 </div>
                 
                 <div class="input-group">
-                    <input type="password" id="password" name="password" placeholder="Password" required>
+                    <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password">
                 </div>
                 
                 <button type="submit" class="login-btn">
@@ -287,7 +287,7 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="mobile/js/mobile-api.js"></script>
     <script src="mobile/js/mobile-socket.js"></script>
     <script src="mobile/js/mobile-auction.js"></script>
