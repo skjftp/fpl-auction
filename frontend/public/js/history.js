@@ -60,7 +60,7 @@ class HistoryManager {
                 ...soldItems.map(item => ({ ...item, type: 'sale' })),
                 ...(Array.isArray(bidHistory) ? bidHistory.map(item => ({ 
                     ...item, 
-                    type: item.isAutoBid ? 'auto-bid' : 'bid' 
+                    type: item.is_auto_bid || item.isAutoBid ? 'auto-bid' : 'bid' 
                 })) : [])
             ].sort((a, b) => new Date(b.created_at || b.sold_at) - new Date(a.created_at || a.sold_at));
             
@@ -87,7 +87,7 @@ class HistoryManager {
             }
 
             const data = await response.json();
-            return data.soldItems || [];
+            return Array.isArray(data) ? data : (data.soldItems || []);
         } catch (error) {
             console.error('Error fetching sold items:', error);
             return [];
@@ -188,7 +188,7 @@ class HistoryManager {
                         </div>
                         <div class="text-right ml-4">
                             <div class="font-bold text-lg text-emerald-600">
-                                £${item.price || 0}m
+                                £${item.price_paid || 0}m
                             </div>
                             <div class="text-xs text-gray-500">Sold</div>
                         </div>
@@ -216,7 +216,7 @@ class HistoryManager {
                         </div>
                         <div class="text-right ml-4">
                             <div class="font-bold text-lg text-blue-600">
-                                £${item.amount || 0}m
+                                £${item.bid_amount || item.bidAmount || 0}m
                             </div>
                             <div class="text-xs text-gray-500">
                                 ${item.isWinning ? 'Winning Bid' : 'Bid'}
