@@ -197,19 +197,19 @@ class API {
 
     // Admin auction management endpoints
     async restartCompletedAuction(auctionId) {
-        return await this.request(`/admin/auction/restart/${auctionId}`, { method: 'POST' });
+        return await this.request(`/auction/admin/restart/${auctionId}`, { method: 'POST' });
     }
 
     async cancelPreviousBid(auctionId) {
-        return await this.request(`/admin/auction/cancel-bid/${auctionId}`, { method: 'POST' });
+        return await this.request(`/auction/admin/cancel-bid/${auctionId}`, { method: 'POST' });
     }
 
     async getCompletedAuctions() {
-        return await this.request('/admin/auctions/completed');
+        return await this.request('/auction/admin/completed');
     }
 
     async getActiveAuctionWithBids() {
-        return await this.request('/admin/auction/current-with-bids');
+        return await this.request('/auction/admin/current-with-bids');
     }
 }
 

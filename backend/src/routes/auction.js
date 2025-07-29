@@ -683,4 +683,288 @@ router.get('/bid-history', async (req, res) => {
   }
 });
 
+// ADMIN AUCTION MANAGEMENT ENDPOINTS
+
+// Get completed auctions - Admin only
+router.get('/admin/completed', requireAdmin, async (req, res) => {
+  try {
+    const completedAuctions = await collections.auctions
+      .where('status', '==', 'completed')
+      .orderBy('ended_at', 'desc')
+      .limit(50)
+      .get();
+    
+    const auctions = [];
+    
+    for (const doc of completedAuctions.docs) {
+      const auction = doc.data();
+      
+      // Get player or club details
+      if (auction.player_id) {
+        const playerDoc = await collections.fplPlayers.doc(auction.player_id.toString()).get();
+        if (playerDoc.exists) {
+          const player = playerDoc.data();
+          auction.player_name = player.web_name || player.name;
+          auction.position = player.position;
+        }
+      } else if (auction.club_id) {
+        const clubDoc = await collections.fplClubs.doc(auction.club_id.toString()).get();
+        if (clubDoc.exists) {
+          const club = clubDoc.data();
+          auction.club_name = club.name;
+        }
+      }
+      
+      // Get winning team name
+      const teamQuery = await collections.teams
+        .where('id', '==', auction.current_bidder_id)
+        .limit(1)
+        .get();
+      
+      if (!teamQuery.empty) {
+        auction.winning_team_name = teamQuery.docs[0].data().name;
+      }
+      
+      auction.final_price = auction.current_bid;
+      auction.completed_at = auction.ended_at;
+      
+      auctions.push(auction);
+    }
+    
+    res.json(auctions);
+    
+  } catch (error) {
+    console.error('Error fetching completed auctions:', error);
+    res.status(500).json({ error: 'Failed to fetch completed auctions' });
+  }
+});
+
+// Get current auction with bids - Admin only
+router.get('/admin/current-with-bids', requireAdmin, async (req, res) => {
+  try {
+    const activeAuctions = await collections.auctions
+      .where('status', '==', 'active')
+      .limit(1)
+      .get();
+    
+    if (activeAuctions.empty) {
+      return res.json(null);
+    }
+    
+    const auctionDoc = activeAuctions.docs[0];
+    const auction = auctionDoc.data();
+    
+    // Get player or club details
+    if (auction.player_id) {
+      const playerDoc = await collections.fplPlayers.doc(auction.player_id.toString()).get();
+      if (playerDoc.exists) {
+        const player = playerDoc.data();
+        auction.player_name = player.web_name || player.name;
+      }
+    } else if (auction.club_id) {
+      const clubDoc = await collections.fplClubs.doc(auction.club_id.toString()).get();
+      if (clubDoc.exists) {
+        const club = clubDoc.data();
+        auction.club_name = club.name;
+      }
+    }
+    
+    // Get bid history for this auction
+    const bidsSnapshot = await collections.bidHistory
+      .where('auction_id', '==', auction.id)
+      .orderBy('created_at', 'asc')
+      .get();
+    
+    const bids = [];
+    for (const bidDoc of bidsSnapshot.docs) {
+      const bid = bidDoc.data();
+      
+      // Get team name for each bid
+      const teamQuery = await collections.teams
+        .where('id', '==', bid.team_id)
+        .limit(1)
+        .get();
+      
+      if (!teamQuery.empty) {
+        bid.team_name = teamQuery.docs[0].data().name;
+      }
+      
+      bid.amount = bid.bid_amount;
+      bids.push(bid);
+    }
+    
+    auction.bids = bids;
+    auction.stage = auction.selling_stage || 'active';
+    
+    res.json(auction);
+    
+  } catch (error) {
+    console.error('Error fetching current auction with bids:', error);
+    res.status(500).json({ error: 'Failed to fetch current auction' });
+  }
+});
+
+// Restart completed auction - Admin only
+router.post('/admin/restart/:auctionId', requireAdmin, async (req, res) => {
+  const auctionId = req.params.auctionId;
+  
+  try {
+    const auctionDoc = await collections.auctions.doc(auctionId).get();
+    
+    if (!auctionDoc.exists) {
+      return res.status(404).json({ error: 'Auction not found' });
+    }
+    
+    const auction = auctionDoc.data();
+    
+    if (auction.status !== 'completed') {
+      return res.status(400).json({ error: 'Can only restart completed auctions' });
+    }
+    
+    // Check if there's already an active auction
+    const activeAuctions = await collections.auctions
+      .where('status', '==', 'active')
+      .get();
+    
+    if (!activeAuctions.empty) {
+      return res.status(400).json({ error: 'Cannot restart - another auction is already active' });
+    }
+    
+    // Use a batch to ensure atomicity
+    const batch = admin.firestore().batch();
+    
+    // Remove from winning team's squad
+    const squadSnapshot = await collections.teamSquads
+      .where('team_id', '==', auction.current_bidder_id)
+      .where(auction.auction_type === 'player' ? 'player_id' : 'club_id', '==', auction.player_id || auction.club_id)
+      .get();
+    
+    if (!squadSnapshot.empty) {
+      batch.delete(squadSnapshot.docs[0].ref);
+    }
+    
+    // Restore team budget
+    const teamQuery = await collections.teams
+      .where('id', '==', auction.current_bidder_id)
+      .limit(1)
+      .get();
+    
+    if (!teamQuery.empty) {
+      const teamDoc = teamQuery.docs[0];
+      const currentBudget = teamDoc.data().budget;
+      batch.update(teamDoc.ref, {
+        budget: currentBudget + auction.current_bid
+      });
+    }
+    
+    // Reactivate auction
+    batch.update(collections.auctions.doc(auctionId), {
+      status: 'active',
+      selling_stage: null,
+      wait_requested_by: null,
+      wait_requested_at: null,
+      restarted_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    await batch.commit();
+    
+    // Broadcast restart event
+    req.io.to('auction-room').emit('auction-restarted', {
+      auctionId,
+      message: 'Auction has been restarted by admin'
+    });
+    
+    res.json({ success: true, message: 'Auction restarted successfully' });
+    
+  } catch (error) {
+    console.error('Error restarting auction:', error);
+    res.status(500).json({ error: 'Failed to restart auction' });
+  }
+});
+
+// Cancel previous bid - Admin only
+router.post('/admin/cancel-bid/:auctionId', requireAdmin, async (req, res) => {
+  const auctionId = req.params.auctionId;
+  
+  try {
+    const auctionDoc = await collections.auctions.doc(auctionId).get();
+    
+    if (!auctionDoc.exists) {
+      return res.status(404).json({ error: 'Auction not found' });
+    }
+    
+    const auction = auctionDoc.data();
+    
+    if (auction.status !== 'active') {
+      return res.status(400).json({ error: 'Can only cancel bids in active auctions' });
+    }
+    
+    // Get bid history for this auction
+    const bidsSnapshot = await collections.bidHistory
+      .where('auction_id', '==', auctionId)
+      .orderBy('created_at', 'desc')
+      .limit(2)
+      .get();
+    
+    if (bidsSnapshot.empty) {
+      return res.status(400).json({ error: 'No bids to cancel' });
+    }
+    
+    const bids = bidsSnapshot.docs;
+    
+    if (bids.length < 2) {
+      return res.status(400).json({ error: 'Cannot cancel the initial bid' });
+    }
+    
+    const lastBid = bids[0].data();
+    const previousBid = bids[1].data();
+    
+    // Use a batch for atomicity
+    const batch = admin.firestore().batch();
+    
+    // Delete the last bid
+    batch.delete(bids[0].ref);
+    
+    // Update auction with previous bid details
+    batch.update(collections.auctions.doc(auctionId), {
+      current_bid: previousBid.bid_amount,
+      current_bidder_id: previousBid.team_id,
+      bid_count: admin.firestore.FieldValue.increment(-1),
+      selling_stage: null, // Reset selling stage
+      wait_requested_by: null,
+      wait_requested_at: null,
+      last_bid_cancelled_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    await batch.commit();
+    
+    // Get team name for broadcast
+    const teamQuery = await collections.teams
+      .where('id', '==', previousBid.team_id)
+      .limit(1)
+      .get();
+    
+    const teamName = teamQuery.empty ? 'Unknown Team' : teamQuery.docs[0].data().name;
+    
+    // Broadcast bid cancellation
+    req.io.to('auction-room').emit('bid-cancelled', {
+      auctionId,
+      newCurrentBid: previousBid.bid_amount,
+      newCurrentBidder: teamName,
+      message: 'Last bid cancelled by admin'
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Last bid cancelled successfully',
+      newCurrentBid: previousBid.bid_amount,
+      newCurrentBidder: teamName
+    });
+    
+  } catch (error) {
+    console.error('Error cancelling bid:', error);
+    res.status(500).json({ error: 'Failed to cancel bid' });
+  }
+});
+
 module.exports = router;
