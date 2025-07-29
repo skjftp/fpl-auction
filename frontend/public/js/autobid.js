@@ -68,8 +68,16 @@ function closeAutoBidModal() {
 // Load players for auto-bid configuration
 async function loadPlayersForAutoBid() {
     try {
-        const players = await api.getPlayers();
-        const clubs = [...new Set(players.map(p => p.team_name))].sort();
+        const response = await api.getPlayers();
+        console.log('Players response:', response); // Debug log
+        
+        // Handle both array and object responses
+        const players = Array.isArray(response) ? response : (response.players || []);
+        
+        // Filter out sold players
+        const availablePlayers = players.filter(p => !p.sold_to_team_id);
+        
+        const clubs = [...new Set(availablePlayers.map(p => p.team_name))].sort();
         
         // Populate club filter
         const clubFilter = document.getElementById('autoBidFilterClub');
@@ -79,9 +87,10 @@ async function loadPlayersForAutoBid() {
         });
 
         // Render players list
-        renderAutoBidPlayersList(players);
+        renderAutoBidPlayersList(availablePlayers);
     } catch (error) {
         console.error('Error loading players:', error);
+        showNotification('Failed to load players', 'error');
     }
 }
 
@@ -89,20 +98,28 @@ async function loadPlayersForAutoBid() {
 function renderAutoBidPlayersList(players) {
     const container = document.getElementById('autoBidPlayersList');
     container.innerHTML = '';
+    
+    if (!players || players.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-gray-500">No players available</div>';
+        return;
+    }
 
     players.forEach(player => {
         const config = autoBidConfig.players[player.id] || {};
         const playerDiv = document.createElement('div');
         playerDiv.className = 'border rounded p-3 mb-2 player-config-item';
-        playerDiv.dataset.playerName = player.name.toLowerCase();
-        playerDiv.dataset.position = player.position;
-        playerDiv.dataset.club = player.team_name;
+        
+        // Use web_name as the display name (this is the standard FPL field)
+        const displayName = player.web_name || player.name || 'Unknown';
+        playerDiv.dataset.playerName = displayName.toLowerCase();
+        playerDiv.dataset.position = player.position || player.element_type_name || '';
+        playerDiv.dataset.club = player.team_name || '';
         
         playerDiv.innerHTML = `
             <div class="flex items-center justify-between">
                 <div class="flex-1">
-                    <div class="font-medium">${player.name}</div>
-                    <div class="text-sm text-gray-500">${player.position} - ${player.team_name} - £${player.now_cost || 0}</div>
+                    <div class="font-medium">${displayName}</div>
+                    <div class="text-sm text-gray-500">${player.position || player.element_type_name || ''} - ${player.team_name || ''} - £${player.now_cost || player.price || 0}</div>
                 </div>
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center">
