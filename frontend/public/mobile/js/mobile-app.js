@@ -194,6 +194,14 @@ class MobileApp {
     }
 
     setupEventListeners() {
+        // TTS toggle button
+        const ttsToggleBtn = document.getElementById('ttsToggleBtn');
+        if (ttsToggleBtn) {
+            ttsToggleBtn.addEventListener('click', () => this.toggleTTS());
+            // Initialize button state
+            this.initializeTTSButton();
+        }
+        
         // Logout button
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
@@ -918,6 +926,36 @@ class MobileApp {
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
+            }
+        }
+    }
+
+    initializeTTSButton() {
+        if (window.ttsManager) {
+            const btn = document.getElementById('ttsToggleBtn');
+            
+            if (window.ttsManager.enabled) {
+                btn?.classList.add('active');
+            } else {
+                btn?.classList.remove('active');
+            }
+        }
+    }
+
+    toggleTTS() {
+        if (window.ttsManager) {
+            const isEnabled = window.ttsManager.toggle();
+            const btn = document.getElementById('ttsToggleBtn');
+            
+            if (isEnabled) {
+                btn?.classList.add('active');
+                this.showToast('Voice announcements enabled', 'success');
+                
+                // Test TTS
+                window.ttsManager.test();
+            } else {
+                btn?.classList.remove('active');
+                this.showToast('Voice announcements disabled', 'info');
             }
         }
     }

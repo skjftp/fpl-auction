@@ -8,6 +8,13 @@ class TTSManager {
     }
 
     init() {
+        // Check if TTS is supported
+        if (!('speechSynthesis' in window)) {
+            console.warn('TTS not supported in this browser');
+            this.enabled = false;
+            return;
+        }
+
         // Load available voices
         this.loadVoices();
         
@@ -18,10 +25,13 @@ class TTSManager {
 
         // Load settings from localStorage
         this.loadSettings();
+        
+        console.log('TTS Manager initialized, enabled:', this.enabled);
     }
 
     loadVoices() {
         this.voices = speechSynthesis.getVoices();
+        console.log('Available voices:', this.voices.length);
         
         // Prefer English voices
         const englishVoices = this.voices.filter(voice => 
@@ -33,6 +43,10 @@ class TTSManager {
         this.selectedVoice = englishVoices.find(voice => 
             voice.lang === 'en-GB' || voice.lang === 'en-US'
         ) || englishVoices[0] || this.voices[0];
+        
+        if (this.selectedVoice) {
+            console.log('Selected voice:', this.selectedVoice.name, this.selectedVoice.lang);
+        }
     }
 
     loadSettings() {
@@ -63,32 +77,50 @@ class TTSManager {
             speechSynthesis.cancel();
         }
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        
-        if (this.selectedVoice) {
-            utterance.voice = this.selectedVoice;
-        }
-        
-        utterance.rate = 0.9; // Slightly slower for clarity
-        utterance.pitch = 1.0;
-        utterance.volume = 0.8;
-        
-        // Error handling
-        utterance.onerror = (event) => {
-            console.error('TTS Error:', event.error);
-        };
+        // Mobile browsers need a slight delay after user interaction
+        setTimeout(() => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            if (this.selectedVoice) {
+                utterance.voice = this.selectedVoice;
+            }
+            
+            utterance.rate = 0.9; // Slightly slower for clarity
+            utterance.pitch = 1.0;
+            utterance.volume = 0.8;
+            
+            // Error handling
+            utterance.onerror = (event) => {
+                console.error('TTS Error:', event.error);
+                // On mobile, errors often occur if TTS isn't enabled in settings
+                if (event.error === 'not-allowed') {
+                    console.warn('TTS not allowed - user may need to enable in browser settings');
+                }
+            };
 
-        speechSynthesis.speak(utterance);
+            // Ensure voices are loaded before speaking
+            if (this.voices.length === 0) {
+                this.loadVoices();
+            }
+
+            try {
+                speechSynthesis.speak(utterance);
+            } catch (error) {
+                console.error('TTS speak error:', error);
+            }
+        }, 100);
     }
 
     // Auction event announcements
     announcePlayerAuction(playerName) {
         const text = `Next player up for auction is ${playerName}`;
+        console.log('TTS announcing player:', text);
         this.speak(text, true);
     }
 
     announceClubAuction(clubName) {
         const text = `Next club up for auction is ${clubName}`;
+        console.log('TTS announcing club:', text);
         this.speak(text, true);
     }
 

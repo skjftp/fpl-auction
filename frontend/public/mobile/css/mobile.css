@@ -227,6 +227,7 @@ body {
     font-weight: 600;
 }
 
+.sound-toggle-btn,
 .logout-btn {
     background: none;
     border: none;
@@ -235,8 +236,15 @@ body {
     padding: 8px;
     border-radius: 8px;
     transition: all 0.2s ease;
+    margin-left: 8px;
 }
 
+.sound-toggle-btn.active {
+    color: #10b981;
+    background: #d1fae5;
+}
+
+.sound-toggle-btn:active,
 .logout-btn:active {
     background: #f3f4f6;
     transform: scale(0.95);
