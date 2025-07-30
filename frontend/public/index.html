@@ -220,6 +220,12 @@
                         <div class="text-xs text-gray-500 uppercase tracking-wide">Budget</div>
                         <div id="teamBudget" class="text-xl font-bold text-emerald-600"><span class="currency-j">J</span>0</div>
                     </div>
+                    <button id="ttsToggleBtn" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg transition-all duration-200 mr-2" title="Toggle voice announcements">
+                        <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.037 12 5v14c0 .963-1.077 1.337-1.707.707L5.586 15z"></path>
+                        </svg>
+                        <span class="hidden sm:inline ml-1">Sound On</span>
+                    </button>
                     <button id="changePasswordBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-all duration-200 mr-2">
                         <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
@@ -720,6 +726,7 @@
 
     <!-- Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/tts.js"></script>
     <script src="js/socket.js"></script>
     <script src="js/draft.js"></script>
     <script src="js/auction.js"></script>

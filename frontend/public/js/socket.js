@@ -156,6 +156,15 @@ class SocketManager {
             `New auction started: ${data.player?.web_name || data.club?.name}`,
             'info'
         );
+        
+        // TTS announcement for new auction
+        if (window.ttsManager) {
+            if (data.player) {
+                window.ttsManager.announcePlayerAuction(data.player.web_name);
+            } else if (data.club) {
+                window.ttsManager.announceClubAuction(data.club.name);
+            }
+        }
     }
 
     handleNewBid(data) {
@@ -187,6 +196,14 @@ class SocketManager {
     handleAuctionCompleted(data) {
         window.auctionManager.clearCurrentAuction();
         showNotification('Auction completed!', 'success');
+        
+        // TTS announcement for sold item
+        if (window.ttsManager && data) {
+            const itemName = data.player?.web_name || data.club?.name || 'Item';
+            const teamName = data.team?.name || data.winnerName || 'Unknown Team';
+            const amount = formatCurrencyPlain(data.finalBid || data.price || 0);
+            window.ttsManager.announceSold(itemName, teamName, amount);
+        }
         
         // Refresh sold items and player display for everyone
         window.auctionManager.loadSoldItems().then(() => {
@@ -220,6 +237,15 @@ class SocketManager {
             }
             
             showNotification(data.message, 'info');
+            
+            // TTS announcement for selling stages
+            if (window.ttsManager) {
+                if (data.stage === 'selling1') {
+                    window.ttsManager.announceSelling1();
+                } else if (data.stage === 'selling2') {
+                    window.ttsManager.announceSelling2();
+                }
+            }
         }
     }
 

@@ -176,6 +176,15 @@ class MobileSocketManager {
             `New auction: ${itemName}`,
             'info'
         );
+        
+        // TTS announcement for new auction
+        if (window.ttsManager) {
+            if (data.player || data.player_name) {
+                window.ttsManager.announcePlayerAuction(itemName);
+            } else if (data.club || data.club_name) {
+                window.ttsManager.announceClubAuction(itemName);
+            }
+        }
     }
 
     handleNewBid(data) {
@@ -213,6 +222,14 @@ class MobileSocketManager {
         
         window.mobileApp.showToast('Auction completed!', 'success');
         this.vibrate([100, 50, 100]);
+        
+        // TTS announcement for sold item
+        if (window.ttsManager && data) {
+            const itemName = data.player?.web_name || data.club?.name || 'Item';
+            const teamName = data.team?.name || data.winnerName || 'Unknown Team';
+            const amount = formatCurrencyPlain(data.finalBid || data.price || 0);
+            window.ttsManager.announceSold(itemName, teamName, amount);
+        }
     }
 
     handleSellingStageUpdate(data) {
@@ -220,6 +237,15 @@ class MobileSocketManager {
             window.mobileAuction.receiveSellingStageUpdate(data);
         }
         window.mobileApp.showToast(data.message, 'info');
+        
+        // TTS announcement for selling stages
+        if (window.ttsManager) {
+            if (data.stage === 'selling1') {
+                window.ttsManager.announceSelling1();
+            } else if (data.stage === 'selling2') {
+                window.ttsManager.announceSelling2();
+            }
+        }
     }
 
     handleWaitRequested(data) {

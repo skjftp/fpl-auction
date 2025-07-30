@@ -22,6 +22,11 @@ class App {
             this.logout();
         });
 
+        // TTS toggle functionality
+        document.getElementById('ttsToggleBtn').addEventListener('click', () => {
+            this.toggleTTS();
+        });
+
         // Password change functionality
         document.getElementById('changePasswordBtn').addEventListener('click', () => {
             this.showPasswordModal();
@@ -104,6 +109,42 @@ class App {
         } finally {
             btn.textContent = 'Login';
             btn.disabled = false;
+        }
+    }
+
+    initializeTTSButton() {
+        if (window.ttsManager) {
+            const btn = document.getElementById('ttsToggleBtn');
+            const span = btn.querySelector('span');
+            
+            if (window.ttsManager.enabled) {
+                btn.className = 'bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg transition-all duration-200 mr-2';
+                span.textContent = 'Sound On';
+            } else {
+                btn.className = 'bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-all duration-200 mr-2';
+                span.textContent = 'Sound Off';
+            }
+        }
+    }
+
+    toggleTTS() {
+        if (window.ttsManager) {
+            const isEnabled = window.ttsManager.toggle();
+            const btn = document.getElementById('ttsToggleBtn');
+            const span = btn.querySelector('span');
+            
+            if (isEnabled) {
+                btn.className = 'bg-green-100 hover:bg-green-200 text-green-700 px-3 py-2 rounded-lg transition-all duration-200 mr-2';
+                span.textContent = 'Sound On';
+                showNotification('Voice announcements enabled', 'success');
+                
+                // Test TTS
+                window.ttsManager.test();
+            } else {
+                btn.className = 'bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-all duration-200 mr-2';
+                span.textContent = 'Sound Off';
+                showNotification('Voice announcements disabled', 'info');
+            }
         }
     }
 
@@ -198,6 +239,9 @@ class App {
         
         console.log('Current user admin status:', this.currentUser?.is_admin);
         console.log('Admin tab visibility:', adminTab?.style.display, adminTabNav?.style.display);
+        
+        // Initialize TTS button state
+        this.initializeTTSButton();
         
         this.updateNavbar();
         this.switchTab(this.currentTab);
