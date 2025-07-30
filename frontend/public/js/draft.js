@@ -250,8 +250,13 @@ class DraftManager {
         if (!message) return;
 
         try {
-            await window.api.sendChatMessage(message);
+            const response = await window.api.sendChatMessage(message);
             input.value = '';
+            
+            // Immediately add the message to local chat
+            if (response.message) {
+                this.addChatMessage(response.message);
+            }
         } catch (error) {
             console.error('Error sending chat message:', error);
             this.showNotification('Failed to send message', 'error');
@@ -259,8 +264,17 @@ class DraftManager {
     }
 
     addChatMessage(message) {
-        this.chatMessages.push(message);
-        this.updateChatUI();
+        // Check if message already exists (prevent duplicates from socket event)
+        const isDuplicate = this.chatMessages.some(m => 
+            m.message === message.message && 
+            m.username === message.username && 
+            m.created_at === message.created_at
+        );
+        
+        if (!isDuplicate) {
+            this.chatMessages.push(message);
+            this.updateChatUI();
+        }
     }
 
     updateChatUI() {
