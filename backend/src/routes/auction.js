@@ -771,7 +771,6 @@ router.get('/admin/current-with-bids', requireAdmin, async (req, res) => {
     // Get bid history for this auction
     const bidsSnapshot = await collections.bidHistory
       .where('auction_id', '==', auction.id)
-      .orderBy('created_at', 'asc')
       .get();
     
     const bids = [];
@@ -791,6 +790,13 @@ router.get('/admin/current-with-bids', requireAdmin, async (req, res) => {
       bid.amount = bid.bid_amount;
       bids.push(bid);
     }
+    
+    // Sort bids by created_at manually
+    bids.sort((a, b) => {
+      const aTime = a.created_at?._seconds || 0;
+      const bTime = b.created_at?._seconds || 0;
+      return aTime - bTime;
+    });
     
     auction.bids = bids;
     auction.stage = auction.selling_stage || 'active';
@@ -901,15 +907,18 @@ router.post('/admin/cancel-bid/:auctionId', requireAdmin, async (req, res) => {
     // Get bid history for this auction
     const bidsSnapshot = await collections.bidHistory
       .where('auction_id', '==', auctionId)
-      .orderBy('created_at', 'desc')
-      .limit(2)
       .get();
     
     if (bidsSnapshot.empty) {
       return res.status(400).json({ error: 'No bids to cancel' });
     }
     
-    const bids = bidsSnapshot.docs;
+    // Sort bids by created_at to get the latest ones
+    const bids = bidsSnapshot.docs.sort((a, b) => {
+      const aTime = a.data().created_at?._seconds || 0;
+      const bTime = b.data().created_at?._seconds || 0;
+      return bTime - aTime; // Descending order
+    });
     
     if (bids.length < 2) {
       return res.status(400).json({ error: 'Cannot cancel the initial bid' });
