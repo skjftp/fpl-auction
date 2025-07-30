@@ -628,6 +628,17 @@ class App {
 
     displayAdminTeams(teams) {
         const container = document.getElementById('adminTeamsList');
+        console.log('Displaying admin teams:', teams);
+        
+        if (!container) {
+            console.error('adminTeamsList container not found');
+            return;
+        }
+        
+        if (!teams || teams.length === 0) {
+            container.innerHTML = '<div class="text-gray-500 text-center py-4">No teams found</div>';
+            return;
+        }
         
         container.innerHTML = teams.map(team => {
             const isSuper = team.id === 10;
@@ -707,15 +718,32 @@ class App {
 
     async loadAuctionManagement() {
         try {
+            console.log('Loading auction management data...');
+            
             // Load completed auctions for restart functionality
+            console.log('Fetching completed auctions...');
             const completedAuctions = await api.getCompletedAuctions();
+            console.log('Completed auctions response:', completedAuctions);
             this.displayCompletedAuctions(completedAuctions);
             
             // Load current auction with bids for cancel bid functionality
+            console.log('Fetching current auction with bids...');
             const currentAuction = await api.getActiveAuctionWithBids();
+            console.log('Current auction response:', currentAuction);
             this.displayCurrentAuctionBids(currentAuction);
         } catch (error) {
             console.error('Error loading auction management data:', error);
+            
+            // Show error messages in the UI
+            const completedContainer = document.getElementById('completedAuctionsList');
+            if (completedContainer) {
+                completedContainer.innerHTML = `<div class="text-red-500 text-center py-4">Error loading completed auctions: ${error.message}</div>`;
+            }
+            
+            const currentContainer = document.getElementById('currentAuctionBids');
+            if (currentContainer) {
+                currentContainer.innerHTML = `<div class="text-red-500 text-center py-4">Error loading current auction: ${error.message}</div>`;
+            }
         }
     }
 
