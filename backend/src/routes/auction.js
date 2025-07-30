@@ -690,7 +690,6 @@ router.get('/admin/completed', requireAdmin, async (req, res) => {
   try {
     const completedAuctions = await collections.auctions
       .where('status', '==', 'completed')
-      .orderBy('ended_at', 'desc')
       .limit(50)
       .get();
     
@@ -726,7 +725,7 @@ router.get('/admin/completed', requireAdmin, async (req, res) => {
       }
       
       auction.final_price = auction.current_bid;
-      auction.completed_at = auction.ended_at;
+      auction.completed_at = auction.ended_at || auction.updated_at || new Date().toISOString();
       
       auctions.push(auction);
     }
