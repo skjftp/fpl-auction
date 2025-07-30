@@ -190,7 +190,7 @@ class App {
     updateNavbar() {
         if (this.currentUser) {
             document.getElementById('teamName').textContent = this.currentUser.name;
-            document.getElementById('teamBudget').textContent = `£${this.currentUser.budget}`;
+            document.getElementById('teamBudget').innerHTML = formatCurrency(this.currentUser.budget, false);
         }
     }
 
@@ -546,7 +546,7 @@ class App {
             return `
                 <div class="player-card" style="border-color: ${clubColor};">
                     <div class="player-name">${player.web_name || player.player_name || player.name || 'Unknown'}</div>
-                    <div class="player-price">£${player.price_paid || 0}m</div>
+                    <div class="player-price">${formatCurrency(player.price_paid || 0)}</div>
                     <div class="player-club" style="color: ${clubColor};">${clubName}</div>
                 </div>
             `;
@@ -585,7 +585,7 @@ class App {
                                 <div class="club-card">
                                     <div class="font-semibold">${club.club_name || club.name || 'Unknown Club'}</div>
                                     <div class="text-xs text-gray-600">${club.club_short_name || club.short_name || ''}</div>
-                                    <div class="text-sm text-emerald-600">£${club.price_paid || 0}m</div>
+                                    <div class="text-sm text-emerald-600">${formatCurrency(club.price_paid || 0)}</div>
                                 </div>
                             `).join('')}
                         </div>
@@ -596,11 +596,11 @@ class App {
                 <div class="mt-4 bg-gray-100 rounded-lg p-3">
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium">Total Spent:</span>
-                        <span class="text-sm font-bold">£${totalSpent}m</span>
+                        <span class="text-sm font-bold">${formatCurrency(totalSpent)}</span>
                     </div>
                     <div class="flex justify-between items-center mt-1">
                         <span class="text-sm font-medium">Remaining Budget:</span>
-                        <span class="text-sm font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}">£${remainingBudget}m</span>
+                        <span class="text-sm font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(remainingBudget)}</span>
                     </div>
                 </div>
             `;
@@ -678,8 +678,8 @@ class App {
                                 <td class="px-4 py-3 font-medium">${team.name}</td>
                                 <td class="px-4 py-3 text-right">${team.player_count}/15</td>
                                 <td class="px-4 py-3 text-right">${team.club_count}/2</td>
-                                <td class="px-4 py-3 text-right">£${team.total_spent}</td>
-                                <td class="px-4 py-3 text-right">£${team.budget}</td>
+                                <td class="px-4 py-3 text-right">${formatCurrency(team.total_spent, false)}</td>
+                                <td class="px-4 py-3 text-right">${formatCurrency(team.budget, false)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -856,7 +856,7 @@ class App {
                 <div class="flex-1">
                     <div class="font-semibold">${auction.player_name || auction.club_name || 'Unknown'}</div>
                     <div class="text-sm text-gray-600">
-                        Sold to ${auction.winning_team_name || 'Unknown'} for £${auction.final_price || 0}m
+                        Sold to ${auction.winning_team_name || 'Unknown'} for ${formatCurrency(auction.final_price || 0)}
                     </div>
                     <div class="text-xs text-gray-500">
                         ${new Date(auction.completed_at).toLocaleString()}
@@ -889,7 +889,7 @@ class App {
                     <div class="flex items-center justify-between p-2 bg-gray-50 rounded ${index === auction.bids.length - 1 ? 'border-l-4 border-blue-500' : ''}">
                         <div class="flex-1">
                             <div class="font-medium">${bid.team_name || 'Unknown Team'}</div>
-                            <div class="text-sm text-gray-600">£${bid.amount || 0}m</div>
+                            <div class="text-sm text-gray-600">${formatCurrency(bid.amount || 0)}</div>
                             <div class="text-xs text-gray-500">
                                 ${new Date(bid.created_at).toLocaleString()}
                             </div>
@@ -1046,7 +1046,7 @@ class App {
 
     async resetDraft(draftId) {
         try {
-            const resetBudgets = confirm('Reset team budgets to £1000?\n\nOK = Reset budgets\nCancel = Keep current budgets');
+            const resetBudgets = confirm('Reset team budgets to J1000?\n\nOK = Reset budgets\nCancel = Keep current budgets');
             
             if (!confirm(`This will clear all auction data${resetBudgets ? ' and reset budgets' : ''}. Are you sure?`)) {
                 return;

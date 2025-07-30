@@ -96,6 +96,9 @@ cd backend && gcloud run deploy fpl-auction-backend --source . --region us-centr
 ## Default Credentials
 All teams use username `team1` through `team10` with password `password123`
 
+## Currency
+The system uses 'J' as the currency symbol (styled in green italic) instead of pounds. All amounts are displayed as J[amount]m (e.g., J50m)
+
 ## Recent Updates
 - Fixed mobile snake draft calculation for cumulative positions
 - Mobile chat loads synchronously for instant display
@@ -123,7 +126,7 @@ All teams use username `team1` through `team10` with password `password123`
 - Always check if selling stage buttons are working correctly
 - Ensure socket connections are established for real-time updates
 - Team10 has super admin access by default
-- Budget starts at £1000 per team
-- Minimum bid increment is £5
+- Budget starts at J1000 per team
+- Minimum bid increment is J5
 - Mobile redirects automatically based on device detection
 - Chat messages stored in Firestore with 50 message limit

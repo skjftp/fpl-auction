@@ -182,7 +182,7 @@ class MobileApp {
             if (teamData) {
                 const teamBudgetEl = document.getElementById('teamBudget');
                 if (teamBudgetEl) {
-                    teamBudgetEl.textContent = `£${teamData.budget || 0}`;
+                    teamBudgetEl.innerHTML = formatCurrency(teamData.budget || 0, false);
                 }
                 
                 // Update current user data
@@ -670,7 +670,7 @@ class MobileApp {
             return `
                 <div class="formation-player" style="border-color: ${clubColor};">
                     <div class="formation-player-name">${player.web_name || player.name || 'Unknown'}</div>
-                    <div class="formation-player-price">£${player.price_paid || 0}m</div>
+                    <div class="formation-player-price">${formatCurrency(player.price_paid || 0)}</div>
                     <div class="formation-player-club" style="color: ${clubColor};">${player.team_name || ''}</div>
                 </div>
             `;
@@ -687,7 +687,7 @@ class MobileApp {
             return `
                 <div class="formation-club">
                     <div class="formation-club-name">${club.name || 'Unknown'}</div>
-                    <div class="formation-club-price">£${club.price_paid || 0}m</div>
+                    <div class="formation-club-price">${formatCurrency(club.price_paid || 0)}</div>
                 </div>
             `;
         };
@@ -750,7 +750,7 @@ class MobileApp {
                                 <h5>${player.web_name || player.name || 'Unknown'}</h5>
                                 <p>${player.team_name || 'Unknown Club'}</p>
                             </div>
-                            <div class="squad-player-price">£${player.price_paid || 0}m</div>
+                            <div class="squad-player-price">${formatCurrency(player.price_paid || 0)}</div>
                         </div>
                     `).join('')}
                     ${players.length === 0 ? '<div style="color: #9ca3af; font-style: italic; padding: 8px 0;">No players</div>' : ''}
@@ -772,7 +772,7 @@ class MobileApp {
                                 <h5>${club.name || 'Unknown Club'}</h5>
                                 <p>${club.short_name || ''}</p>
                             </div>
-                            <div class="squad-player-price">£${club.price_paid || 0}m</div>
+                            <div class="squad-player-price">${formatCurrency(club.price_paid || 0)}</div>
                         </div>
                     `).join('')}
                 </div>
@@ -1029,7 +1029,7 @@ class MobileApp {
                     </div>
                     <div style="text-align: right;">
                         <div style="font-size: 16px; font-weight: 600; color: #10b981;">
-                            £${item.price_paid || item.bidAmount || 0}m
+                            ${formatCurrency(item.price_paid || item.bidAmount || 0)}
                         </div>
                         <div style="font-size: 10px; color: #9ca3af;">
                             ${this.formatHistoryTime(item.created_at || item.sold_at)}

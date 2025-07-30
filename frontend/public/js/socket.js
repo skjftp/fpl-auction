@@ -88,7 +88,7 @@ class SocketManager {
             if (window.app?.currentTab === 'admin') {
                 window.app.loadAuctionManagement();
             }
-            showNotification(`Bid cancelled - Current bid: £${data.newCurrentBid}m by ${data.newCurrentBidder}`, 'info');
+            showNotification(`Bid cancelled - Current bid: ${formatCurrencyPlain(data.newCurrentBid)} by ${data.newCurrentBidder}`, 'info');
         });
 
         // Draft turn advancement
@@ -178,8 +178,8 @@ class SocketManager {
 
         // Show notification with auto-bid indicator
         const bidMessage = data.isAutoBid 
-            ? `🤖 ${data.teamName} auto-bid £${data.bidAmount}m`
-            : `${data.teamName} bid £${data.bidAmount}m`;
+            ? `🤖 ${data.teamName} auto-bid ${formatCurrencyPlain(data.bidAmount)}`
+            : `${data.teamName} bid ${formatCurrencyPlain(data.bidAmount)}`;
             
         showNotification(bidMessage, 'info');
     }

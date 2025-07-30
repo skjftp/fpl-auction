@@ -185,8 +185,8 @@ class MobileSocketManager {
 
         // Show toast notification
         const bidMessage = data.isAutoBid 
-            ? `🤖 ${data.teamName} auto-bid £${data.bidAmount}m`
-            : `${data.teamName} bid £${data.bidAmount}m`;
+            ? `🤖 ${data.teamName} auto-bid ${formatCurrencyPlain(data.bidAmount)}`
+            : `${data.teamName} bid ${formatCurrencyPlain(data.bidAmount)}`;
             
         window.mobileApp.showToast(bidMessage, 'info');
 

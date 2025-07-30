@@ -188,7 +188,7 @@ class HistoryManager {
                         </div>
                         <div class="text-right ml-4">
                             <div class="font-bold text-lg text-emerald-600">
-                                £${item.price_paid || 0}m
+                                ${formatCurrency(item.price_paid || 0)}
                             </div>
                             <div class="text-xs text-gray-500">Sold</div>
                         </div>
@@ -216,7 +216,7 @@ class HistoryManager {
                         </div>
                         <div class="text-right ml-4">
                             <div class="font-bold text-lg text-blue-600">
-                                £${item.bid_amount || item.bidAmount || 0}m
+                                ${formatCurrency(item.bid_amount || item.bidAmount || 0)}
                             </div>
                             <div class="text-xs text-gray-500">
                                 ${item.isWinning ? 'Winning Bid' : 'Bid'}

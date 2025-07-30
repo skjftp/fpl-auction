@@ -305,7 +305,7 @@ class TeamManager {
                         </div>
                         <!-- Price badge -->
                         <div class="absolute -bottom-1 -right-1 bg-white border border-gray-300 rounded-full px-1.5 py-0.5 text-xs font-semibold text-gray-700 shadow-sm">
-                            £${player.price_paid || 0}m
+                            ${formatCurrency(player.price_paid || 0)}
                         </div>
                     </div>
                     <div class="text-center mt-2">
@@ -327,7 +327,7 @@ class TeamManager {
             return `
                 <div class="bg-purple-50 border-2 border-purple-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div class="font-semibold text-purple-900">${club.name || 'Unknown'}</div>
-                    <div class="text-sm text-purple-700 mt-1">£${club.price_paid || 0}m</div>
+                    <div class="text-sm text-purple-700 mt-1">${formatCurrency(club.price_paid || 0)}</div>
                 </div>
             `;
         };
@@ -379,13 +379,13 @@ class TeamManager {
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium text-gray-700">Total Spent:</span>
                         <span class="text-lg font-bold text-gray-900">
-                            £${this.calculateTotalSpent(positions, clubs)}m
+                            ${formatCurrency(this.calculateTotalSpent(positions, clubs))}
                         </span>
                     </div>
                     <div class="flex justify-between items-center mt-2">
                         <span class="text-sm font-medium text-gray-700">Remaining Budget:</span>
                         <span class="text-lg font-bold text-emerald-600">
-                            £${(1000 - this.calculateTotalSpent(positions, clubs)).toFixed(1)}m
+                            ${formatCurrency((1000 - this.calculateTotalSpent(positions, clubs)).toFixed(1))}
                         </span>
                     </div>
                 </div>

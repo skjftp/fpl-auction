@@ -206,14 +206,14 @@ class MobileAutoBidManager {
                         <div>
                             <div class="config-player-name">${player.web_name || player.name || 'Unknown'}</div>
                             <div class="config-player-details">
-                                ${player.position || player.element_type_name || ''} - ${player.team_name || ''} - £${player.now_cost || player.price || 0}m
+                                ${player.position || player.element_type_name || ''} - ${player.team_name || ''} - ${formatCurrency(player.now_cost || player.price || 0)}
                             </div>
                         </div>
                         <input type="number" 
                                class="max-bid-input" 
                                data-player-id="${player.id}"
                                value="${playerConfig.maxBid || ''}" 
-                               placeholder="Max £" 
+                               placeholder="Max J" 
                                min="5" 
                                step="5">
                     </div>
@@ -372,7 +372,7 @@ class MobileAutoBidManager {
         // Place auto-bid
         try {
             await window.mobileAPI.placeBid(auction.id, nextBid, true);
-            console.log(`Mobile auto-bid placed: £${nextBid} for player ${playerId}`);
+            console.log(`Mobile auto-bid placed: ${formatCurrencyPlain(nextBid, false)} for player ${playerId}`);
         } catch (error) {
             console.error('Mobile auto-bid failed:', error);
         }

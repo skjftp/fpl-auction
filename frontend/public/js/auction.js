@@ -139,7 +139,7 @@ class AuctionManager {
                         </div>
                         <div class="text-right">
                             <div class="font-bold text-emerald-600">
-                                £${sale.price_paid || 0}m
+                                ${formatCurrency(sale.price_paid || 0)}
                             </div>
                             ${sale.player_id ? `<div class="text-xs text-gray-500">${sale.position || ''}</div>` : ''}
                         </div>
@@ -236,7 +236,7 @@ class AuctionManager {
                     </div>
                 </div>
                 <div class="text-right flex-shrink-0">
-                    <div class="text-xs font-medium">£${(player.price / 10).toFixed(1)}m</div>
+                    <div class="text-xs font-medium">${formatCurrency((player.price / 10).toFixed(1))}</div>
                     <div class="text-sm font-bold">${player.total_points}pts</div>
                     <button onclick="auctionManager.startPlayerAuction(${player.id})" 
                             class="start-auction-btn mt-1 px-2 py-0.5 rounded text-xs transition-colors ${
@@ -363,7 +363,7 @@ class AuctionManager {
                 
                 <div class="bg-gray-50 rounded p-3 mb-3">
                     <div class="text-xs text-gray-500 mb-1">Current Bid</div>
-                    <div id="currentBidAmount" class="text-xl font-bold text-green-600 mb-1">£${auction.currentBid}</div>
+                    <div id="currentBidAmount" class="text-xl font-bold text-green-600 mb-1">${formatCurrency(auction.currentBid, false)}</div>
                     <div id="currentBidder" class="${auction.currentBidder ? 'text-xs font-medium' : 'text-xs text-gray-500'}">
                         ${auction.currentBidder ? 
                             (auction.isAutoBid ? '🤖 ' : '') + (auction.currentBidder.name || auction.currentBidder) :
@@ -385,7 +385,7 @@ class AuctionManager {
                 
                 <div class="space-y-2">
                     <div class="text-xs text-gray-600 mb-1">
-                        Max bid: £${maxBid > 0 ? maxBid : 'N/A'}
+                        Max bid: ${maxBid > 0 ? formatCurrency(maxBid, false) : 'N/A'}
                     </div>
                     <input type="number" id="bidAmount" value="${auction.currentBid + 5}" min="${auction.currentBid + 5}" max="${maxBid > 0 ? maxBid : ''}" step="5"
                            class="w-full px-2 py-1 border rounded text-center text-sm">
@@ -503,7 +503,7 @@ class AuctionManager {
             // Check if bid exceeds maximum allowed bid
             const maxBid = await this.calculateMaxBid();
             if (maxBid > 0 && bidAmount > maxBid) {
-                showNotification(`Bid cannot exceed £${maxBid} (budget constraint)`, 'error');
+                showNotification(`Bid cannot exceed ${formatCurrencyPlain(maxBid, false)} (budget constraint)`, 'error');
                 return;
             }
 
@@ -539,7 +539,7 @@ class AuctionManager {
             const bidInput = document.getElementById('bidAmount');
             
             if (currentBidEl) {
-                currentBidEl.textContent = `£${bidData.bidAmount}`;
+                currentBidEl.innerHTML = formatCurrency(bidData.bidAmount, false);
             }
             
             if (bidderEl) {

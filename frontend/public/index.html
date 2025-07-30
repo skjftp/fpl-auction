@@ -86,6 +86,17 @@
             border: 1px solid rgba(255, 255, 255, 0.18);
         }
 
+        /* Currency J Symbol Styles */
+        .currency-j {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-weight: bold;
+            font-style: italic;
+            color: #059669;
+            display: inline-block;
+            transform: scaleY(1.1);
+            letter-spacing: -0.05em;
+        }
+        
         /* Bottom navigation styles */
         .bottom-nav {
             position: fixed;
@@ -207,7 +218,7 @@
                 <div class="flex items-center space-x-6">
                     <div class="text-right">
                         <div class="text-xs text-gray-500 uppercase tracking-wide">Budget</div>
-                        <div id="teamBudget" class="text-xl font-bold text-emerald-600">£0</div>
+                        <div id="teamBudget" class="text-xl font-bold text-emerald-600"><span class="currency-j">J</span>0</div>
                     </div>
                     <button id="changePasswordBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-all duration-200 mr-2">
                         <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -714,6 +725,7 @@
     <script src="js/auction.js"></script>
     <script src="js/team.js"></script>
     <script src="js/scoring.js"></script>
+    <script src="js/currency.js"></script>
     <script src="js/autobid.js"></script>
     <script src="js/history.js"></script>
     <script src="js/app.js"></script>

@@ -47,6 +47,17 @@ body {
     margin-top: 20px;
 }
 
+/* Currency J Symbol Styles */
+.currency-j {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-weight: bold;
+    font-style: italic;
+    color: #059669;
+    display: inline-block;
+    transform: scaleY(1.1);
+    letter-spacing: -0.05em;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }

@@ -63,7 +63,7 @@ router.post('/start-player/:playerId', async (req, res) => {
       return res.status(400).json({ error: 'Player is already sold in this draft' });
     }
     
-    // Create new auction with automatic £5 bid
+    // Create new auction with automatic J5 bid
     const auctionRef = collections.auctions.doc();
     const auctionId = auctionRef.id;
     
@@ -84,7 +84,7 @@ router.post('/start-player/:playerId', async (req, res) => {
     
     await auctionRef.set(auctionData);
     
-    // Record the automatic £5 bid in bid history
+    // Record the automatic J5 bid in bid history
     await collections.bidHistory.add({
       auction_id: auctionId,
       team_id: teamId,
@@ -187,7 +187,7 @@ router.post('/start-club/:clubId', async (req, res) => {
       return res.status(400).json({ error: 'Club is already sold in this draft' });
     }
     
-    // Create new auction with automatic £5 bid
+    // Create new auction with automatic J5 bid
     const auctionRef = collections.auctions.doc();
     const auctionId = auctionRef.id;
     
@@ -208,7 +208,7 @@ router.post('/start-club/:clubId', async (req, res) => {
     
     await auctionRef.set(auctionData);
     
-    // Record the automatic £5 bid in bid history
+    // Record the automatic J5 bid in bid history
     await collections.bidHistory.add({
       auction_id: auctionId,
       team_id: teamId,

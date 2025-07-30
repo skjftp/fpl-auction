@@ -200,7 +200,7 @@ class MobileAuctionManager {
         const teamPosEl = document.getElementById('playerTeamPos');
         if (teamPosEl) {
             const positionName = this.getPositionName(position);
-            const priceText = auctionData.now_cost ? `£${auctionData.now_cost / 10}m` : '';
+            const priceText = auctionData.now_cost ? formatCurrency(auctionData.now_cost / 10) : '';
             teamPosEl.textContent = `${positionName} - ${teamName} ${priceText}`.trim();
         }
     }
@@ -246,7 +246,7 @@ class MobileAuctionManager {
         console.log('💰 Mobile: Bid details - Amount:', currentBid, 'Bidder:', bidderName);
 
         if (bidAmountEl) {
-            bidAmountEl.textContent = `£${currentBid}`;
+            bidAmountEl.innerHTML = formatCurrency(currentBid, false);
         }
 
         if (bidderEl) {
@@ -258,7 +258,7 @@ class MobileAuctionManager {
             const nextBid = currentBid + 5;
             bidInput.value = nextBid;
             bidInput.min = nextBid;
-            bidInput.placeholder = `£${nextBid}`;
+            bidInput.placeholder = formatCurrencyPlain(nextBid, false);
         }
     }
 
@@ -492,7 +492,7 @@ class MobileAuctionManager {
 
             await window.mobileAPI.placeBid(this.currentAuction.id, bidAmount);
             
-            window.mobileApp.showToast(`Bid placed: £${bidAmount}`, 'success');
+            window.mobileApp.showToast(`Bid placed: ${formatCurrencyPlain(bidAmount, false)}`, 'success');
         } catch (error) {
             console.error('Error placing bid:', error);
             window.mobileApp.showToast(error.message, 'error');
@@ -591,7 +591,7 @@ class MobileAuctionManager {
                         ${isSold ? `<p style="color: #ef4444; font-size: 11px;">Sold to ${player.sold_to_team_name || 'Unknown'}</p>` : ''}
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                        <span class="player-price">£${(player.now_cost || player.price || 0) / 10}m</span>
+                        <span class="player-price">${formatCurrency((player.now_cost || player.price || 0) / 10)}</span>
                         ${canStartAuction ? `
                             <button class="start-auction-btn" onclick="mobileAuction.startPlayerAuction(${player.id})">
                                 Start
@@ -651,7 +651,7 @@ class MobileAuctionManager {
                     </div>
                 </div>
                 <div style="font-size: 14px; font-weight: 600; color: #10b981;">
-                    £${item.price_paid || 0}m
+                    ${formatCurrency(item.price_paid || 0)}
                 </div>
             </div>
         `).join('');

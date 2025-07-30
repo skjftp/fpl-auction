@@ -6,13 +6,13 @@ A Fantasy Premier League auction website with real-time bidding and scoring syst
 
 ### Auction System
 - **10 Teams**: Pre-configured team logins (team1-team10)
-- **Budget**: Each team starts with £1000
+- **Budget**: Each team starts with J1000
 - **Player Auction**: Bid on all FPL players from the official API
 - **Club Auction**: Bid on Premier League clubs
 - **Real-time Bidding**: Live updates using Socket.IO
 - **Squad Rules**: 15 players + 2 clubs per team
 - **Position Limits**: 2 GKP, 5 DEF, 5 MID, 3 FWD
-- **Minimum Bid**: £5 with £5 increments
+- **Minimum Bid**: J5 with J5 increments
 
 ### Scoring System
 - Integration with FPL API for live scores

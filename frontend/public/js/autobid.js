@@ -133,7 +133,7 @@ function renderAutoBidPlayersList(players) {
             <div class="flex items-center justify-between">
                 <div class="flex-1">
                     <div class="font-medium">${displayName}</div>
-                    <div class="text-sm text-gray-500">${player.position || player.element_type_name || ''} - ${player.team_name || ''} - £${player.now_cost || player.price || 0}</div>
+                    <div class="text-sm text-gray-500">${player.position || player.element_type_name || ''} - ${player.team_name || ''} - ${formatCurrency(player.now_cost || player.price || 0, false)}</div>
                 </div>
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center">
@@ -142,7 +142,7 @@ function renderAutoBidPlayersList(players) {
                                class="w-20 px-2 py-1 border rounded player-max-bid" 
                                data-player-id="${player.id}"
                                value="${config.maxBid || ''}" 
-                               placeholder="£" 
+                               placeholder="J" 
                                min="0" 
                                step="5">
                     </div>
@@ -383,7 +383,7 @@ async function checkAndPlaceAutoBids() {
     // Place bid
     try {
         await api.placeBid(auction.id, nextBid, true);
-        console.log(`Auto-bid placed: £${nextBid} for player ${playerId}`);
+        console.log(`Auto-bid placed: ${formatCurrencyPlain(nextBid, false)} for player ${playerId}`);
     } catch (error) {
         console.error('Auto-bid failed:', error);
     }

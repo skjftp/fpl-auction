@@ -62,7 +62,7 @@
             <div class="top-bar">
                 <div class="team-info">
                     <span id="teamName" class="team-name"></span>
-                    <span id="teamBudget" class="team-budget">£0</span>
+                    <span id="teamBudget" class="team-budget"><span class="currency-j">J</span>0</span>
                 </div>
                 <button id="logoutBtn" class="logout-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -126,7 +126,7 @@
                     <div class="bid-info">
                         <div class="current-bid">
                             <span class="bid-label">Current Bid</span>
-                            <span id="currentBidAmount" class="bid-amount">£0</span>
+                            <span id="currentBidAmount" class="bid-amount"><span class="currency-j">J</span>0</span>
                         </div>
                         <div class="current-bidder">
                             <span class="bidder-label">Bidder</span>
@@ -140,7 +140,7 @@
                             <!-- Wait Button (left side) -->
                             <button id="waitBtn" class="wait-btn hidden">Wait!</button>
                             
-                            <input type="number" id="bidAmount" class="bid-input" placeholder="£" min="5" step="5">
+                            <input type="number" id="bidAmount" class="bid-input" placeholder="J" min="5" step="5">
                             <button id="placeBidBtn" class="place-bid-btn">
                                 <span class="btn-text">Place Bid</span>
                                 <div class="btn-spinner hidden"></div>
@@ -303,6 +303,7 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="mobile/js/mobile-api.js"></script>
     <script src="mobile/js/mobile-socket.js"></script>
+    <script src="mobile/js/mobile-currency.js"></script>
     <script src="mobile/js/mobile-auction.js"></script>
     <script src="mobile/js/mobile-autobid.js"></script>
     <script src="mobile/js/mobile-app.js"></script>
