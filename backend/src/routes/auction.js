@@ -539,11 +539,36 @@ async function completeAuction(req, res, auctionId, auction) {
     // Commit the batch
     await batch.commit();
     
+    // Get winner team name
+    const winnerTeamName = teamDoc.data().name;
+    
+    // Get player or club details for the completion data
+    let itemName = '';
+    let itemData = null;
+    
+    if (auction.auction_type === 'player' && auction.player_id) {
+      const playerDoc = await collections.fplPlayers.doc(auction.player_id.toString()).get();
+      if (playerDoc.exists) {
+        itemData = playerDoc.data();
+        itemName = itemData.web_name || itemData.name || 'Unknown Player';
+      }
+    } else if (auction.auction_type === 'club' && auction.club_id) {
+      const clubDoc = await collections.fplClubs.doc(auction.club_id.toString()).get();
+      if (clubDoc.exists) {
+        itemData = clubDoc.data();
+        itemName = itemData.name || 'Unknown Club';
+      }
+    }
+    
     const completionData = {
       auctionId,
       winnerId: auction.current_bidder_id,
-      finalPrice: auction.current_bid,
-      type: auction.auction_type
+      winnerName: winnerTeamName,
+      finalBid: auction.current_bid,
+      type: auction.auction_type,
+      player: auction.auction_type === 'player' ? itemData : null,
+      club: auction.auction_type === 'club' ? itemData : null,
+      team: { id: auction.current_bidder_id, name: winnerTeamName }
     };
     
     // Broadcast completion

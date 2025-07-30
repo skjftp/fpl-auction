@@ -201,8 +201,8 @@ class SocketManager {
         if (window.ttsManager && data) {
             const itemName = data.player?.web_name || data.club?.name || 'Item';
             const teamName = data.team?.name || data.winnerName || 'Unknown Team';
-            const amount = formatCurrencyPlain(data.finalBid || data.price || 0);
-            window.ttsManager.announceSold(itemName, teamName, amount);
+            const amount = data.finalBid || data.price || 0;
+            window.ttsManager.announceSold(itemName, teamName, amount + 'm');
         }
         
         // Refresh sold items and player display for everyone

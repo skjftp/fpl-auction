@@ -133,7 +133,7 @@ class TTSManager {
     }
 
     announceSold(playerName, teamName, amount) {
-        const text = `Sold! ${playerName} goes to ${teamName} for ${amount}`;
+        const text = `Sold! ${playerName} goes to ${teamName} for J ${amount}`;
         this.speak(text, true);
     }
 
