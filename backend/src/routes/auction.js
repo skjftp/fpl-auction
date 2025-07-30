@@ -534,17 +534,21 @@ async function completeAuction(req, res, auctionId, auction) {
     // Broadcast completion
     req.io.to('auction-room').emit('auction-completed', completionData);
     
-    // Advance to next team in draft order
-    try {
-      const result = await advanceDraftTurn();
-      if (result.hasNext) {
-        req.io.emit('draft-turn-advanced', {
-          currentTeam: result.currentTeam,
-          currentPosition: result.currentPosition
-        });
+    // Advance to next team in draft order (only if not a restarted auction)
+    if (!auction.is_restarted) {
+      try {
+        const result = await advanceDraftTurn();
+        if (result.hasNext) {
+          req.io.emit('draft-turn-advanced', {
+            currentTeam: result.currentTeam,
+            currentPosition: result.currentPosition
+          });
+        }
+      } catch (err) {
+        console.error('Failed to advance draft turn:', err);
       }
-    } catch (err) {
-      console.error('Failed to advance draft turn:', err);
+    } else {
+      console.log('Skipping turn advancement for restarted auction');
     }
     
     res.json({ success: true, completion: completionData });
@@ -862,13 +866,14 @@ router.post('/admin/restart/:auctionId', requireAdmin, async (req, res) => {
       });
     }
     
-    // Reactivate auction
+    // Reactivate auction with restart flag
     batch.update(collections.auctions.doc(auctionId), {
       status: 'active',
       selling_stage: null,
       wait_requested_by: null,
       wait_requested_at: null,
-      restarted_at: admin.firestore.FieldValue.serverTimestamp()
+      restarted_at: admin.firestore.FieldValue.serverTimestamp(),
+      is_restarted: true // Flag to prevent turn advancement
     });
     
     await batch.commit();

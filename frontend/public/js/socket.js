@@ -63,6 +63,34 @@ class SocketManager {
             this.handleWaitRejected(data);
         });
 
+        // Admin auction management events
+        this.socket.on('auction-restarted', (data) => {
+            console.log('🔄 Auction restarted:', data);
+            // Reload auction data
+            if (window.auctionManager) {
+                window.auctionManager.loadPlayers();
+                window.auctionManager.loadCurrentAuction();
+            }
+            // Reload admin panel if open
+            if (window.app?.currentTab === 'admin') {
+                window.app.loadAuctionManagement();
+            }
+            showNotification('Auction has been restarted by admin', 'info');
+        });
+
+        this.socket.on('bid-cancelled', (data) => {
+            console.log('↩️ Bid cancelled:', data);
+            // Update current auction display
+            if (window.auctionManager && window.auctionManager.currentAuction?.id === data.auctionId) {
+                window.auctionManager.loadCurrentAuction();
+            }
+            // Reload admin panel if open
+            if (window.app?.currentTab === 'admin') {
+                window.app.loadAuctionManagement();
+            }
+            showNotification(`Bid cancelled - Current bid: £${data.newCurrentBid}m by ${data.newCurrentBidder}`, 'info');
+        });
+
         this.socket.on('error', (error) => {
             console.error('Socket error:', error);
             showNotification('Connection error', 'error');
