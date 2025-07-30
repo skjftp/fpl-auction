@@ -614,8 +614,13 @@ class App {
         }
 
         try {
+            console.log('Loading admin panel...');
+            
             // Load teams list for admin access management
+            console.log('Fetching teams leaderboard...');
             const teams = await api.getTeamsLeaderboard();
+            console.log('Teams received:', teams);
+            
             this.displayAdminTeams(teams);
             
             // Load auction management data
@@ -623,6 +628,12 @@ class App {
         } catch (error) {
             console.error('Error loading admin panel:', error);
             showNotification('Failed to load admin panel', 'error');
+            
+            // Display error in the teams list container
+            const container = document.getElementById('adminTeamsList');
+            if (container) {
+                container.innerHTML = `<div class="text-red-500 text-center py-4">Error loading teams: ${error.message}</div>`;
+            }
         }
     }
 

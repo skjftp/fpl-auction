@@ -114,20 +114,37 @@ router.get('/', async (req, res) => {
     for (const doc of teamsSnapshot.docs) {
       const team = doc.data();
       
-      // Get squad count
+      // Get squad details
       const squadSnapshot = await collections.teamSquads
         .where('team_id', '==', team.id)
         .get();
       
+      let playerCount = 0;
+      let clubCount = 0;
+      let totalSpent = 0;
+      
+      squadSnapshot.forEach(doc => {
+        const item = doc.data();
+        if (item.player_id) {
+          playerCount++;
+        } else if (item.club_id) {
+          clubCount++;
+        }
+        totalSpent += item.price_paid || 0;
+      });
+      
       teams.push({
         ...team,
         squad_count: squadSnapshot.size,
+        player_count: playerCount,
+        club_count: clubCount,
+        total_spent: totalSpent,
         total_points: 0 // TODO: Calculate from gameweeks
       });
     }
     
-    // Sort by points
-    teams.sort((a, b) => b.total_points - a.total_points);
+    // Sort by team id to maintain consistent order
+    teams.sort((a, b) => a.id - b.id);
     
     res.json(teams);
   } catch (error) {
