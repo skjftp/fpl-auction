@@ -706,6 +706,11 @@
                         targetTab.classList.remove('hidden');
                         targetTab.classList.add('fade-in');
                     }
+                    
+                    // Call the app's switchTab method to load content
+                    if (window.app && window.app.switchTab) {
+                        window.app.switchTab(tab);
+                    }
                 });
             });
             
@@ -742,11 +747,21 @@
             // Setup history filters
             setupHistoryFilters();
             
-            // Update draft tab visibility based on admin status
+            // Update admin tabs visibility based on admin status
             const updateAdminTabs = () => {
                 const draftTab = document.querySelector('.nav-item[data-tab="draft"]');
-                if (draftTab && window.app?.currentUser) {
-                    draftTab.style.display = window.app.currentUser.is_admin ? 'flex' : 'none';
+                const adminTab = document.querySelector('.nav-item[data-tab="admin"]');
+                
+                if (window.app?.currentUser) {
+                    const isAdmin = window.app.currentUser.is_admin;
+                    console.log('Updating admin tabs visibility. User is admin:', isAdmin);
+                    
+                    if (draftTab) {
+                        draftTab.style.display = isAdmin ? 'flex' : 'none';
+                    }
+                    if (adminTab) {
+                        adminTab.style.display = isAdmin ? 'flex' : 'none';
+                    }
                 }
             };
             

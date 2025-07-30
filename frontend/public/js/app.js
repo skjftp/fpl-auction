@@ -98,9 +98,16 @@ class App {
         
         // Show admin tab if user is admin
         const adminTab = document.querySelector('[data-tab="admin"]');
+        const adminTabNav = document.querySelector('.nav-item[data-tab="admin"]');
         if (adminTab) {
             adminTab.style.display = this.currentUser?.is_admin ? 'block' : 'none';
         }
+        if (adminTabNav) {
+            adminTabNav.style.display = this.currentUser?.is_admin ? 'flex' : 'none';
+        }
+        
+        console.log('Current user admin status:', this.currentUser?.is_admin);
+        console.log('Admin tab visibility:', adminTab?.style.display, adminTabNav?.style.display);
         
         this.updateNavbar();
         this.switchTab(this.currentTab);
