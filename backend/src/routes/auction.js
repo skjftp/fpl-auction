@@ -905,14 +905,14 @@ router.post('/admin/restart/:auctionId', requireAdmin, async (req, res) => {
     }
     
     // Get current bidder info
-    const teamQuery = await collections.teams
+    const bidderQuery = await collections.teams
       .where('id', '==', fullAuction.current_bidder_id)
       .limit(1)
       .get();
     
     let currentBidder = { name: 'Unknown', username: 'unknown' };
-    if (!teamQuery.empty) {
-      currentBidder = teamQuery.docs[0].data();
+    if (!bidderQuery.empty) {
+      currentBidder = bidderQuery.docs[0].data();
     }
     
     // Format response data same as auction-started
