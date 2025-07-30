@@ -548,7 +548,12 @@
                     
                     <!-- Auction Management -->
                     <div class="mb-8">
-                        <h4 class="text-lg font-semibold mb-4 text-gray-900">Auction Management</h4>
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-lg font-semibold text-gray-900">Auction Management</h4>
+                            <button onclick="window.app.loadAuctionManagement()" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg transition-colors">
+                                🔄 Refresh
+                            </button>
+                        </div>
                         
                         <!-- Restart Completed Auctions -->
                         <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-4">
