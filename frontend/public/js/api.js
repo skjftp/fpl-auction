@@ -72,6 +72,13 @@ class API {
         return await this.request('/auth/init-teams', { method: 'POST' });
     }
 
+    async changePassword(currentPassword, newPassword) {
+        return await this.request('/auth/change-password', {
+            method: 'POST',
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+    }
+
     async getAllTeams() {
         return await this.request('/auth/teams');
     }
@@ -210,6 +217,33 @@ class API {
 
     async getActiveAuctionWithBids() {
         return await this.request('/auction/admin/current-with-bids');
+    }
+
+    // Draft Management endpoints
+    async getDrafts() {
+        return await this.request('/draft-management/list');
+    }
+
+    async createDraft(name, description) {
+        return await this.request('/draft-management/create', {
+            method: 'POST',
+            body: JSON.stringify({ name, description })
+        });
+    }
+
+    async setActiveDraft(draftId) {
+        return await this.request(`/draft-management/set-active/${draftId}`, { method: 'POST' });
+    }
+
+    async resetDraft(draftId, resetTeamBudgets = true) {
+        return await this.request(`/draft-management/reset/${draftId}`, {
+            method: 'POST',
+            body: JSON.stringify({ resetTeamBudgets })
+        });
+    }
+
+    async getActiveDraft() {
+        return await this.request('/draft-management/active');
     }
 }
 

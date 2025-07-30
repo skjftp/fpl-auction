@@ -14,7 +14,8 @@ const collections = {
   draftOrder: db.collection('draft_order'),
   draftState: db.collection('draft_state'),
   chatMessages: db.collection('chat_messages'),
-  autoBidConfigs: db.collection('auto_bid_configs')
+  autoBidConfigs: db.collection('auto_bid_configs'),
+  drafts: db.collection('drafts')  // New collection for managing multiple drafts
 };
 
 async function initializeDatabase() {

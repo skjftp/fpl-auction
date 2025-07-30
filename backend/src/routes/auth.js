@@ -1,7 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const admin = require('firebase-admin');
 const { collections, createDefaultTeams } = require('../models/database');
+const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -59,6 +61,56 @@ router.post('/init-teams', async (req, res) => {
   } catch (error) {
     console.error('Init teams error:', error);
     res.status(500).json({ error: 'Failed to initialize teams' });
+  }
+});
+
+// Change password endpoint
+router.post('/change-password', authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const teamId = req.user.teamId;
+  
+  try {
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new passwords are required' });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+    }
+    
+    // Get team from database using username as document ID
+    const teamDoc = await collections.teams.doc(req.user.username).get();
+    
+    if (!teamDoc.exists) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    
+    const team = teamDoc.data();
+    
+    // Verify current password
+    const isValidPassword = await bcrypt.compare(currentPassword, team.password_hash);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update password in database
+    await teamDoc.ref.update({
+      password_hash: hashedPassword,
+      password_updated_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Password changed successfully' 
+    });
+    
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'Failed to change password' });
   }
 });
 

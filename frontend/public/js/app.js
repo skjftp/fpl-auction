@@ -22,6 +22,20 @@ class App {
             this.logout();
         });
 
+        // Password change functionality
+        document.getElementById('changePasswordBtn').addEventListener('click', () => {
+            this.showPasswordModal();
+        });
+
+        document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handlePasswordChange();
+        });
+
+        document.getElementById('cancelPasswordBtn').addEventListener('click', () => {
+            this.hidePasswordModal();
+        });
+
         // Tab navigation
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -83,6 +97,66 @@ class App {
         window.socketManager.disconnect();
         this.showLogin();
         showNotification('Logged out successfully', 'success');
+    }
+
+    showPasswordModal() {
+        document.getElementById('changePasswordModal').classList.remove('hidden');
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        document.getElementById('passwordError').classList.add('hidden');
+    }
+
+    hidePasswordModal() {
+        document.getElementById('changePasswordModal').classList.add('hidden');
+    }
+
+    async handlePasswordChange() {
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const errorDiv = document.getElementById('passwordError');
+        const saveBtn = document.getElementById('savePasswordBtn');
+        
+        // Reset error
+        errorDiv.classList.add('hidden');
+        errorDiv.textContent = '';
+        
+        // Validate passwords match
+        if (newPassword !== confirmPassword) {
+            errorDiv.textContent = 'New passwords do not match';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        // Validate minimum length
+        if (newPassword.length < 6) {
+            errorDiv.textContent = 'New password must be at least 6 characters';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Changing...';
+        
+        try {
+            const response = await api.changePassword(currentPassword, newPassword);
+            
+            if (response.success) {
+                showNotification('Password changed successfully', 'success');
+                this.hidePasswordModal();
+            } else {
+                errorDiv.textContent = response.error || 'Failed to change password';
+                errorDiv.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error changing password:', error);
+            errorDiv.textContent = error.message || 'Failed to change password';
+            errorDiv.classList.remove('hidden');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Change Password';
+        }
     }
 
     showLogin() {
@@ -630,6 +704,9 @@ class App {
             
             this.displayAdminTeams(teams);
             
+            // Load draft management
+            await this.loadDraftManagement();
+            
             // Load auction management data
             await this.loadAuctionManagement();
         } catch (error) {
@@ -870,6 +947,120 @@ class App {
         } catch (error) {
             console.error('Error cancelling bid:', error);
             showNotification('Failed to cancel bid', 'error');
+        }
+    }
+
+    // Draft Management Methods
+    async loadDraftManagement() {
+        try {
+            const drafts = await api.getDrafts();
+            this.displayDrafts(drafts);
+        } catch (error) {
+            console.error('Error loading drafts:', error);
+            const container = document.getElementById('draftsList');
+            if (container) {
+                container.innerHTML = `<div class="text-red-500 text-center py-4">Error loading drafts: ${error.message}</div>`;
+            }
+        }
+    }
+
+    displayDrafts(drafts) {
+        const container = document.getElementById('draftsList');
+        if (!container) return;
+        
+        if (!drafts || drafts.length === 0) {
+            container.innerHTML = '<div class="text-gray-500 text-center py-4">No drafts created yet</div>';
+            return;
+        }
+        
+        container.innerHTML = drafts.map(draft => `
+            <div class="flex items-center justify-between p-3 bg-white rounded border ${draft.is_active ? 'border-green-500 bg-green-50' : ''}">
+                <div>
+                    <div class="font-medium">${draft.name}</div>
+                    <div class="text-sm text-gray-600">
+                        ${draft.description || 'No description'}
+                        ${draft.is_active ? '<span class="text-green-600 font-medium ml-2">(Active)</span>' : ''}
+                    </div>
+                    ${draft.total_auctions !== undefined ? `
+                        <div class="text-xs text-gray-500 mt-1">
+                            Auctions: ${draft.completed_auctions || 0}/${draft.total_auctions || 0}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="flex gap-2">
+                    ${!draft.is_active ? `
+                        <button onclick="window.app.setActiveDraft('${draft.id}')" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                            Activate
+                        </button>
+                    ` : ''}
+                    <button onclick="window.app.resetDraft('${draft.id}')" 
+                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async createNewDraft() {
+        const nameInput = document.getElementById('newDraftName');
+        const name = nameInput?.value?.trim();
+        
+        if (!name) {
+            showNotification('Please enter a draft name', 'error');
+            return;
+        }
+        
+        try {
+            const response = await api.createDraft(name, '');
+            if (response.success) {
+                showNotification('Draft created successfully', 'success');
+                nameInput.value = '';
+                await this.loadDraftManagement();
+            }
+        } catch (error) {
+            console.error('Error creating draft:', error);
+            showNotification('Failed to create draft', 'error');
+        }
+    }
+
+    async setActiveDraft(draftId) {
+        try {
+            if (!confirm('Are you sure you want to activate this draft? This will make it the current active draft.')) {
+                return;
+            }
+            
+            const response = await api.setActiveDraft(draftId);
+            if (response.success) {
+                showNotification('Draft activated successfully', 'success');
+                await this.loadDraftManagement();
+            }
+        } catch (error) {
+            console.error('Error activating draft:', error);
+            showNotification('Failed to activate draft', 'error');
+        }
+    }
+
+    async resetDraft(draftId) {
+        try {
+            const resetBudgets = confirm('Reset team budgets to £1000?\n\nOK = Reset budgets\nCancel = Keep current budgets');
+            
+            if (!confirm(`This will clear all auction data${resetBudgets ? ' and reset budgets' : ''}. Are you sure?`)) {
+                return;
+            }
+            
+            const response = await api.resetDraft(draftId, resetBudgets);
+            if (response.success) {
+                showNotification('Draft reset successfully', 'success');
+                await this.loadDraftManagement();
+                
+                // Reload the page to refresh all data
+                setTimeout(() => location.reload(), 1000);
+            }
+        } catch (error) {
+            console.error('Error resetting draft:', error);
+            showNotification('Failed to reset draft', 'error');
         }
     }
 }

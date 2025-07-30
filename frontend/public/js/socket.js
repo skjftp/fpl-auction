@@ -111,6 +111,17 @@ class SocketManager {
             }
         });
 
+        // Draft reset event
+        this.socket.on('draft-reset', (data) => {
+            console.log('🔄 Draft reset:', data);
+            showNotification(data.message, 'warning');
+            
+            // Reload the page after a short delay to refresh all data
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        });
+
         this.socket.on('error', (error) => {
             console.error('Socket error:', error);
             showNotification('Connection error', 'error');
