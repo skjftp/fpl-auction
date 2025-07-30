@@ -878,13 +878,66 @@ router.post('/admin/restart/:auctionId', requireAdmin, async (req, res) => {
     
     await batch.commit();
     
-    // Broadcast restart event
+    // Get full auction data for broadcast (same as auction-started event)
+    const fullAuction = auction;
+    fullAuction.id = auctionId;
+    fullAuction.status = 'active';
+    
+    // Get player or club details
+    if (fullAuction.player_id) {
+      const playerDoc = await collections.fplPlayers.doc(fullAuction.player_id.toString()).get();
+      if (playerDoc.exists) {
+        fullAuction.player = playerDoc.data();
+        
+        // Get club info
+        if (fullAuction.player.team_id) {
+          const clubDoc = await collections.fplClubs.doc(fullAuction.player.team_id.toString()).get();
+          if (clubDoc.exists) {
+            fullAuction.player.team_name = clubDoc.data().name;
+          }
+        }
+      }
+    } else if (fullAuction.club_id) {
+      const clubDoc = await collections.fplClubs.doc(fullAuction.club_id.toString()).get();
+      if (clubDoc.exists) {
+        fullAuction.club = clubDoc.data();
+      }
+    }
+    
+    // Get current bidder info
+    const teamQuery = await collections.teams
+      .where('id', '==', fullAuction.current_bidder_id)
+      .limit(1)
+      .get();
+    
+    let currentBidder = { name: 'Unknown', username: 'unknown' };
+    if (!teamQuery.empty) {
+      currentBidder = teamQuery.docs[0].data();
+    }
+    
+    // Format response data same as auction-started
+    const responseData = {
+      id: auctionId,
+      player: fullAuction.player || null,
+      club: fullAuction.club || null,
+      currentBid: fullAuction.current_bid,
+      currentBidder: currentBidder,
+      currentBidderId: fullAuction.current_bidder_id,
+      status: 'active',
+      type: fullAuction.auction_type,
+      startedBy: currentBidder
+    };
+    
+    // Emit auction-started event so all clients update properly
+    req.io.to('auction-room').emit('auction-started', responseData);
+    
+    // Also emit auction-restarted for backward compatibility
     req.io.to('auction-room').emit('auction-restarted', {
       auctionId,
       message: 'Auction has been restarted by admin'
     });
     
-    res.json({ success: true, message: 'Auction restarted successfully' });
+    res.json({ success: true, message: 'Auction restarted successfully', auction: responseData });
     
   } catch (error) {
     console.error('Error restarting auction:', error);
