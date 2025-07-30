@@ -46,6 +46,10 @@ router.post('/create', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Draft name is required' });
     }
     
+    // Check if this is the first draft
+    const existingDrafts = await collections.drafts.get();
+    const isFirstDraft = existingDrafts.empty;
+    
     // Create new draft
     const draftRef = collections.drafts.doc();
     const draftId = draftRef.id;
@@ -53,7 +57,7 @@ router.post('/create', requireAdmin, async (req, res) => {
     await draftRef.set({
       name,
       description: description || '',
-      is_active: false,
+      is_active: isFirstDraft, // Auto-activate if first draft
       created_at: admin.firestore.FieldValue.serverTimestamp(),
       created_by: req.user.teamId
     });

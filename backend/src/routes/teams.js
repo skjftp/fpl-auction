@@ -1,6 +1,7 @@
 const express = require('express');
 const { collections } = require('../models/database');
 const { requireAdmin } = require('../middleware/auth');
+const { getActiveDraftId } = require('../utils/draft');
 
 const router = express.Router();
 
@@ -12,7 +13,10 @@ router.get('/test', (req, res) => {
 // Get all squad items (for tracking sold players/clubs)
 router.get('/all-squads', async (req, res) => {
   try {
-    const squadSnapshot = await collections.teamSquads.get();
+    const draftId = await getActiveDraftId();
+    const squadSnapshot = await collections.teamSquads
+      .where('draft_id', '==', draftId)
+      .get();
     const squads = squadSnapshot.docs.map(doc => doc.data());
     res.json(squads);
   } catch (error) {
@@ -25,11 +29,13 @@ router.get('/all-squads', async (req, res) => {
 router.get('/:teamId/squad', async (req, res) => {
   try {
     const teamId = parseInt(req.params.teamId);
-    console.log('Getting squad for team:', teamId);
+    const draftId = await getActiveDraftId();
+    console.log('Getting squad for team:', teamId, 'in draft:', draftId);
     
-    // Get squad for this team
+    // Get squad for this team in active draft
     const squadSnapshot = await collections.teamSquads
       .where('team_id', '==', teamId)
+      .where('draft_id', '==', draftId)
       .get();
     
     console.log('Squad snapshot size:', squadSnapshot.size);
@@ -108,15 +114,17 @@ router.get('/:teamId/squad', async (req, res) => {
 // Get all teams leaderboard
 router.get('/', async (req, res) => {
   try {
+    const draftId = await getActiveDraftId();
     const teamsSnapshot = await collections.teams.get();
     const teams = [];
     
     for (const doc of teamsSnapshot.docs) {
       const team = doc.data();
       
-      // Get squad details
+      // Get squad details for active draft
       const squadSnapshot = await collections.teamSquads
         .where('team_id', '==', team.id)
+        .where('draft_id', '==', draftId)
         .get();
       
       let playerCount = 0;
@@ -157,9 +165,11 @@ router.get('/', async (req, res) => {
 router.get('/sold-items', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 20;
+    const draftId = await getActiveDraftId();
     
     // Get recent squad additions (sold items) with team and player/club info
     const soldItemsSnapshot = await collections.teamSquads
+      .where('draft_id', '==', draftId)
       .orderBy('acquired_at', 'desc')
       .limit(limit)
       .get();

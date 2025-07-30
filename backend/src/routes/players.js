@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const { collections } = require('../models/database');
 const admin = require('firebase-admin');
+const { getActiveDraftId } = require('../utils/draft');
 
 const router = express.Router();
 
@@ -103,9 +104,12 @@ router.get('/', async (req, res) => {
       clubsMap[club.id] = club;
     });
     
-    // Get sold players information
+    // Get active draft ID
+    const draftId = await getActiveDraftId();
+    
+    // Get sold players information for active draft
     const soldPlayersSnapshot = await collections.teamSquads
-      .where('player_id', '!=', null)
+      .where('draft_id', '==', draftId)
       .get();
     const soldPlayersMap = {};
     
@@ -119,12 +123,14 @@ router.get('/', async (req, res) => {
     
     soldPlayersSnapshot.docs.forEach(doc => {
       const soldPlayer = doc.data();
-      const team = teamsMap[soldPlayer.team_id];
-      soldPlayersMap[soldPlayer.player_id] = {
-        sold_to_team_id: soldPlayer.team_id,
-        sold_to_team_name: team ? team.name : 'Unknown Team',
-        price_paid: soldPlayer.price_paid
-      };
+      if (soldPlayer.player_id) { // Only process player entries
+        const team = teamsMap[soldPlayer.team_id];
+        soldPlayersMap[soldPlayer.player_id] = {
+          sold_to_team_id: soldPlayer.team_id,
+          sold_to_team_name: team ? team.name : 'Unknown Team',
+          price_paid: soldPlayer.price_paid
+        };
+      }
     });
     
     // Process players and add club info
@@ -169,9 +175,44 @@ router.get('/clubs', async (req, res) => {
       .orderBy('strength', 'desc')
       .get();
     
+    // Get active draft ID
+    const draftId = await getActiveDraftId();
+    
+    // Get sold clubs information for active draft
+    const soldClubsSnapshot = await collections.teamSquads
+      .where('draft_id', '==', draftId)
+      .get();
+    
+    const soldClubsMap = {};
+    
+    // Get team names for sold clubs
+    const teamsSnapshot = await collections.teams.get();
+    const teamsMap = {};
+    teamsSnapshot.docs.forEach(doc => {
+      const team = doc.data();
+      teamsMap[team.id] = team;
+    });
+    
+    soldClubsSnapshot.docs.forEach(doc => {
+      const soldClub = doc.data();
+      if (soldClub.club_id) { // Only process club entries
+        const team = teamsMap[soldClub.team_id];
+        soldClubsMap[soldClub.club_id] = {
+          sold_to_team_id: soldClub.team_id,
+          sold_to_team_name: team ? team.name : 'Unknown Team',
+          price_paid: soldClub.price_paid
+        };
+      }
+    });
+    
     const clubs = [];
     clubsSnapshot.docs.forEach(doc => {
-      clubs.push(doc.data());
+      const club = doc.data();
+      const soldInfo = soldClubsMap[club.id] || {};
+      clubs.push({
+        ...club,
+        ...soldInfo
+      });
     });
     
     res.json(clubs);

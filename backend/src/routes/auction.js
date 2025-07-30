@@ -2,6 +2,7 @@ const express = require('express');
 const { collections, advanceDraftTurn, isTeamCompleted, canTeamAcquirePlayer } = require('../models/database');
 const admin = require('firebase-admin');
 const { requireAdmin } = require('../middleware/auth');
+const { getActiveDraftId } = require('../utils/draft');
 
 const router = express.Router();
 
@@ -49,13 +50,17 @@ router.post('/start-player/:playerId', async (req, res) => {
       return res.status(400).json({ error: 'Another auction is already active' });
     }
     
-    // Check if player is already sold
+    // Get active draft ID
+    const draftId = await getActiveDraftId();
+    
+    // Check if player is already sold in this draft
     const soldPlayers = await collections.teamSquads
       .where('player_id', '==', playerId)
+      .where('draft_id', '==', draftId)
       .get();
     
     if (!soldPlayers.empty) {
-      return res.status(400).json({ error: 'Player is already sold' });
+      return res.status(400).json({ error: 'Player is already sold in this draft' });
     }
     
     // Create new auction with automatic £5 bid
@@ -73,7 +78,8 @@ router.post('/start-player/:playerId', async (req, res) => {
       wait_requested_by: null, // Team ID that requested wait
       wait_requested_at: null, // Timestamp of wait request
       started_at: admin.firestore.FieldValue.serverTimestamp(),
-      bid_count: 1
+      bid_count: 1,
+      draft_id: draftId // Link to active draft
     };
     
     await auctionRef.set(auctionData);
@@ -168,13 +174,17 @@ router.post('/start-club/:clubId', async (req, res) => {
       return res.status(400).json({ error: 'Another auction is already active' });
     }
     
-    // Check if club is already sold
+    // Get active draft ID
+    const draftId = await getActiveDraftId();
+    
+    // Check if club is already sold in this draft
     const soldClubs = await collections.teamSquads
       .where('club_id', '==', clubId)
+      .where('draft_id', '==', draftId)
       .get();
     
     if (!soldClubs.empty) {
-      return res.status(400).json({ error: 'Club is already sold' });
+      return res.status(400).json({ error: 'Club is already sold in this draft' });
     }
     
     // Create new auction with automatic £5 bid
@@ -192,7 +202,8 @@ router.post('/start-club/:clubId', async (req, res) => {
       wait_requested_by: null, // Team ID that requested wait
       wait_requested_at: null, // Timestamp of wait request
       started_at: admin.firestore.FieldValue.serverTimestamp(),
-      bid_count: 1
+      bid_count: 1,
+      draft_id: draftId // Link to active draft
     };
     
     await auctionRef.set(auctionData);
@@ -489,13 +500,17 @@ async function completeAuction(req, res, auctionId, auction) {
     // Use a batch write for atomic operations
     const batch = admin.firestore().batch();
     
+    // Get active draft ID
+    const draftId = await getActiveDraftId();
+    
     // Add to team squad
     const squadRef = collections.teamSquads.doc();
     batch.set(squadRef, {
       team_id: auction.current_bidder_id,
       [`${auction.auction_type}_id`]: auction.player_id || auction.club_id,
       price_paid: auction.current_bid,
-      acquired_at: admin.firestore.FieldValue.serverTimestamp()
+      acquired_at: admin.firestore.FieldValue.serverTimestamp(),
+      draft_id: draftId // Link to active draft
     });
     
     // Update team budget (need to get current budget first)
@@ -562,8 +577,10 @@ async function completeAuction(req, res, auctionId, auction) {
 // Get current active auctions
 router.get('/active', async (req, res) => {
   try {
+    const draftId = await getActiveDraftId();
     const activeAuctions = await collections.auctions
       .where('status', '==', 'active')
+      .where('draft_id', '==', draftId)
       .get();
     
     const auctions = [];
@@ -623,8 +640,20 @@ router.get('/active', async (req, res) => {
 router.get('/bid-history', async (req, res) => {
   try {
     const teamId = req.user.teamId;
+    const draftId = await getActiveDraftId();
     
-    // Get all bids from bid history
+    // Get all auctions for this draft first
+    const auctionsSnapshot = await collections.auctions
+      .where('draft_id', '==', draftId)
+      .get();
+    
+    const auctionIds = auctionsSnapshot.docs.map(doc => doc.id);
+    
+    if (auctionIds.length === 0) {
+      return res.json({ bids: [] });
+    }
+    
+    // Get all bids from bid history for auctions in this draft
     const bidsSnapshot = await collections.bidHistory
       .orderBy('created_at', 'desc')
       .limit(100)
@@ -634,6 +663,11 @@ router.get('/bid-history', async (req, res) => {
     
     for (const doc of bidsSnapshot.docs) {
       const bid = { id: doc.id, ...doc.data() };
+      
+      // Only include bids from auctions in this draft
+      if (!auctionIds.includes(bid.auction_id)) {
+        continue;
+      }
       
       // Get player/club info
       if (bid.auction_id) {
@@ -692,8 +726,10 @@ router.get('/bid-history', async (req, res) => {
 // Get completed auctions - Admin only
 router.get('/admin/completed', requireAdmin, async (req, res) => {
   try {
+    const draftId = await getActiveDraftId();
     const completedAuctions = await collections.auctions
       .where('status', '==', 'completed')
+      .where('draft_id', '==', draftId)
       .limit(50)
       .get();
     
@@ -745,8 +781,10 @@ router.get('/admin/completed', requireAdmin, async (req, res) => {
 // Get current auction with bids - Admin only
 router.get('/admin/current-with-bids', requireAdmin, async (req, res) => {
   try {
+    const draftId = await getActiveDraftId();
     const activeAuctions = await collections.auctions
       .where('status', '==', 'active')
+      .where('draft_id', '==', draftId)
       .limit(1)
       .get();
     

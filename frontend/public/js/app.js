@@ -1034,7 +1034,9 @@ class App {
             const response = await api.setActiveDraft(draftId);
             if (response.success) {
                 showNotification('Draft activated successfully', 'success');
-                await this.loadDraftManagement();
+                
+                // Reload the page to refresh all data for the new active draft
+                setTimeout(() => location.reload(), 1000);
             }
         } catch (error) {
             console.error('Error activating draft:', error);

@@ -1,5 +1,6 @@
 const { db } = require('../config/firebase-config');
 const bcrypt = require('bcryptjs');
+const { getActiveDraftId } = require('../utils/draft');
 
 // Initialize collections
 const collections = {
@@ -120,8 +121,10 @@ async function startDraft() {
 
 // Check if a team has completed their squad (15 players + 2 clubs)
 async function isTeamCompleted(teamId) {
+  const draftId = await getActiveDraftId();
   const squadSnapshot = await collections.teamSquads
     .where('team_id', '==', teamId)
+    .where('draft_id', '==', draftId)
     .get();
   
   let playerCount = 0;
@@ -138,8 +141,10 @@ async function isTeamCompleted(teamId) {
 
 // Get team's current squad composition
 async function getTeamSquadStats(teamId) {
+  const draftId = await getActiveDraftId();
   const squadSnapshot = await collections.teamSquads
     .where('team_id', '==', teamId)
+    .where('draft_id', '==', draftId)
     .get();
   
   const stats = {
