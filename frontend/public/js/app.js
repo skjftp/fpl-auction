@@ -42,6 +42,22 @@ class App {
                 this.switchTab(e.target.dataset.tab);
             });
         });
+
+        // Page visibility API - refresh data when tab becomes active
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && this.currentUser) {
+                console.log('App tab became active, refreshing data...');
+                this.refreshDataOnTabFocus();
+            }
+        });
+
+        // Also handle window focus for better cross-browser support
+        window.addEventListener('focus', () => {
+            if (this.currentUser) {
+                console.log('App window focused, refreshing data...');
+                this.refreshDataOnTabFocus();
+            }
+        });
     }
 
     checkAuthStatus() {
@@ -1063,6 +1079,52 @@ class App {
         } catch (error) {
             console.error('Error resetting draft:', error);
             showNotification('Failed to reset draft', 'error');
+        }
+    }
+
+    // Refresh data when tab becomes active
+    async refreshDataOnTabFocus() {
+        try {
+            // Refresh team budget
+            await this.refreshTeamBudget();
+            
+            // Let each tab handle its own refresh
+            switch (this.currentTab) {
+                case 'auction':
+                    if (window.auctionManager) {
+                        await window.auctionManager.refreshAuctionOnTabFocus();
+                    }
+                    break;
+                case 'myTeam':
+                    if (window.teamManager) {
+                        await window.teamManager.loadTeamSquad();
+                    }
+                    break;
+                case 'draft':
+                    if (window.draftManager) {
+                        await window.draftManager.loadDraftState();
+                    }
+                    break;
+                case 'history':
+                    if (window.historyManager) {
+                        await window.historyManager.loadHistory();
+                    }
+                    break;
+                case 'scoring':
+                    if (window.scoringManager) {
+                        await window.scoringManager.loadCurrentGameweek();
+                    }
+                    break;
+                case 'admin':
+                    if (this.currentUser?.is_admin) {
+                        await this.loadAdminPanel();
+                    }
+                    break;
+            }
+            
+            console.log('Data refreshed for tab:', this.currentTab);
+        } catch (error) {
+            console.error('Error refreshing data on tab focus:', error);
         }
     }
 }

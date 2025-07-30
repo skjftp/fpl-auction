@@ -37,6 +37,20 @@ class AuctionManager {
         document.getElementById('searchPlayers').addEventListener('input', () => {
             this.filterPlayers();
         });
+
+        // Page visibility API - refresh auction when tab becomes active
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                console.log('Tab became active, refreshing auction data...');
+                this.refreshAuctionOnTabFocus();
+            }
+        });
+
+        // Also handle window focus for better cross-browser support
+        window.addEventListener('focus', () => {
+            console.log('Window focused, refreshing auction data...');
+            this.refreshAuctionOnTabFocus();
+        });
     }
 
     async loadInitialData() {
@@ -588,6 +602,33 @@ class AuctionManager {
         this.currentAuction = null;
         const container = document.getElementById('currentAuction');
         container.innerHTML = '<p class="text-gray-500 text-center py-8">No active auction</p>';
+    }
+
+    // Refresh auction data when tab becomes active
+    async refreshAuctionOnTabFocus() {
+        try {
+            // Only refresh if on auction tab
+            if (window.app && window.app.currentTab !== 'auction') {
+                return;
+            }
+
+            // Refresh active auctions
+            await this.loadActiveAuctions();
+            
+            // Refresh sold items to update player/club availability
+            await this.loadSoldItems();
+            
+            // Refresh players list to update sold status
+            this.displayPlayers(this.players);
+            this.displayClubs(this.clubs);
+            
+            // Refresh draft state
+            await this.loadDraftState();
+            
+            console.log('Auction data refreshed successfully');
+        } catch (error) {
+            console.error('Error refreshing auction data:', error);
+        }
     }
 
     async loadActiveAuctions() {

@@ -264,6 +264,22 @@ class MobileApp {
                 );
             });
         });
+
+        // Page visibility API - refresh auction when tab becomes active
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && this.currentUser) {
+                console.log('Mobile tab became active, refreshing auction data...');
+                this.refreshDataOnTabFocus();
+            }
+        });
+
+        // Also handle window focus for better mobile browser support
+        window.addEventListener('focus', () => {
+            if (this.currentUser) {
+                console.log('Mobile window focused, refreshing auction data...');
+                this.refreshDataOnTabFocus();
+            }
+        });
     }
 
     async initializeManagers() {
@@ -923,6 +939,41 @@ class MobileApp {
         // Show login screen
         this.showLoginScreen();
         this.showToast('Logged out successfully', 'info');
+    }
+
+    // Refresh data when tab becomes active
+    async refreshDataOnTabFocus() {
+        try {
+            // Refresh current auction immediately if on auction tab
+            if (this.currentTab === 'auction' && window.mobileAuction) {
+                await window.mobileAuction.loadActiveAuction();
+                await window.mobileAuction.loadSoldItems();
+                await window.mobileAuction.renderPlayers();
+            }
+            
+            // Refresh team data
+            await this.refreshTeamData();
+            
+            // Refresh draft state
+            await this.loadDraftState();
+            
+            // Refresh other tab-specific data
+            switch (this.currentTab) {
+                case 'squad':
+                    await this.loadTeamSquad();
+                    break;
+                case 'history':
+                    await this.loadHistory();
+                    break;
+                case 'chat':
+                    await this.loadChatMessages();
+                    break;
+            }
+            
+            console.log('Mobile data refreshed for tab:', this.currentTab);
+        } catch (error) {
+            console.error('Error refreshing mobile data on tab focus:', error);
+        }
     }
 
     showToast(message, type = 'info') {
