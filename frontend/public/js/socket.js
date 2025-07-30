@@ -91,6 +91,26 @@ class SocketManager {
             showNotification(`Bid cancelled - Current bid: £${data.newCurrentBid}m by ${data.newCurrentBidder}`, 'info');
         });
 
+        // Draft turn advancement
+        this.socket.on('draft-turn-advanced', (data) => {
+            console.log('➡️ Draft turn advanced:', data);
+            
+            // Update draft state in draft manager
+            if (window.draftManager) {
+                window.draftManager.loadDraftState();
+            }
+            
+            // Update turn indicator in auction manager
+            if (window.auctionManager) {
+                window.auctionManager.loadDraftState();
+            }
+            
+            // Show notification about turn change
+            if (data.currentTeam) {
+                showNotification(`It's now ${data.currentTeam.name}'s turn`, 'info');
+            }
+        });
+
         this.socket.on('error', (error) => {
             console.error('Socket error:', error);
             showNotification('Connection error', 'error');

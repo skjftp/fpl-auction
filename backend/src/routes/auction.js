@@ -539,7 +539,7 @@ async function completeAuction(req, res, auctionId, auction) {
       try {
         const result = await advanceDraftTurn();
         if (result.hasNext) {
-          req.io.emit('draft-turn-advanced', {
+          req.io.to('auction-room').emit('draft-turn-advanced', {
             currentTeam: result.currentTeam,
             currentPosition: result.currentPosition
           });
