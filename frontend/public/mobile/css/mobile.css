@@ -472,7 +472,7 @@ body {
     flex: 1;
     overflow-y: auto;
     padding-top: 155px;
-    padding-bottom: 90px; /* Increased space for chat input on small screens */
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 20px)); /* Space for tab nav + safe area */
     position: relative;
 }
 
@@ -482,12 +482,12 @@ body {
     padding: 0;
     display: none; /* Hidden by default */
     flex-direction: column;
-    height: calc(100vh - 165px - 65px); /* Full height minus header and tab nav */
+    height: calc(100vh - 165px - 65px - env(safe-area-inset-bottom, 0)); /* Full height minus header, tab nav, and safe area */
     position: fixed;
     top: 165px; /* After fixed header */
     left: 0;
     right: 0;
-    bottom: 65px; /* Above tab nav */
+    bottom: calc(65px + env(safe-area-inset-bottom, 0)); /* Above tab nav + safe area */
     padding-top: 8px; /* Small padding after auto-bid card */
 }
 
@@ -500,7 +500,7 @@ body {
 #auctionTab .fixed-bottom-chat {
     background: white;
     border: 1px solid #e5e7eb;
-    margin: 20px 12px 12px; /* Increased top margin from 8px to 20px */
+    margin: 20px 12px calc(12px + env(safe-area-inset-bottom, 0)); /* Bottom margin accounts for safe area */
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
@@ -1650,7 +1650,11 @@ body {
 /* Small Screen Support (iPhone SE and similar) */
 @media (max-height: 667px) {
     .tab-content {
-        padding-bottom: 100px; /* Extra space for small screens */
+        padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px)); /* Extra space for small screens + safe area */
+    }
+    
+    #auctionTab .fixed-bottom-chat {
+        margin-bottom: calc(20px + env(safe-area-inset-bottom, 0)) !important;
     }
     
     #auctionTab .fixed-bottom-chat .chat-input-bar {
@@ -1670,11 +1674,11 @@ body {
 /* Extra small screens (iPhone SE) */
 @media (max-height: 568px) {
     .tab-content {
-        padding-bottom: 110px; /* Even more space for very small screens */
+        padding-bottom: calc(110px + env(safe-area-inset-bottom, 20px)); /* Even more space for very small screens + safe area */
     }
     
-    .fixed-bottom-chat {
-        margin-bottom: 20px !important; /* Ensure space above tabs */
+    #auctionTab .fixed-bottom-chat {
+        margin-bottom: calc(25px + env(safe-area-inset-bottom, 0)) !important; /* Ensure space above tabs */
     }
     
     /* Further limit chat messages on very small screens */
