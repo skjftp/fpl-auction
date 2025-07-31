@@ -202,6 +202,12 @@ class API {
         });
     }
 
+    async clearAllChats() {
+        return await this.request('/draft/chat/clear', {
+            method: 'DELETE'
+        });
+    }
+
     // Admin auction management endpoints
     async restartCompletedAuction(auctionId) {
         return await this.request(`/auction/admin/restart/${auctionId}`, { method: 'POST' });

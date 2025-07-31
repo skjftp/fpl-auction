@@ -126,6 +126,17 @@ class SocketManager {
             console.error('Socket error:', error);
             showNotification('Connection error', 'error');
         });
+
+        // Chat cleared event
+        this.socket.on('chat_cleared', (data) => {
+            console.log('🗑️ Chat cleared:', data);
+            // Clear the chat display
+            const chatContainer = document.getElementById('chatMessages');
+            if (chatContainer) {
+                chatContainer.innerHTML = '';
+            }
+            showNotification(`Chat cleared by ${data.clearedBy}`, 'info');
+        });
     }
 
     disconnect() {

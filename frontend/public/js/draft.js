@@ -156,12 +156,13 @@ class DraftManager {
     updateAdminControls() {
         const initBtn = document.getElementById('initializeDraftBtn');
         const startBtn = document.getElementById('startDraftBtn');
+        const clearChatBtn = document.getElementById('clearChatBtn');
         const isAdmin = window.app?.currentUser?.is_admin || false;
 
         // Hide admin controls from non-admin users
         const adminControlsContainer = initBtn?.parentElement;
         if (adminControlsContainer) {
-            adminControlsContainer.style.display = isAdmin ? 'block' : 'none';
+            adminControlsContainer.style.display = isAdmin ? 'flex' : 'none';
         }
 
         if (isAdmin) {
@@ -172,6 +173,32 @@ class DraftManager {
             if (startBtn) {
                 startBtn.disabled = !this.draftState?.draft_order || this.draftState?.is_active || false;
             }
+
+            if (clearChatBtn && !clearChatBtn.hasAttribute('data-listener')) {
+                clearChatBtn.setAttribute('data-listener', 'true');
+                clearChatBtn.addEventListener('click', () => this.clearAllChats());
+            }
+        }
+    }
+
+    async clearAllChats() {
+        if (!confirm('Are you sure you want to clear all chat messages? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const result = await window.api.clearAllChats();
+            if (result.success) {
+                window.app.showNotification(`✅ ${result.message} (${result.deletedCount} messages deleted)`, 'success');
+                // Clear the chat display
+                const chatContainer = document.getElementById('chatMessages');
+                if (chatContainer) {
+                    chatContainer.innerHTML = '';
+                }
+            }
+        } catch (error) {
+            console.error('Error clearing chats:', error);
+            window.app.showNotification('❌ Failed to clear chats', 'error');
         }
     }
 

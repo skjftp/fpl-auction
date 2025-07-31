@@ -243,4 +243,35 @@ router.post('/chat', async (req, res) => {
   }
 });
 
+// Clear all chat messages (admin only)
+router.delete('/chat/clear', requireAdmin, async (req, res) => {
+  try {
+    // Get all chat messages
+    const messagesSnapshot = await collections.chatMessages.get();
+    
+    // Delete all messages in batches
+    const batch = admin.firestore().batch();
+    messagesSnapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+    
+    // Emit to all connected clients that chat was cleared
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('chat_cleared', { clearedBy: req.user.username });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'All chat messages cleared successfully',
+      deletedCount: messagesSnapshot.size 
+    });
+  } catch (error) {
+    console.error('Error clearing chat messages:', error);
+    res.status(500).json({ error: 'Failed to clear chat messages' });
+  }
+});
+
 module.exports = router;
