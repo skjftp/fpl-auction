@@ -685,17 +685,50 @@ class MobileApp {
             if (isEmpty || !player) {
                 return `
                     <div class="formation-player empty">
+                        <div class="formation-player-image empty-image">
+                            <span>+</span>
+                        </div>
                         <div class="formation-player-name">Empty</div>
                     </div>
                 `;
             }
             
             const clubColor = clubColorMap.get(player.team_name) || '#6b7280';
+            
+            // Get player image URL (same logic as web version)
+            const getPlayerImageUrl = () => {
+                if (player.photo) {
+                    const photoCode = player.photo.replace('.jpg', '');
+                    return `https://resources.premierleague.com/premierleague/photos/players/250x250/p${photoCode}.png`;
+                } else if (player.code) {
+                    return `https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.code}.png`;
+                } else if (player.id) {
+                    return `https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.id}.png`;
+                }
+                return null;
+            };
+            
+            const playerImageUrl = getPlayerImageUrl();
+            const isLightColor = ['#FFFFFF', '#FDB913', '#95BFE5', '#6CABDD', '#3AAFDD'].includes(clubColor);
+            const borderColor = isLightColor ? '#374151' : '#FFFFFF';
+            
             return `
-                <div class="formation-player" style="border-color: ${clubColor};">
+                <div class="formation-player">
+                    <div class="formation-player-image" style="border-color: ${borderColor}; background-color: ${clubColor};">
+                        ${playerImageUrl ? 
+                            `<img src="${playerImageUrl}" 
+                                 alt="${player.web_name}" 
+                                 onerror="this.style.display='none'; this.parentElement.querySelector('.player-initials').style.display='flex';">
+                             <div class="player-initials" style="display: none; color: ${borderColor};">
+                                ${player.web_name ? player.web_name.substring(0, 2).toUpperCase() : 'UN'}
+                             </div>` :
+                            `<div class="player-initials" style="color: ${borderColor};">
+                                ${player.web_name ? player.web_name.substring(0, 2).toUpperCase() : 'UN'}
+                             </div>`
+                        }
+                    </div>
                     <div class="formation-player-name">${player.web_name || player.name || 'Unknown'}</div>
                     <div class="formation-player-price">${formatCurrency(player.price_paid || 0)}</div>
-                    <div class="formation-player-club" style="color: ${clubColor};">${player.team_name || ''}</div>
                 </div>
             `;
         };
