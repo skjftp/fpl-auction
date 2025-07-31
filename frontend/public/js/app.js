@@ -911,23 +911,37 @@ class App {
             return;
         }
         
-        container.innerHTML = auctions.slice(-10).map(auction => `
-            <div class="flex items-center justify-between p-3 bg-white rounded border">
-                <div class="flex-1">
-                    <div class="font-semibold">${auction.player_name || auction.club_name || 'Unknown'}</div>
-                    <div class="text-sm text-gray-600">
-                        Sold to ${auction.winning_team_name || 'Unknown'} for ${formatCurrency(auction.final_price || 0)}
+        container.innerHTML = auctions.slice(-10).map(auction => {
+            // Handle Firestore timestamp format
+            let dateStr = '';
+            if (auction.completed_at) {
+                if (auction.completed_at._seconds) {
+                    // Firestore timestamp
+                    dateStr = new Date(auction.completed_at._seconds * 1000).toLocaleString();
+                } else {
+                    // Regular date
+                    dateStr = new Date(auction.completed_at).toLocaleString();
+                }
+            }
+            
+            return `
+                <div class="flex items-center justify-between p-3 bg-white rounded border">
+                    <div class="flex-1">
+                        <div class="font-semibold">${auction.player_name || auction.club_name || 'Unknown'}</div>
+                        <div class="text-sm text-gray-600">
+                            Sold to ${auction.winning_team_name || 'Unknown'} for ${formatCurrency(auction.final_price || 0)}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            ${dateStr}
+                        </div>
                     </div>
-                    <div class="text-xs text-gray-500">
-                        ${new Date(auction.completed_at).toLocaleString()}
-                    </div>
+                    <button onclick="window.app.restartAuction('${auction.id}')" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                        Restart
+                    </button>
                 </div>
-                <button onclick="window.app.restartAuction('${auction.id}')" 
-                        class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                    Restart
-                </button>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     displayCurrentAuctionBids(auction) {

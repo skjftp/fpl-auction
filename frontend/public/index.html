@@ -584,12 +584,15 @@
                         <!-- Draft Controls -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <h5 class="font-medium text-gray-900 mb-3">🎲 Draft Controls</h5>
-                            <div class="flex gap-3">
+                            <div class="flex gap-3 flex-wrap">
                                 <button onclick="window.draftManager.initializeDraft()" class="btn-secondary">
                                     🎲 Initialize Draft Order
                                 </button>
                                 <button onclick="window.draftManager.startDraft()" class="btn-primary">
                                     🚀 Start Draft
+                                </button>
+                                <button onclick="window.draftManager.clearAllChats()" class="btn-secondary">
+                                    🗑️ Clear All Chats
                                 </button>
                             </div>
                         </div>
