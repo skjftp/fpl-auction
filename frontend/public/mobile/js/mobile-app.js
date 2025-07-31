@@ -853,15 +853,52 @@ class MobileApp {
                 console.warn('Error formatting date:', error);
             }
 
-            return `
-                <div class="chat-message">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                        <span style="font-weight: 600; color: #374151; font-size: 11px;">${msg.team_name || 'Unknown'}</span>
-                        <span style="color: #9ca3af; font-size: 10px;">${timeString}</span>
+            // Check if this is the current user's message
+            const isOwnMessage = this.currentUser && (
+                msg.team_id === this.currentUser.id || 
+                msg.team_name === this.currentUser.name
+            );
+
+            if (isOwnMessage) {
+                // Right-aligned style for own messages
+                return `
+                    <div class="chat-message" style="text-align: right;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="color: #9ca3af; font-size: 10px;">${timeString}</span>
+                            <span style="font-weight: 600; color: #059669; font-size: 11px;">You</span>
+                        </div>
+                        <div style="
+                            display: inline-block; 
+                            background-color: #10b981; 
+                            color: white; 
+                            padding: 6px 10px; 
+                            border-radius: 12px 12px 0 12px; 
+                            max-width: 80%; 
+                            text-align: left;
+                            font-size: 12px;
+                        ">${this.escapeHtml(msg.message || '')}</div>
                     </div>
-                    <div style="color: #1f2937; font-size: 12px;">${this.escapeHtml(msg.message || '')}</div>
-                </div>
-            `;
+                `;
+            } else {
+                // Left-aligned style for other messages
+                return `
+                    <div class="chat-message">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-weight: 600; color: #374151; font-size: 11px;">${msg.team_name || 'Unknown'}</span>
+                            <span style="color: #9ca3af; font-size: 10px;">${timeString}</span>
+                        </div>
+                        <div style="
+                            display: inline-block; 
+                            background-color: #f3f4f6; 
+                            color: #1f2937; 
+                            padding: 6px 10px; 
+                            border-radius: 12px 12px 12px 0; 
+                            max-width: 80%;
+                            font-size: 12px;
+                        ">${this.escapeHtml(msg.message || '')}</div>
+                    </div>
+                `;
+            }
         }).join('');
 
         // Only auto-scroll if user was already at bottom or on initial load
