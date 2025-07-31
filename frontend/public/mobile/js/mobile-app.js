@@ -1058,10 +1058,31 @@ class MobileApp {
             console.log('Loaded bid history:', bidHistory);
             console.log('Loaded sold items:', soldItems);
             
+            // Handle different response formats for bid history
+            let bidData = [];
+            if (bidHistory && bidHistory.bids && Array.isArray(bidHistory.bids)) {
+                bidData = bidHistory.bids;
+            } else if (Array.isArray(bidHistory)) {
+                bidData = bidHistory;
+            }
+            
             this.historyItems = [
-                ...soldItems.map(item => ({ ...item, type: 'sale' })),
-                ...(Array.isArray(bidHistory) ? bidHistory.map(item => ({ ...item, type: item.isAutoBid ? 'auto-bid' : 'bid' })) : [])
-            ].sort((a, b) => new Date(b.created_at || b.sold_at) - new Date(a.created_at || a.sold_at));
+                ...(Array.isArray(soldItems) ? soldItems.map(item => ({ 
+                    ...item, 
+                    type: 'sale',
+                    // Use acquired_at for sold items
+                    timestamp: item.acquired_at || item.sold_at || item.created_at
+                })) : []),
+                ...bidData.map(item => ({ 
+                    ...item, 
+                    type: item.isAutoBid ? 'auto-bid' : 'bid',
+                    timestamp: item.created_at
+                }))
+            ].sort((a, b) => {
+                const aTime = this.parseTimestamp(a.timestamp);
+                const bTime = this.parseTimestamp(b.timestamp);
+                return bTime - aTime;
+            });
             
             console.log('Combined history items:', this.historyItems);
             
@@ -1121,7 +1142,7 @@ class MobileApp {
                             ${formatCurrency(item.price_paid || item.bidAmount || 0)}
                         </div>
                         <div style="font-size: 10px; color: #9ca3af;">
-                            ${this.formatHistoryTime(item.created_at || item.sold_at)}
+                            ${this.formatHistoryTime(item.timestamp || item.created_at || item.acquired_at || item.sold_at)}
                         </div>
                     </div>
                 </div>
@@ -1140,16 +1161,21 @@ class MobileApp {
         this.renderHistory(filter, search);
     }
     
+    parseTimestamp(timestamp) {
+        if (!timestamp) return new Date(0);
+        
+        // Handle Firestore timestamp format
+        if (timestamp && typeof timestamp === 'object' && timestamp._seconds) {
+            return new Date(timestamp._seconds * 1000);
+        }
+        
+        // Handle regular date string
+        return new Date(timestamp);
+    }
+    
     formatHistoryTime(timestamp) {
         try {
-            let date;
-            
-            // Handle Firestore timestamp format
-            if (timestamp && typeof timestamp === 'object' && timestamp._seconds) {
-                date = new Date(timestamp._seconds * 1000);
-            } else {
-                date = new Date(timestamp);
-            }
+            const date = this.parseTimestamp(timestamp);
             
             // Check if date is valid
             if (isNaN(date.getTime())) {

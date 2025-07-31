@@ -165,18 +165,45 @@ router.get('/', async (req, res) => {
 router.get('/sold-items', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 20;
-    const draftId = await getActiveDraftId();
+    let draftId;
+    
+    try {
+      draftId = await getActiveDraftId();
+    } catch (draftError) {
+      console.error('Error getting active draft ID:', draftError);
+      return res.json([]); // Return empty array if no active draft
+    }
     
     // Get recent squad additions (sold items) with team and player/club info
-    const soldItemsSnapshot = await collections.teamSquads
-      .where('draft_id', '==', draftId)
-      .orderBy('acquired_at', 'desc')
-      .limit(limit)
-      .get();
+    let soldItemsSnapshot;
+    try {
+      soldItemsSnapshot = await collections.teamSquads
+        .where('draft_id', '==', draftId)
+        .orderBy('acquired_at', 'desc')
+        .limit(limit)
+        .get();
+    } catch (queryError) {
+      console.error('Query error - trying without orderBy:', queryError);
+      // Try without orderBy if index doesn't exist
+      soldItemsSnapshot = await collections.teamSquads
+        .where('draft_id', '==', draftId)
+        .limit(limit)
+        .get();
+    }
     
     const soldItems = [];
     
-    for (const doc of soldItemsSnapshot.docs) {
+    // Sort in-memory if orderBy failed
+    const docs = soldItemsSnapshot.docs;
+    if (docs.length > 0 && !soldItemsSnapshot.query._queryOptions.orderBy) {
+      docs.sort((a, b) => {
+        const aTime = a.data().acquired_at?.toDate?.() || new Date(0);
+        const bTime = b.data().acquired_at?.toDate?.() || new Date(0);
+        return bTime - aTime;
+      });
+    }
+    
+    for (const doc of docs.slice(0, limit)) {
       const item = doc.data();
       
       // Get team info
