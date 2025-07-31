@@ -208,6 +208,15 @@ class MobileApp {
             logoutBtn.addEventListener('click', () => this.handleLogout());
         }
 
+        // Password button
+        const passwordBtn = document.getElementById('passwordBtn');
+        if (passwordBtn) {
+            passwordBtn.addEventListener('click', () => this.showPasswordModal());
+        }
+
+        // Password modal
+        this.initializePasswordModal();
+
         // Tab navigation
         const tabBtns = document.querySelectorAll('.tab-btn');
         tabBtns.forEach(btn => {
@@ -1290,6 +1299,93 @@ class MobileApp {
     handleOffline() {
         console.log('App went offline');
         this.showToast('No internet connection', 'warning');
+    }
+
+    // Password change functionality
+    initializePasswordModal() {
+        const modal = document.getElementById('passwordModal');
+        const closeBtn = document.getElementById('closePasswordModalBtn');
+        const form = document.getElementById('passwordForm');
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.hidePasswordModal());
+        }
+
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.hidePasswordModal();
+                }
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', (e) => this.handlePasswordChange(e));
+        }
+    }
+
+    showPasswordModal() {
+        const modal = document.getElementById('passwordModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            // Reset form
+            document.getElementById('passwordForm')?.reset();
+            this.hidePasswordError();
+        }
+    }
+
+    hidePasswordModal() {
+        const modal = document.getElementById('passwordModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    showPasswordError(message) {
+        const errorEl = document.getElementById('passwordError');
+        if (errorEl) {
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+        }
+    }
+
+    hidePasswordError() {
+        const errorEl = document.getElementById('passwordError');
+        if (errorEl) {
+            errorEl.classList.add('hidden');
+        }
+    }
+
+    async handlePasswordChange(e) {
+        e.preventDefault();
+        
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // Validate passwords match
+        if (newPassword !== confirmPassword) {
+            this.showPasswordError('New passwords do not match');
+            return;
+        }
+
+        // Validate password length
+        if (newPassword.length < 6) {
+            this.showPasswordError('New password must be at least 6 characters');
+            return;
+        }
+
+        try {
+            const result = await window.mobileAPI.changePassword(currentPassword, newPassword);
+            
+            if (result.success) {
+                this.showToast('Password changed successfully', 'success');
+                this.hidePasswordModal();
+            }
+        } catch (error) {
+            console.error('Password change error:', error);
+            this.showPasswordError(error.message || 'Failed to change password');
+        }
     }
 }
 

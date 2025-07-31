@@ -228,6 +228,7 @@ body {
 }
 
 .sound-toggle-btn,
+.password-btn,
 .logout-btn {
     background: none;
     border: none;
@@ -245,6 +246,7 @@ body {
 }
 
 .sound-toggle-btn:active,
+.password-btn:active,
 .logout-btn:active {
     background: #f3f4f6;
     transform: scale(0.95);
@@ -1588,6 +1590,71 @@ body {
 
 .cancel-btn:active {
     background: #4b5563;
+    transform: scale(0.98);
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1f2937;
+    background: white;
+    transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.form-hint {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.error-message {
+    background: #fef2f2;
+    color: #dc2626;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    border: 1px solid #fecaca;
+}
+
+.btn-primary.full-width {
+    width: 100%;
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary.full-width:active {
+    background: #059669;
     transform: scale(0.98);
 }
 

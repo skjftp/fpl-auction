@@ -450,6 +450,33 @@ class MobileAPI {
             throw error;
         }
     }
+
+    // Change password
+    async changePassword(currentPassword, newPassword) {
+        try {
+            const response = await fetch(`${this.baseURL}/auth/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    currentPassword,
+                    newPassword
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to change password');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error changing password:', error);
+            throw error;
+        }
+    }
 }
 
 // Global API instance
