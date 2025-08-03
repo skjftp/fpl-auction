@@ -9,6 +9,7 @@ class MobileAuctionManager {
         this.canStartAuction = false;
         this.isSuperAdmin = false;
         this.currentTeamId = null;
+        this.currentFilters = null; // Track filter state
         
         // Position mapping
         this.positionMap = {
@@ -76,17 +77,26 @@ class MobileAuctionManager {
         // Player search and filters
         const playerSearch = document.getElementById('playerSearch');
         if (playerSearch) {
-            playerSearch.addEventListener('input', () => this.filterPlayers());
+            playerSearch.addEventListener('input', () => {
+                this.saveFilterState();
+                this.filterPlayers();
+            });
         }
 
         const positionFilter = document.getElementById('positionFilter');
         if (positionFilter) {
-            positionFilter.addEventListener('change', () => this.filterPlayers());
+            positionFilter.addEventListener('change', () => {
+                this.saveFilterState();
+                this.filterPlayers();
+            });
         }
 
         const clubFilter = document.getElementById('clubFilter');
         if (clubFilter) {
-            clubFilter.addEventListener('change', () => this.filterPlayers());
+            clubFilter.addEventListener('change', () => {
+                this.saveFilterState();
+                this.filterPlayers();
+            });
         }
 
         // Sold items toggle
@@ -112,6 +122,8 @@ class MobileAuctionManager {
             this.players = Array.isArray(players) ? players : (players.players || []);
             this.filteredPlayers = [...this.players];
             this.renderPlayers();
+            // Restore filters after loading players
+            this.restoreFilterState();
             this.populateClubFilter();
         } catch (error) {
             console.error('Error loading players:', error);
@@ -582,6 +594,31 @@ class MobileAuctionManager {
         this.renderPlayers();
     }
 
+    // Save current filter state
+    saveFilterState() {
+        const search = document.getElementById('playerSearch')?.value || '';
+        const position = document.getElementById('positionFilter')?.value || '';
+        const club = document.getElementById('clubFilter')?.value || '';
+        
+        this.currentFilters = { search, position, club };
+    }
+
+    // Restore filter state
+    restoreFilterState() {
+        if (this.currentFilters) {
+            const searchInput = document.getElementById('playerSearch');
+            const positionInput = document.getElementById('positionFilter');
+            const clubInput = document.getElementById('clubFilter');
+            
+            if (searchInput) searchInput.value = this.currentFilters.search || '';
+            if (positionInput) positionInput.value = this.currentFilters.position || '';
+            if (clubInput) clubInput.value = this.currentFilters.club || '';
+            
+            // Re-apply filters
+            this.filterPlayers();
+        }
+    }
+
     renderPlayers() {
         const container = document.getElementById('playersList');
         if (!container) return;
@@ -624,10 +661,19 @@ class MobileAuctionManager {
         const clubFilter = document.getElementById('clubFilter');
         if (!clubFilter) return;
 
-        const clubs = [...new Set(this.players.map(p => p.team_name).filter(Boolean))].sort();
+        // Save current selection before repopulating
+        const currentSelection = clubFilter.value;
+
+        // Create a Set to ensure unique club names
+        const uniqueClubs = [...new Set(this.players.map(p => p.team_name).filter(Boolean))].sort();
         
         clubFilter.innerHTML = '<option value="">All Clubs</option>' + 
-            clubs.map(club => `<option value="${club}">${club}</option>`).join('');
+            uniqueClubs.map(club => `<option value="${club}">${club}</option>`).join('');
+            
+        // Restore previous selection if it still exists
+        if (currentSelection && Array.from(clubFilter.options).some(opt => opt.value === currentSelection)) {
+            clubFilter.value = currentSelection;
+        }
     }
 
     async startPlayerAuction(playerId) {

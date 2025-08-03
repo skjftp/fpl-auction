@@ -9,6 +9,7 @@ class AuctionManager {
         this.chatMessages = [];
         this.soldPlayers = new Set(); // Track sold players
         this.soldClubs = new Set(); // Track sold clubs
+        this.currentFilters = null; // Track filter state
         this.init();
     }
 
@@ -27,14 +28,17 @@ class AuctionManager {
 
         // Filter events
         document.getElementById('positionFilter').addEventListener('change', () => {
+            this.saveFilterState();
             this.filterPlayers();
         });
 
         document.getElementById('teamFilter').addEventListener('change', () => {
+            this.saveFilterState();
             this.filterPlayers();
         });
 
         document.getElementById('searchPlayers').addEventListener('input', () => {
+            this.saveFilterState();
             this.filterPlayers();
         });
 
@@ -167,6 +171,8 @@ class AuctionManager {
         try {
             this.players = await api.getPlayers();
             this.displayPlayers(this.players);
+            // Restore filters after loading players
+            this.restoreFilterState();
         } catch (error) {
             console.error('Error loading players:', error);
         }
@@ -183,10 +189,22 @@ class AuctionManager {
 
     async populateTeamFilter() {
         const teamFilter = document.getElementById('teamFilter');
+        // Save current selection before repopulating
+        const currentSelection = teamFilter.value;
+        
         teamFilter.innerHTML = '<option value="">All Teams</option>';
         
-        const teams = [...new Set(this.players.map(p => ({ id: p.team_id, name: p.team_name })))]
-            .filter(t => t.name)
+        // Create a Map to ensure unique teams by ID
+        const teamsMap = new Map();
+        this.players.forEach(player => {
+            if (player.team_id && player.team_name) {
+                teamsMap.set(player.team_id, player.team_name);
+            }
+        });
+        
+        // Convert to array and sort by name
+        const teams = Array.from(teamsMap.entries())
+            .map(([id, name]) => ({ id, name }))
             .sort((a, b) => a.name.localeCompare(b.name));
 
         teams.forEach(team => {
@@ -195,6 +213,11 @@ class AuctionManager {
             option.textContent = team.name;
             teamFilter.appendChild(option);
         });
+        
+        // Restore previous selection if it still exists
+        if (currentSelection && Array.from(teamFilter.options).some(opt => opt.value === currentSelection)) {
+            teamFilter.value = currentSelection;
+        }
     }
 
     displayPlayers(players) {
@@ -210,6 +233,27 @@ class AuctionManager {
             const playerCard = this.createPlayerCard(player);
             container.appendChild(playerCard);
         });
+    }
+
+    // Save current filter state
+    saveFilterState() {
+        const position = document.getElementById('positionFilter').value;
+        const team = document.getElementById('teamFilter').value;
+        const search = document.getElementById('searchPlayers').value;
+        
+        this.currentFilters = { position, team, search };
+    }
+
+    // Restore filter state
+    restoreFilterState() {
+        if (this.currentFilters) {
+            document.getElementById('positionFilter').value = this.currentFilters.position || '';
+            document.getElementById('teamFilter').value = this.currentFilters.team || '';
+            document.getElementById('searchPlayers').value = this.currentFilters.search || '';
+            
+            // Re-apply filters
+            this.filterPlayers();
+        }
     }
 
     createPlayerCard(player) {
@@ -621,6 +665,9 @@ class AuctionManager {
             // Refresh players list to update sold status
             this.displayPlayers(this.players);
             this.displayClubs(this.clubs);
+            
+            // Restore filter state
+            this.restoreFilterState();
             
             // Refresh draft state
             await this.loadDraftState();
