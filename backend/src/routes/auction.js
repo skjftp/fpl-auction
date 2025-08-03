@@ -9,7 +9,7 @@ const router = express.Router();
 // Start auction for a player (with draft validation)
 router.post('/start-player/:playerId', async (req, res) => {
   const playerId = parseInt(req.params.playerId);
-  const teamId = req.user.teamId;
+  const requestingTeamId = req.user.teamId;
   
   try {
     // First check if it's this team's turn in the draft
@@ -25,8 +25,21 @@ router.post('/start-player/:playerId', async (req, res) => {
       return res.status(400).json({ error: 'Draft is not active' });
     }
     
-    if (draftState.current_team_id !== teamId) {
-      return res.status(403).json({ error: 'Not your turn to start an auction' });
+    // Check if requesting team is super admin
+    const requestingTeamDoc = await collections.teams.where('id', '==', requestingTeamId).limit(1).get();
+    const isSuperAdmin = !requestingTeamDoc.empty && requestingTeamDoc.docs[0].data().is_admin;
+    
+    let teamId = requestingTeamId;
+    let startedByAdmin = false;
+    
+    if (draftState.current_team_id !== requestingTeamId) {
+      if (isSuperAdmin) {
+        // Super admin can start on behalf of current team
+        teamId = draftState.current_team_id;
+        startedByAdmin = true;
+      } else {
+        return res.status(403).json({ error: 'Not your turn to start an auction' });
+      }
     }
     
     // Check if team has completed their squad (15 players + 2 clubs)
@@ -139,7 +152,7 @@ router.post('/start-player/:playerId', async (req, res) => {
 // Start auction for a club (with draft validation)
 router.post('/start-club/:clubId', async (req, res) => {
   const clubId = parseInt(req.params.clubId);
-  const teamId = req.user.teamId;
+  const requestingTeamId = req.user.teamId;
   
   try {
     // First check if it's this team's turn in the draft
@@ -155,8 +168,21 @@ router.post('/start-club/:clubId', async (req, res) => {
       return res.status(400).json({ error: 'Draft is not active' });
     }
     
-    if (draftState.current_team_id !== teamId) {
-      return res.status(403).json({ error: 'Not your turn to start an auction' });
+    // Check if requesting team is super admin
+    const requestingTeamDoc = await collections.teams.where('id', '==', requestingTeamId).limit(1).get();
+    const isSuperAdmin = !requestingTeamDoc.empty && requestingTeamDoc.docs[0].data().is_admin;
+    
+    let teamId = requestingTeamId;
+    let startedByAdmin = false;
+    
+    if (draftState.current_team_id !== requestingTeamId) {
+      if (isSuperAdmin) {
+        // Super admin can start on behalf of current team
+        teamId = draftState.current_team_id;
+        startedByAdmin = true;
+      } else {
+        return res.status(403).json({ error: 'Not your turn to start an auction' });
+      }
     }
     
     // Check if team has completed their squad (15 players + 2 clubs)

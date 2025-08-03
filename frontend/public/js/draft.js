@@ -211,7 +211,11 @@ class DraftManager {
                 btn.disabled = !canStart.can_start;
                 if (canStart.can_start) {
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    btn.title = 'Start auction for this player/club';
+                    if (canStart.is_super_admin && canStart.current_team_id !== window.app.currentUser?.id) {
+                        btn.title = 'Start auction on behalf of current team (Super Admin)';
+                    } else {
+                        btn.title = 'Start auction for this player/club';
+                    }
                 } else {
                     btn.classList.add('opacity-50', 'cursor-not-allowed');
                     btn.title = 'Not your turn to start an auction';
@@ -222,11 +226,21 @@ class DraftManager {
             const turnIndicator = document.getElementById('turnIndicator');
             if (turnIndicator) {
                 if (canStart.can_start) {
-                    turnIndicator.innerHTML = `
-                        <div class="bg-green-500 text-white px-4 py-2 rounded-lg animate-pulse">
-                            🎯 Your Turn - Choose a player or club to auction
-                        </div>
-                    `;
+                    if (canStart.is_super_admin && canStart.current_team_id !== window.app.currentUser?.id) {
+                        // Get current team name from draft state
+                        const currentTeamName = this.draftState?.current_team_name || 'Unknown Team';
+                        turnIndicator.innerHTML = `
+                            <div class="bg-purple-500 text-white px-4 py-2 rounded-lg animate-pulse">
+                                🛡️ Super Admin Mode - Starting on behalf of ${currentTeamName}
+                            </div>
+                        `;
+                    } else {
+                        turnIndicator.innerHTML = `
+                            <div class="bg-green-500 text-white px-4 py-2 rounded-lg animate-pulse">
+                                🎯 Your Turn - Choose a player or club to auction
+                            </div>
+                        `;
+                    }
                 } else {
                     turnIndicator.innerHTML = `
                         <div class="bg-gray-400 text-white px-4 py-2 rounded-lg">

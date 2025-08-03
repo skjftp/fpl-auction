@@ -110,8 +110,19 @@ router.get('/can-start-auction', async (req, res) => {
     }
     
     const state = stateDoc.data();
-    const canStart = state && state.is_active && state.current_team_id === teamId;
-    res.json({ can_start: canStart });
+    
+    // Check if user is super admin
+    const teamDoc = await collections.teams.where('id', '==', teamId).limit(1).get();
+    const isSuperAdmin = !teamDoc.empty && teamDoc.docs[0].data().is_admin;
+    
+    // Can start if it's their turn OR if they're super admin
+    const canStart = state && state.is_active && (state.current_team_id === teamId || isSuperAdmin);
+    
+    res.json({ 
+      can_start: canStart,
+      is_super_admin: isSuperAdmin,
+      current_team_id: state.current_team_id 
+    });
     
   } catch (error) {
     console.error('Error checking auction permission:', error);

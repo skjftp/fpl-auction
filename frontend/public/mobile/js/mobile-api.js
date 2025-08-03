@@ -322,6 +322,25 @@ class MobileAPI {
         }
     }
 
+    async canStartAuction() {
+        try {
+            const response = await fetch(`${this.baseURL}/draft/can-start-auction`, {
+                headers: {
+                    'Authorization': `Bearer ${this.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to check auction permission');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Can start auction error:', error);
+            return { can_start: false };
+        }
+    }
+
     // Chat
     async getChatMessages() {
         try {

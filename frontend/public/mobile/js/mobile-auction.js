@@ -6,6 +6,9 @@ class MobileAuctionManager {
         this.clubs = [];
         this.soldItems = [];
         this.filteredPlayers = [];
+        this.canStartAuction = false;
+        this.isSuperAdmin = false;
+        this.currentTeamId = null;
         
         // Position mapping
         this.positionMap = {
@@ -33,6 +36,7 @@ class MobileAuctionManager {
             await this.loadClubs();
             await this.loadActiveAuctions();
             await this.loadSoldItems();
+            await this.checkAuctionPermissions();
             
             // Setup event listeners
             this.setupEventListeners();
@@ -41,6 +45,18 @@ class MobileAuctionManager {
         } catch (error) {
             console.error('Failed to initialize auction manager:', error);
             window.mobileApp.showToast('Failed to load auction data', 'error');
+        }
+    }
+
+    async checkAuctionPermissions() {
+        try {
+            const permissions = await window.mobileAPI.canStartAuction();
+            this.canStartAuction = permissions.can_start;
+            this.isSuperAdmin = permissions.is_super_admin;
+            this.currentTeamId = permissions.current_team_id;
+        } catch (error) {
+            console.error('Failed to check auction permissions:', error);
+            this.canStartAuction = false;
         }
     }
 
@@ -579,7 +595,7 @@ class MobileAuctionManager {
             const isSold = player.sold_to_team_id;
             const currentUser = window.mobileAPI.getCurrentUser();
             const hasActiveAuction = this.currentAuction !== null;
-            const canStartAuction = !isSold && currentUser.id && !hasActiveAuction;
+            const canStart = !isSold && !hasActiveAuction && this.canStartAuction;
 
             const position = this.getPositionName(player.position, player);
             
@@ -592,8 +608,9 @@ class MobileAuctionManager {
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
                         <span class="player-price">${formatCurrency((player.now_cost || player.price || 0) / 10)}</span>
-                        ${canStartAuction ? `
-                            <button class="start-auction-btn" onclick="mobileAuction.startPlayerAuction(${player.id})">
+                        ${canStart ? `
+                            <button class="start-auction-btn" onclick="mobileAuction.startPlayerAuction(${player.id})" 
+                                    title="${this.isSuperAdmin && this.currentTeamId !== currentUser.id ? 'Start on behalf of current team (Super Admin)' : 'Start auction'}">
                                 Start
                             </button>
                         ` : ''}

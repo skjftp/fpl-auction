@@ -206,6 +206,8 @@ class MobileSocketManager {
     handleAuctionCompleted(data) {
         if (window.mobileAuction) {
             window.mobileAuction.clearCurrentAuction();
+            // Check auction permissions after completion
+            window.mobileAuction.checkAuctionPermissions();
             // Refresh sold items and update squad if won
             window.mobileAuction.loadSoldItems();
             
@@ -276,6 +278,10 @@ class MobileSocketManager {
     handleDraftTurnAdvanced(data) {
         if (window.mobileApp) {
             window.mobileApp.updateDraftStatus(data);
+        }
+        // Check auction permissions after turn advances
+        if (window.mobileAuction) {
+            window.mobileAuction.checkAuctionPermissions();
         }
     }
 
