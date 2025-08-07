@@ -371,19 +371,25 @@
 
             <!-- Auction Tab -->
             <div id="auctionTab" class="tab-content fade-in">
-                <div class="max-h-[calc(100vh-160px)] overflow-hidden">
-                    <!-- Auto-Bidding Controls -->
-                    <div class="card p-2 mb-2">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <label class="flex items-center cursor-pointer">
-                                    <input type="checkbox" id="autoBidToggle" class="mr-2 h-4 w-4 text-emerald-600 rounded focus:ring-emerald-500">
-                                    <span class="text-sm font-medium text-gray-700">Auto-Bid</span>
-                                </label>
-                                <button id="autoBidConfigBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition-colors">
-                                    Config
-                                </button>
-                            </div>
+                <!-- Top Controls -->
+                <div class="flex justify-between items-center mb-2">
+                    <!-- Turn Indicator -->
+                    <div id="auctionTurnIndicator" class="card p-2 flex-1 mr-2">
+                        <div class="text-center text-sm">
+                            <span class="text-gray-500">Loading turn info...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Auto-Bid Controls -->
+                    <div class="card p-2">
+                        <div class="flex items-center space-x-3">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="autoBidToggle" class="mr-2 h-4 w-4 text-emerald-600 rounded">
+                                <span class="text-sm font-medium text-gray-700">Auto-Bid</span>
+                            </label>
+                            <button id="autoBidConfigBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
+                                Config
+                            </button>
                             <div id="autoBidStatus" class="hidden">
                                 <span class="animate-pulse bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-medium">
                                     🤖 Active
@@ -391,92 +397,101 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Turn Indicator at the top -->
-                    <div id="auctionTurnIndicator" class="card p-2 mb-2">
-                        <div class="text-center text-sm">
-                            <span class="text-gray-500">Loading turn info...</span>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3" style="height: calc(100vh - 280px);">
-                        <!-- Left: Players List -->
-                        <div class="lg:col-span-1">
-                            <div class="card p-3" style="height: 100%;">
-                                <div class="flex justify-between items-center mb-2">
-                                    <h3 class="text-sm font-semibold text-gray-900">Players</h3>
+                </div>
+                
+                <!-- Main 3-Column Grid -->
+                <div class="grid grid-cols-3 gap-2" style="height: calc(100vh - 200px);">
+                    <!-- Left Column: Players & Clubs -->
+                    <div class="col-span-1">
+                        <div class="card p-2 h-full flex flex-col">
+                            <!-- Tab Buttons -->
+                            <div class="flex mb-2 border-b">
+                                <button id="playersTabBtn" class="flex-1 px-2 py-1 text-xs font-medium text-emerald-600 border-b-2 border-emerald-600">
+                                    Players
+                                </button>
+                                <button id="clubsTabBtn" class="flex-1 px-2 py-1 text-xs font-medium text-gray-500 hover:text-gray-700">
+                                    Clubs
+                                </button>
+                            </div>
+                            
+                            <!-- Players Section -->
+                            <div id="playersSection" class="flex-1 flex flex-col overflow-hidden">
+                                <!-- Sync Button -->
+                                <div class="flex justify-between items-center mb-1">
+                                    <h3 class="text-xs font-semibold text-gray-900">Players</h3>
                                     <button id="syncDataBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
                                         Sync
                                     </button>
                                 </div>
                                 
                                 <!-- Filters -->
-                                <div class="space-y-2 mb-2">
-                                    <select id="positionFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                        <option value="">All Positions</option>
-                                        <option value="1">GKP</option>
-                                        <option value="2">DEF</option>
-                                        <option value="3">MID</option>
-                                        <option value="4">FWD</option>
-                                    </select>
-                                    <select id="teamFilter" class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                        <option value="">All Teams</option>
-                                    </select>
+                                <div class="space-y-1 mb-2">
+                                    <div class="flex gap-1">
+                                        <select id="positionFilter" class="flex-1 border border-gray-200 rounded px-1 py-0.5 text-xs">
+                                            <option value="">All Pos</option>
+                                            <option value="1">GKP</option>
+                                            <option value="2">DEF</option>
+                                            <option value="3">MID</option>
+                                            <option value="4">FWD</option>
+                                        </select>
+                                        <select id="teamFilter" class="flex-1 border border-gray-200 rounded px-1 py-0.5 text-xs">
+                                            <option value="">All Teams</option>
+                                        </select>
+                                    </div>
                                     <input type="text" id="searchPlayers" placeholder="Search..." 
-                                           class="w-full border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                           class="w-full border border-gray-200 rounded px-2 py-1 text-xs">
                                 </div>
                                 
-                                <!-- Players List with Fixed Height -->
-                                <div id="playersList" class="space-y-1 overflow-y-auto pr-1" style="height: calc(100% - 140px);">
+                                <!-- Players List -->
+                                <div id="playersList" class="flex-1 overflow-y-auto space-y-1 pr-1">
                                     <!-- Players will be loaded here -->
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Middle: Current Auction and Clubs -->
-                        <div class="lg:col-span-1 flex flex-col space-y-3" style="height: 100%;">
-                            <!-- Current Auction -->
-                            <div class="card p-3" style="flex-shrink: 0;">
-                                <h3 class="text-sm font-semibold mb-2 text-gray-900">Current Auction</h3>
-                                <div id="currentAuction">
-                                    <p class="text-gray-500 text-center py-4 text-sm">No active auction</p>
-                                </div>
-                            </div>
                             
-                            <!-- Available Clubs -->
-                            <div class="card p-3 flex-1 overflow-hidden">
-                                <h3 class="text-sm font-semibold mb-2 text-gray-900">Clubs</h3>
-                                <div id="clubsList" class="grid grid-cols-2 gap-2 overflow-y-auto" style="height: calc(100% - 30px);">
+                            <!-- Clubs Section (Hidden by default) -->
+                            <div id="clubsSection" class="flex-1 overflow-hidden hidden">
+                                <h3 class="text-xs font-semibold text-gray-900 mb-2">Clubs</h3>
+                                <div id="clubsList" class="grid grid-cols-2 gap-1 overflow-y-auto h-full pb-2">
                                     <!-- Clubs will be loaded here -->
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Right: Team Chat -->
-                        <div class="lg:col-span-1" style="height: 100%;">
-                            <div class="card h-full overflow-hidden flex flex-col">
-                                <!-- Chat Header -->
-                                <div class="p-3 border-b border-gray-200" style="height: 50px; flex-shrink: 0;">
-                                    <h3 class="text-sm font-semibold text-gray-900">💬 Chat</h3>
-                                </div>
-                                
-                                <!-- Chat Messages (Scrollable Area) -->
-                                <div id="chatMessages" class="p-3 bg-gray-50 text-sm overflow-y-auto" style="height: calc(100% - 110px);">
-                                    <div class="text-gray-500 text-center">No messages yet...</div>
-                                </div>
-                                
-                                <!-- Chat Input (Fixed at Bottom) -->
-                                <div class="p-3 border-t border-gray-200 bg-white" style="height: 60px; flex-shrink: 0;">
-                                    <form id="chatForm" class="flex gap-2 h-full items-center">
-                                        <input type="text" id="chatInput" 
-                                               placeholder="Type a message..." 
-                                               class="flex-1 px-3 py-2 text-sm border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                               maxlength="500">
-                                        <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 text-sm rounded transition-colors">
-                                            Send
-                                        </button>
-                                    </form>
-                                </div>
+                    </div>
+                    
+                    <!-- Middle Column: Current Auction -->
+                    <div class="col-span-1">
+                        <div class="card p-3 h-full">
+                            <h3 class="text-sm font-semibold mb-2 text-gray-900">Current Auction</h3>
+                            <div id="currentAuction" class="h-full overflow-y-auto">
+                                <p class="text-gray-500 text-center py-4 text-sm">No active auction</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: Chat -->
+                    <div class="col-span-1">
+                        <div class="card h-full flex flex-col">
+                            <!-- Chat Header -->
+                            <div class="p-2 border-b border-gray-200">
+                                <h3 class="text-sm font-semibold text-gray-900">💬 Chat</h3>
+                            </div>
+                            
+                            <!-- Chat Messages -->
+                            <div id="chatMessages" class="flex-1 p-2 bg-gray-50 text-xs overflow-y-auto">
+                                <div class="text-gray-500 text-center">No messages yet...</div>
+                            </div>
+                            
+                            <!-- Chat Input -->
+                            <div class="p-2 border-t border-gray-200 bg-white">
+                                <form id="chatForm" class="flex gap-1">
+                                    <input type="text" id="chatInput" 
+                                           placeholder="Type a message..." 
+                                           class="flex-1 px-2 py-1 text-xs border border-gray-200 rounded"
+                                           maxlength="500">
+                                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 text-xs rounded transition-colors">
+                                        Send
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -733,6 +748,40 @@
     
     <!-- Modern UI Scripts -->
     <script>
+        // Players/Clubs tab switching
+        document.addEventListener('DOMContentLoaded', function() {
+            const playersTabBtn = document.getElementById('playersTabBtn');
+            const clubsTabBtn = document.getElementById('clubsTabBtn');
+            const playersSection = document.getElementById('playersSection');
+            const clubsSection = document.getElementById('clubsSection');
+            
+            if (playersTabBtn && clubsTabBtn) {
+                playersTabBtn.addEventListener('click', function() {
+                    // Show players, hide clubs
+                    playersSection.classList.remove('hidden');
+                    clubsSection.classList.add('hidden');
+                    
+                    // Update button styles
+                    playersTabBtn.classList.add('text-emerald-600', 'border-b-2', 'border-emerald-600');
+                    playersTabBtn.classList.remove('text-gray-500');
+                    clubsTabBtn.classList.remove('text-emerald-600', 'border-b-2', 'border-emerald-600');
+                    clubsTabBtn.classList.add('text-gray-500');
+                });
+                
+                clubsTabBtn.addEventListener('click', function() {
+                    // Show clubs, hide players
+                    clubsSection.classList.remove('hidden');
+                    playersSection.classList.add('hidden');
+                    
+                    // Update button styles
+                    clubsTabBtn.classList.add('text-emerald-600', 'border-b-2', 'border-emerald-600');
+                    clubsTabBtn.classList.remove('text-gray-500');
+                    playersTabBtn.classList.remove('text-emerald-600', 'border-b-2', 'border-emerald-600');
+                    playersTabBtn.classList.add('text-gray-500');
+                });
+            }
+        });
+        
         // History filter functionality
         let currentHistoryFilter = 'bids';
         
