@@ -402,10 +402,10 @@
                 <!-- Main 3-Column Grid -->
                 <div class="grid grid-cols-3 gap-2" style="height: calc(100vh - 200px);">
                     <!-- Left Column: Players & Clubs -->
-                    <div class="col-span-1">
-                        <div class="card p-2 h-full flex flex-col">
+                    <div class="col-span-1" style="height: 100%;">
+                        <div class="card p-2 flex flex-col" style="height: 100%;">
                             <!-- Tab Buttons -->
-                            <div class="flex mb-2 border-b">
+                            <div class="flex mb-2 border-b" style="flex-shrink: 0;">
                                 <button id="playersTabBtn" class="flex-1 px-2 py-1 text-xs font-medium text-emerald-600 border-b-2 border-emerald-600">
                                     Players
                                 </button>
@@ -415,9 +415,9 @@
                             </div>
                             
                             <!-- Players Section -->
-                            <div id="playersSection" class="flex-1 flex flex-col overflow-hidden">
+                            <div id="playersSection" class="flex flex-col" style="flex: 1; min-height: 0;">
                                 <!-- Sync Button -->
-                                <div class="flex justify-between items-center mb-1">
+                                <div class="flex justify-between items-center mb-1" style="flex-shrink: 0;">
                                     <h3 class="text-xs font-semibold text-gray-900">Players</h3>
                                     <button id="syncDataBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
                                         Sync
@@ -425,7 +425,7 @@
                                 </div>
                                 
                                 <!-- Filters -->
-                                <div class="space-y-1 mb-2">
+                                <div class="space-y-1 mb-2" style="flex-shrink: 0;">
                                     <div class="flex gap-1">
                                         <select id="positionFilter" class="flex-1 border border-gray-200 rounded px-1 py-0.5 text-xs">
                                             <option value="">All Pos</option>
@@ -442,16 +442,16 @@
                                            class="w-full border border-gray-200 rounded px-2 py-1 text-xs">
                                 </div>
                                 
-                                <!-- Players List -->
-                                <div id="playersList" class="flex-1 overflow-y-auto space-y-1 pr-1">
+                                <!-- Players List with proper scrolling -->
+                                <div id="playersList" class="space-y-1 pr-1" style="flex: 1; overflow-y: auto; min-height: 0;">
                                     <!-- Players will be loaded here -->
                                 </div>
                             </div>
                             
                             <!-- Clubs Section (Hidden by default) -->
-                            <div id="clubsSection" class="flex-1 overflow-hidden hidden">
-                                <h3 class="text-xs font-semibold text-gray-900 mb-2">Clubs</h3>
-                                <div id="clubsList" class="grid grid-cols-2 gap-1 overflow-y-auto h-full pb-2">
+                            <div id="clubsSection" class="hidden" style="flex: 1; min-height: 0; display: none;">
+                                <h3 class="text-xs font-semibold text-gray-900 mb-2" style="flex-shrink: 0;">Clubs</h3>
+                                <div id="clubsList" class="grid grid-cols-2 gap-1 pb-2" style="overflow-y: auto; height: calc(100% - 30px);">
                                     <!-- Clubs will be loaded here -->
                                 </div>
                             </div>
@@ -459,30 +459,30 @@
                     </div>
                     
                     <!-- Middle Column: Current Auction -->
-                    <div class="col-span-1">
-                        <div class="card p-3 h-full">
-                            <h3 class="text-sm font-semibold mb-2 text-gray-900">Current Auction</h3>
-                            <div id="currentAuction" class="h-full overflow-y-auto">
+                    <div class="col-span-1" style="height: 100%;">
+                        <div class="card p-3 flex flex-col" style="height: 100%;">
+                            <h3 class="text-sm font-semibold mb-2 text-gray-900" style="flex-shrink: 0;">Current Auction</h3>
+                            <div id="currentAuction" style="flex: 1; overflow-y: auto; min-height: 0;">
                                 <p class="text-gray-500 text-center py-4 text-sm">No active auction</p>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Right Column: Chat -->
-                    <div class="col-span-1">
-                        <div class="card h-full flex flex-col">
+                    <div class="col-span-1" style="height: 100%;">
+                        <div class="card flex flex-col" style="height: 100%;">
                             <!-- Chat Header -->
-                            <div class="p-2 border-b border-gray-200">
+                            <div class="p-2 border-b border-gray-200" style="flex-shrink: 0;">
                                 <h3 class="text-sm font-semibold text-gray-900">💬 Chat</h3>
                             </div>
                             
                             <!-- Chat Messages -->
-                            <div id="chatMessages" class="flex-1 p-2 bg-gray-50 text-xs overflow-y-auto">
+                            <div id="chatMessages" class="p-2 bg-gray-50 text-xs" style="flex: 1; overflow-y: auto; min-height: 0;">
                                 <div class="text-gray-500 text-center">No messages yet...</div>
                             </div>
                             
                             <!-- Chat Input -->
-                            <div class="p-2 border-t border-gray-200 bg-white">
+                            <div class="p-2 border-t border-gray-200 bg-white" style="flex-shrink: 0;">
                                 <form id="chatForm" class="flex gap-1">
                                     <input type="text" id="chatInput" 
                                            placeholder="Type a message..." 
@@ -758,8 +758,8 @@
             if (playersTabBtn && clubsTabBtn) {
                 playersTabBtn.addEventListener('click', function() {
                     // Show players, hide clubs
-                    playersSection.classList.remove('hidden');
-                    clubsSection.classList.add('hidden');
+                    playersSection.style.display = 'flex';
+                    clubsSection.style.display = 'none';
                     
                     // Update button styles
                     playersTabBtn.classList.add('text-emerald-600', 'border-b-2', 'border-emerald-600');
@@ -770,8 +770,8 @@
                 
                 clubsTabBtn.addEventListener('click', function() {
                     // Show clubs, hide players
-                    clubsSection.classList.remove('hidden');
-                    playersSection.classList.add('hidden');
+                    clubsSection.style.display = 'block';
+                    playersSection.style.display = 'none';
                     
                     // Update button styles
                     clubsTabBtn.classList.add('text-emerald-600', 'border-b-2', 'border-emerald-600');
