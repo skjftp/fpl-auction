@@ -12,69 +12,27 @@ class DraftRevealAnimation {
         this.isAnimating = false;
         this.animationEnabled = true; // Can be toggled by admin
         this.isInitiator = false;
+        this.maxTeams = 10; // Maximum 10 teams
         
-        // Create drum roll audio element
-        this.drumRollAudio = this.createDrumRollAudio();
+        // Create Champions League anthem audio element
+        this.anthemAudio = this.createAnthemAudio();
         
         this.initializeEventListeners();
         this.setupSocketListeners();
     }
     
-    createDrumRollAudio() {
+    createAnthemAudio() {
         const audio = document.createElement('audio');
-        audio.id = 'drumRollSound';
-        // Use a free drum roll sound 
-        audio.src = 'https://www.soundjay.com/misc/sounds/drum-roll-1.wav';
-        audio.volume = 0.5;
-        
-        // Fallback to a simple sound if the main one fails
-        audio.onerror = () => {
-            // Create a simple drum sound using Web Audio API as fallback
-            console.log('Using fallback drum sound');
-            this.createFallbackDrumSound();
-        };
+        audio.id = 'championsLeagueAnthem';
+        // Use the uploaded Champions League anthem
+        audio.src = 'uefa_champions_leagu.mp3';
+        audio.volume = 0.3; // Lower volume for background music
+        audio.loop = true; // Loop during the reveal
         
         document.body.appendChild(audio);
         return audio;
     }
     
-    createFallbackDrumSound() {
-        // Create a simple drum roll using Web Audio API
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        this.playDrumRoll = () => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 200;
-            oscillator.type = 'square';
-            
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.5);
-            
-            // Repeat for drum roll effect
-            for(let i = 0; i < 8; i++) {
-                setTimeout(() => {
-                    const osc = audioContext.createOscillator();
-                    const gain = audioContext.createGain();
-                    osc.connect(gain);
-                    gain.connect(audioContext.destination);
-                    osc.frequency.value = 150 + Math.random() * 100;
-                    osc.type = 'square';
-                    gain.gain.value = 0.1;
-                    osc.start();
-                    osc.stop(audioContext.currentTime + 0.1);
-                }, i * 250);
-            }
-        };
-    }
     
     initializeEventListeners() {
         // No buttons to initialize anymore
@@ -91,13 +49,13 @@ class DraftRevealAnimation {
             return;
         }
         
-        // Setup for animation
-        this.teamsToReveal = [...draftOrder];
+        // Setup for animation - limit to maxTeams
+        this.teamsToReveal = [...draftOrder].slice(0, this.maxTeams);
         this.revealedCount = 0;
         this.revealedTeams.innerHTML = '';
         
         // Create balls in the bowl
-        this.createBalls(draftOrder.length);
+        this.createBalls(Math.min(draftOrder.length, this.maxTeams));
         
         // Hide draw button - we'll use auto-draw
         if (this.drawBtn) {
@@ -107,12 +65,20 @@ class DraftRevealAnimation {
         // Show modal
         this.modal.classList.remove('hidden');
         
-        // Play dramatic sound if TTS is enabled
-        if (window.ttsManager && window.ttsManager.enabled) {
-            window.ttsManager.speak('The draft order reveal is about to begin! Get ready for the most exciting moment of the auction!');
+        // Start playing the Champions League anthem
+        try {
+            this.anthemAudio.currentTime = 0;
+            this.anthemAudio.play().catch(e => console.log('Could not play anthem:', e));
+        } catch (e) {
+            console.log('Error playing anthem:', e);
         }
         
-        // Start automatic drawing with drum roll if initiator
+        // Play dramatic sound if TTS is enabled
+        if (window.ttsManager && window.ttsManager.enabled) {
+            window.ttsManager.speak('The Champions League style draft order reveal is about to begin!');
+        }
+        
+        // Start automatic drawing if initiator
         if (this.isInitiator) {
             this.startAutoDraw();
         }
@@ -154,50 +120,31 @@ class DraftRevealAnimation {
     
     async showDrumRoll() {
         return new Promise(resolve => {
-            // Add drum roll visual effect
+            // Add visual effect - bowl shake
             const bowl = document.querySelector('#draftBowl > div');
             if (bowl) {
                 bowl.classList.add('animate-shake');
             }
             
-            // Create drum roll text
-            const drumRollDiv = document.createElement('div');
-            drumRollDiv.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold text-yellow-400 animate-pulse z-50';
-            drumRollDiv.innerHTML = '🥁 DRUM ROLL 🥁';
+            // Create drawing text
+            const drawingDiv = document.createElement('div');
+            drawingDiv.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold text-yellow-400 animate-pulse z-50';
+            drawingDiv.innerHTML = '⚽ DRAWING... ⚽';
             const bowlContainer = document.getElementById('draftBowl');
             if (bowlContainer) {
-                bowlContainer.appendChild(drumRollDiv);
+                bowlContainer.appendChild(drawingDiv);
             }
             
-            // Play drum roll sound
-            try {
-                if (this.playDrumRoll) {
-                    // Use fallback Web Audio API drum roll
-                    this.playDrumRoll();
-                } else {
-                    // Try to play the audio element
-                    this.drumRollAudio.currentTime = 0;
-                    this.drumRollAudio.play().catch(e => {
-                        console.log('Could not play drum roll:', e);
-                        // Try fallback
-                        this.createFallbackDrumSound();
-                        if (this.playDrumRoll) {
-                            this.playDrumRoll();
-                        }
-                    });
-                }
-            } catch (e) {
-                console.log('Error playing drum roll:', e);
-            }
+            // The anthem is already playing in the background
             
-            // Play drum roll announcement if TTS enabled
+            // Play announcement if TTS enabled
             if (window.ttsManager && window.ttsManager.enabled) {
-                window.ttsManager.speak('Drum roll please!');
+                window.ttsManager.speak('Drawing next team!');
             }
             
-            // After 2 seconds, remove drum roll and resolve
+            // After 2 seconds, remove drawing text and resolve
             setTimeout(() => {
-                drumRollDiv.remove();
+                drawingDiv.remove();
                 if (bowl) {
                     bowl.classList.remove('animate-shake');
                 }
@@ -436,6 +383,12 @@ class DraftRevealAnimation {
     }
     
     async completeReveal() {
+        // Stop the Champions League anthem
+        if (this.anthemAudio) {
+            this.anthemAudio.pause();
+            this.anthemAudio.currentTime = 0;
+        }
+        
         // Show completion message
         setTimeout(async () => {
             // Show "Auction will begin shortly" popup
@@ -490,12 +443,13 @@ class DraftRevealAnimation {
     }
     
     showInstantResults(draftOrder) {
-        // Show results without animation
+        // Show results without animation - limit to maxTeams
         this.modal.classList.remove('hidden');
         if (this.drawBtn) this.drawBtn.style.display = 'none';
         
         this.revealedTeams.innerHTML = '';
-        draftOrder.forEach((team, index) => {
+        const teamsToShow = draftOrder.slice(0, this.maxTeams);
+        teamsToShow.forEach((team, index) => {
             this.addRevealedTeam(team, index + 1);
         });
         
