@@ -214,7 +214,7 @@ class MobileAutoBidManager {
                                data-player-id="${player.id}"
                                value="${playerConfig.maxBid || ''}" 
                                placeholder="Max J" 
-                               min="5" 
+                               min="10" 
                                step="5">
                     </div>
                     <div class="player-settings">

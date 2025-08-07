@@ -544,7 +544,8 @@ class AuctionManager {
             }
             
             // Minimum bid for remaining picks (excluding current auction)
-            const minForRemaining = Math.max(0, (remainingPicks - 1) * 5);
+            // Each remaining pick needs at least J10
+            const minForRemaining = Math.max(0, (remainingPicks - 1) * 10);
             
             // Maximum bid = current budget - minimum needed for remaining picks
             const maxBid = Math.max(0, currentBudget - minForRemaining);

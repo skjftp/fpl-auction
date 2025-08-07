@@ -84,7 +84,7 @@ router.post('/start-player/:playerId', async (req, res) => {
       id: auctionId,
       player_id: playerId,
       auction_type: 'player',
-      current_bid: 5,
+      current_bid: 10,
       current_bidder_id: teamId,
       status: 'active',
       selling_stage: null, // Will be set to 'selling1', 'selling2' by admin
@@ -221,7 +221,7 @@ router.post('/start-club/:clubId', async (req, res) => {
       id: auctionId,
       club_id: clubId,
       auction_type: 'club',
-      current_bid: 5,
+      current_bid: 10,
       current_bidder_id: teamId,
       status: 'active',
       selling_stage: null, // Will be set to 'selling1', 'selling2' by admin
@@ -284,9 +284,9 @@ router.post('/bid/:auctionId', async (req, res) => {
   const { bidAmount, isAutoBid } = req.body;
   const teamId = req.user.teamId;
   
-  // Validate bid amount (minimum 5, increments of 5)
-  if (!bidAmount || bidAmount < 5 || bidAmount % 5 !== 0) {
-    return res.status(400).json({ error: 'Invalid bid amount. Minimum 5, increments of 5' });
+  // Validate bid amount (minimum 10, increments of 5)
+  if (!bidAmount || bidAmount < 10 || bidAmount % 5 !== 0) {
+    return res.status(400).json({ error: 'Invalid bid amount. Minimum 10, increments of 5' });
   }
   
   try {
