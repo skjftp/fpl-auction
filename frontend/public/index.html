@@ -353,7 +353,7 @@
                         <!-- Draft Order -->
                         <div class="card p-6">
                             <h3 class="text-lg font-semibold mb-4 text-gray-900">📋 Draft Order</h3>
-                            <div id="draftOrder" class="space-y-2">
+                            <div id="draftOrder" class="space-y-2 max-h-96 overflow-y-auto">
                                 <div class="text-gray-500">No draft order yet...</div>
                             </div>
                         </div>
@@ -399,10 +399,10 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 h-[calc(100vh-280px)]">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3" style="height: calc(100vh - 280px);">
                         <!-- Left: Players List -->
                         <div class="lg:col-span-1">
-                            <div class="card p-3" style="height: calc(100vh - 280px);">
+                            <div class="card p-3" style="height: 100%;">
                                 <div class="flex justify-between items-center mb-2">
                                     <h3 class="text-sm font-semibold text-gray-900">Players</h3>
                                     <button id="syncDataBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
@@ -434,9 +434,9 @@
                         </div>
                         
                         <!-- Middle: Current Auction and Clubs -->
-                        <div class="lg:col-span-1 flex flex-col space-y-3">
+                        <div class="lg:col-span-1 flex flex-col space-y-3" style="height: 100%;">
                             <!-- Current Auction -->
-                            <div class="card p-3">
+                            <div class="card p-3" style="flex-shrink: 0;">
                                 <h3 class="text-sm font-semibold mb-2 text-gray-900">Current Auction</h3>
                                 <div id="currentAuction">
                                     <p class="text-gray-500 text-center py-4 text-sm">No active auction</p>
@@ -444,16 +444,16 @@
                             </div>
                             
                             <!-- Available Clubs -->
-                            <div class="card p-3 flex-1">
+                            <div class="card p-3 flex-1 overflow-hidden">
                                 <h3 class="text-sm font-semibold mb-2 text-gray-900">Clubs</h3>
-                                <div id="clubsList" class="grid grid-cols-2 gap-2 overflow-y-auto max-h-48">
+                                <div id="clubsList" class="grid grid-cols-2 gap-2 overflow-y-auto" style="height: calc(100% - 30px);">
                                     <!-- Clubs will be loaded here -->
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Right: Team Chat -->
-                        <div class="lg:col-span-1" style="height: 60%;">
+                        <div class="lg:col-span-1" style="height: 100%;">
                             <div class="card h-full overflow-hidden flex flex-col">
                                 <!-- Chat Header -->
                                 <div class="p-3 border-b border-gray-200" style="height: 50px; flex-shrink: 0;">
@@ -698,23 +698,11 @@
                     <!-- Player configs will be dynamically added here -->
                 </div>
                 
-                <!-- Global Settings -->
+                <!-- Per-player settings note -->
                 <div class="border-t pt-4">
-                    <h4 class="font-medium mb-2">Global Settings</h4>
-                    <div class="space-y-2">
-                        <label class="flex items-center">
-                            <input type="checkbox" id="globalNeverSecondBidder" class="mr-2">
-                            <span>Never be the second bidder</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" id="globalOnlySellingStage" class="mr-2">
-                            <span>Only bid during selling stages</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" id="globalSkipIfTeamHasPlayer" class="mr-2">
-                            <span>Skip if any team already has a player from same club</span>
-                        </label>
-                    </div>
+                    <p class="text-sm text-gray-600">
+                        Configure max bid and settings for each player individually using the Settings button.
+                    </p>
                 </div>
                 
                 <!-- Modal Actions -->

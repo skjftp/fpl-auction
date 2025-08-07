@@ -16,6 +16,7 @@ const draftManagementRoutes = require('./routes/draftManagement');
 
 const { initializeDatabase } = require('./models/database');
 const { authenticateToken } = require('./middleware/auth');
+const AutoBidService = require('./services/autoBidService');
 
 // Configure CORS for production and development
 const allowedOrigins = [
@@ -152,6 +153,11 @@ async function startServer() {
   try {
     await initializeDatabase();
     console.log('✅ Database initialized');
+    
+    // Initialize and start AutoBid service
+    const autoBidService = new AutoBidService(io);
+    autoBidService.start();
+    console.log('✅ AutoBid service started');
     
     server.listen(PORT, () => {
       console.log(`🚀 FPL Auction Server running on port ${PORT}`);

@@ -12,12 +12,7 @@ router.get('/config', authenticateToken, async (req, res) => {
         
         if (!configDoc.exists) {
             return res.json({
-                players: {},
-                global: {
-                    neverSecondBidder: false,
-                    onlySellingStage: false,
-                    skipIfTeamHasPlayer: false
-                }
+                players: {}
             });
         }
         

@@ -1,12 +1,7 @@
 // Auto-bidding functionality
 let autoBidEnabled = false;
 let autoBidConfig = {
-    players: {}, // playerId: { maxBid, neverSecondBidder, onlySellingStage, skipIfTeamHasClubPlayer }
-    global: {
-        neverSecondBidder: false,
-        onlySellingStage: false,
-        skipIfTeamHasPlayer: false
-    }
+    players: {} // playerId: { maxBid, neverSecondBidder, onlySellingStage, skipIfTeamHasClubPlayer }
 };
 
 // Initialize auto-bid functionality
@@ -51,10 +46,7 @@ function initAutoBid() {
     document.getElementById('autoBidFilterPosition').addEventListener('change', filterAutoBidPlayers);
     document.getElementById('autoBidFilterClub').addEventListener('change', filterAutoBidPlayers);
 
-    // Global settings
-    document.getElementById('globalNeverSecondBidder').addEventListener('change', updateGlobalSettings);
-    document.getElementById('globalOnlySellingStage').addEventListener('change', updateGlobalSettings);
-    document.getElementById('globalSkipIfTeamHasPlayer').addEventListener('change', updateGlobalSettings);
+    // Global settings removed - per-player settings only
 }
 
 // Update visual status
@@ -208,12 +200,7 @@ function filterAutoBidPlayers() {
     });
 }
 
-// Update global settings
-function updateGlobalSettings() {
-    autoBidConfig.global.neverSecondBidder = document.getElementById('globalNeverSecondBidder').checked;
-    autoBidConfig.global.onlySellingStage = document.getElementById('globalOnlySellingStage').checked;
-    autoBidConfig.global.skipIfTeamHasPlayer = document.getElementById('globalSkipIfTeamHasPlayer').checked;
-}
+// Global settings removed - using per-player settings only
 
 // Save auto-bid configuration
 async function saveAutoBidConfig() {
@@ -260,13 +247,7 @@ async function loadAutoBidConfig() {
             // Set enabled state
             autoBidEnabled = config.enabled || false;
             
-            // Update global settings UI if modal is open
-            const modal = document.getElementById('autoBidModal');
-            if (modal && !modal.classList.contains('hidden')) {
-                document.getElementById('globalNeverSecondBidder').checked = config.global.neverSecondBidder;
-                document.getElementById('globalOnlySellingStage').checked = config.global.onlySellingStage;
-                document.getElementById('globalSkipIfTeamHasPlayer').checked = config.global.skipIfTeamHasPlayer;
-            }
+            // Global settings removed - no UI updates needed
         }
     } catch (error) {
         console.error('Error loading auto-bid config:', error);
@@ -347,11 +328,8 @@ async function checkAndPlaceAutoBids() {
         return;
     }
 
-    // Apply global and player-specific rules
-    const config = {
-        ...autoBidConfig.global,
-        ...playerConfig
-    };
+    // Use player-specific rules only
+    const config = playerConfig;
 
     // Check if we should bid
     if (!shouldAutoBid(auction, config)) {
