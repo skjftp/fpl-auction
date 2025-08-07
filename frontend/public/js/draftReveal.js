@@ -1,18 +1,7 @@
 // Draft Reveal Animation System
 class DraftRevealAnimation {
     constructor() {
-        // Add null checks for mobile compatibility
-        this.modal = document.getElementById('draftRevealModal');
-        this.ballContainer = document.getElementById('ballContainer');
-        this.revealedTeams = document.getElementById('revealedTeams');
-        this.drawBtn = document.getElementById('drawTeamBtn');
-        this.congratsOverlay = document.getElementById('congratsOverlay');
-        
-        if (!this.modal) {
-            console.error('Draft reveal modal not found in DOM');
-            return;
-        }
-        
+        // Initialize properties first
         this.teamsToReveal = [];
         this.revealedCount = 0;
         this.isAnimating = false;
@@ -20,11 +9,26 @@ class DraftRevealAnimation {
         this.isInitiator = false;
         this.maxTeams = 10; // Maximum 10 teams
         
+        // Get DOM elements
+        this.updateDOMReferences();
+        
         // Create Champions League anthem audio element
         this.anthemAudio = this.createAnthemAudio();
         
         this.initializeEventListeners();
         this.setupSocketListeners();
+    }
+    
+    updateDOMReferences() {
+        this.modal = document.getElementById('draftRevealModal');
+        this.ballContainer = document.getElementById('ballContainer');
+        this.revealedTeams = document.getElementById('revealedTeams');
+        this.drawBtn = document.getElementById('drawTeamBtn');
+        this.congratsOverlay = document.getElementById('congratsOverlay');
+        
+        if (!this.modal) {
+            console.warn('Draft reveal modal not found in DOM - will retry when needed');
+        }
     }
     
     createAnthemAudio() {
@@ -46,10 +50,20 @@ class DraftRevealAnimation {
     
     // Start the reveal animation with draft order data
     async startReveal(draftOrder, animationEnabled = true, isInitiator = false) {
-        console.log('Starting draft reveal:', { draftOrder, animationEnabled, isInitiator, modalExists: !!this.modal });
+        // Retry getting DOM elements if not found initially
+        if (!this.modal) {
+            this.updateDOMReferences();
+        }
+        
+        console.log('Starting draft reveal:', { 
+            draftOrderLength: draftOrder?.length, 
+            animationEnabled, 
+            isInitiator, 
+            modalExists: !!this.modal 
+        });
         
         if (!this.modal) {
-            console.error('Cannot start reveal - modal not found');
+            console.error('Cannot start reveal - modal not found after retry');
             return;
         }
         
@@ -86,10 +100,7 @@ class DraftRevealAnimation {
             console.log('Error playing anthem:', e);
         }
         
-        // Play dramatic sound if TTS is enabled
-        if (window.ttsManager && window.ttsManager.enabled) {
-            window.ttsManager.speak('The Champions League style draft order reveal is about to begin!');
-        }
+        // Don't announce start - will announce with first team
         
         // Start automatic drawing if initiator
         if (this.isInitiator) {
@@ -150,10 +161,7 @@ class DraftRevealAnimation {
             
             // The anthem is already playing in the background
             
-            // Play announcement if TTS enabled
-            if (window.ttsManager && window.ttsManager.enabled) {
-                window.ttsManager.speak('Drawing next team!');
-            }
+            // Don't announce drawing - will announce the team result
             
             // After 2 seconds, remove drawing text and resolve
             setTimeout(() => {
