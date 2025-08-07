@@ -332,7 +332,8 @@ router.post('/bid/:auctionId', async (req, res) => {
       // Reset selling stage when a new bid is placed
       selling_stage: null,
       wait_requested_by: null,
-      wait_requested_at: null
+      wait_requested_at: null,
+      last_bid_time: admin.firestore.FieldValue.serverTimestamp()
     });
     
     // Record bid history

@@ -171,6 +171,11 @@ class MobileAuctionManager {
         
         this.currentAuction = auctionData;
         
+        // Start or reset the bid timer
+        if (window.bidTimer) {
+            window.bidTimer.startTimer();
+        }
+        
         const auctionCard = document.getElementById('currentAuction');
         const noAuction = document.getElementById('noAuction');
         
@@ -447,6 +452,12 @@ class MobileAuctionManager {
         
         if (auctionCard) auctionCard.classList.add('hidden');
         if (noAuction) noAuction.classList.remove('hidden');
+        
+        // Stop the bid timer
+        if (window.bidTimer) {
+            window.bidTimer.stopTimer();
+            window.bidTimer.hideTimerDisplay();
+        }
         
         // Re-render players list to re-enable start buttons
         this.renderPlayers();

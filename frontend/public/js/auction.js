@@ -390,6 +390,11 @@ class AuctionManager {
         this.currentAuction = auction;
         const container = document.getElementById('currentAuction');
         
+        // Start or reset the bid timer
+        if (window.bidTimer) {
+            window.bidTimer.startTimer();
+        }
+        
         const item = auction.player || auction.club;
         const itemName = auction.player ? item.web_name : item.name;
         const itemImage = auction.player && item.photo ? 
@@ -662,6 +667,12 @@ class AuctionManager {
         this.currentAuction = null;
         const container = document.getElementById('currentAuction');
         container.innerHTML = '<p class="text-gray-500 text-center py-8">No active auction</p>';
+        
+        // Stop the bid timer
+        if (window.bidTimer) {
+            window.bidTimer.stopTimer();
+            window.bidTimer.hideTimerDisplay();
+        }
     }
 
     // Refresh auction data when tab becomes active
