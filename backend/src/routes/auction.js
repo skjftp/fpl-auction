@@ -710,7 +710,48 @@ router.get('/active', async (req, res) => {
   }
 });
 
-// Get bid history
+// Get bid history for specific auction
+router.get('/bid-history/:auctionId', async (req, res) => {
+  const { auctionId } = req.params;
+  
+  try {
+    // Get bids for this specific auction
+    const bidsSnapshot = await collections.bidHistory
+      .where('auction_id', '==', auctionId)
+      .orderBy('created_at', 'desc')
+      .get();
+    
+    const bids = [];
+    
+    for (const doc of bidsSnapshot.docs) {
+      const bid = { id: doc.id, ...doc.data() };
+      
+      // Get team name
+      const teamQuery = await collections.teams
+        .where('id', '==', bid.team_id)
+        .limit(1)
+        .get();
+      
+      if (!teamQuery.empty) {
+        bid.team_name = teamQuery.docs[0].data().name;
+      }
+      
+      // Format bid amount
+      bid.bidAmount = bid.bid_amount;
+      bid.isAutoBid = bid.is_auto_bid || false;
+      
+      bids.push(bid);
+    }
+    
+    res.json({ bids });
+    
+  } catch (error) {
+    console.error('Error fetching auction bid history:', error);
+    res.status(500).json({ error: 'Failed to fetch bid history' });
+  }
+});
+
+// Get bid history (general)
 router.get('/bid-history', async (req, res) => {
   try {
     const teamId = req.user.teamId;

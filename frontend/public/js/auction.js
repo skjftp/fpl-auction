@@ -398,10 +398,25 @@ class AuctionManager {
 
         // Calculate maximum bid for current user
         const maxBid = await this.calculateMaxBid();
+        
+        // Initialize bid history for this auction if not exists
+        if (!this.currentAuctionBidHistory) {
+            this.currentAuctionBidHistory = [];
+        }
 
         container.innerHTML = `
             <div class="auction-item text-center">
-                <div class="mb-3">
+                <div class="mb-3 relative">
+                    <!-- Bid History Icon -->
+                    <button onclick="auctionManager.showBidHistory()" 
+                            class="absolute top-0 right-0 text-gray-400 hover:text-gray-600 transition-colors" 
+                            title="View bid history">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                    
                     ${itemImage ? 
                         `<img src="${itemImage}" alt="${itemName}" class="w-16 h-16 object-cover rounded-full mx-auto mb-2">` :
                         `<div class="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-2 flex items-center justify-center">
@@ -1138,6 +1153,133 @@ class AuctionManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    // Bid history methods
+    showBidHistory() {
+        // Create or update the bid history modal
+        let modal = document.getElementById('bidHistoryModal');
+        if (!modal) {
+            // Create modal if it doesn't exist
+            modal = document.createElement('div');
+            modal.id = 'bidHistoryModal';
+            modal.className = 'fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50';
+            modal.innerHTML = `
+                <div class="relative top-20 mx-auto p-5 w-full max-w-md">
+                    <div class="card p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">📊 Bid History</h3>
+                            <button onclick="auctionManager.closeBidHistory()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="bidHistoryList" class="space-y-2 max-h-96 overflow-y-auto">
+                            <div class="text-gray-500 text-center">Loading bid history...</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        modal.classList.remove('hidden');
+        this.loadBidHistoryForCurrentAuction();
+    }
+    
+    closeBidHistory() {
+        const modal = document.getElementById('bidHistoryModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+    
+    async loadBidHistoryForCurrentAuction() {
+        if (!this.currentAuction || !this.currentAuction.id) return;
+        
+        try {
+            const response = await fetch(`${api.baseURL}/auction/bid-history/${this.currentAuction.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${api.token}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to load bid history');
+            }
+            
+            const data = await response.json();
+            this.currentAuctionBidHistory = data.bids || [];
+            this.updateBidHistoryDisplay();
+        } catch (error) {
+            console.error('Error loading bid history:', error);
+            const historyList = document.getElementById('bidHistoryList');
+            if (historyList) {
+                historyList.innerHTML = '<div class="text-red-500 text-center">Failed to load bid history</div>';
+            }
+        }
+    }
+    
+    updateBidHistoryDisplay() {
+        const historyList = document.getElementById('bidHistoryList');
+        if (!historyList) return;
+        
+        if (!this.currentAuctionBidHistory || this.currentAuctionBidHistory.length === 0) {
+            historyList.innerHTML = '<div class="text-gray-500 text-center">No bids yet</div>';
+            return;
+        }
+        
+        // Sort bids by time (newest first)
+        const sortedBids = [...this.currentAuctionBidHistory].sort((a, b) => {
+            const timeA = a.created_at?._seconds || a.timestamp || 0;
+            const timeB = b.created_at?._seconds || b.timestamp || 0;
+            return timeB - timeA;
+        });
+        
+        const bidsHtml = sortedBids.map((bid, index) => {
+            const isLatest = index === 0;
+            const isAutoBid = bid.is_auto_bid || bid.isAutoBid;
+            
+            return `
+                <div class="p-2 rounded ${isLatest ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="font-medium">${bid.team_name || bid.teamName || 'Unknown'}</span>
+                            ${isAutoBid ? '<span class="ml-1 text-xs text-blue-600">🤖</span>' : ''}
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-green-600">${formatCurrency(bid.bid_amount || bid.bidAmount || bid.amount, false)}</div>
+                            ${isLatest ? '<div class="text-xs text-green-600">Current</div>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        historyList.innerHTML = bidsHtml;
+    }
+    
+    // Add bid to history when new bid is received (called from socket handler)
+    addBidToHistory(bidData) {
+        if (!this.currentAuction || bidData.auctionId !== this.currentAuction.id) return;
+        
+        if (!this.currentAuctionBidHistory) {
+            this.currentAuctionBidHistory = [];
+        }
+        
+        // Add the new bid
+        this.currentAuctionBidHistory.push({
+            team_name: bidData.teamName,
+            bid_amount: bidData.bidAmount,
+            is_auto_bid: bidData.isAutoBid,
+            created_at: { _seconds: Date.now() / 1000 }
+        });
+        
+        // Update display if modal is open
+        if (document.getElementById('bidHistoryModal') && !document.getElementById('bidHistoryModal').classList.contains('hidden')) {
+            this.updateBidHistoryDisplay();
+        }
     }
 
     // Clean up method

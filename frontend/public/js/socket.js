@@ -166,6 +166,40 @@ class SocketManager {
             }
             showNotification(`Chat cleared by ${data.clearedBy}`, 'info');
         });
+        
+        // Team connection events
+        this.socket.on('team-connected', (data) => {
+            console.log('🟢 Team connected:', data.teamName);
+            this.addSystemMessageToChat(`${data.teamName} connected`, 'connect');
+        });
+        
+        this.socket.on('team-disconnected', (data) => {
+            console.log('🔴 Team disconnected:', data.teamName);
+            this.addSystemMessageToChat(`${data.teamName} disconnected`, 'disconnect');
+        });
+    }
+    
+    addSystemMessageToChat(message, type) {
+        const chatContainer = document.getElementById('chatMessages');
+        if (!chatContainer) return;
+        
+        // Create system message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'text-center text-xs py-1 my-1';
+        
+        if (type === 'connect') {
+            messageDiv.innerHTML = `<span class="text-green-600 font-medium">→ ${message}</span>`;
+        } else if (type === 'disconnect') {
+            messageDiv.innerHTML = `<span class="text-red-600 font-medium">← ${message}</span>`;
+        } else {
+            messageDiv.innerHTML = `<span class="text-gray-500">${message}</span>`;
+        }
+        
+        // Add to chat
+        chatContainer.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
     disconnect() {
@@ -179,7 +213,10 @@ class SocketManager {
     joinAuction() {
         const team = JSON.parse(localStorage.getItem('fpl_team') || '{}');
         if (team.id && this.socket) {
-            this.socket.emit('join-auction', team.id);
+            this.socket.emit('join-auction', {
+                teamId: team.id,
+                teamName: team.name || `Team ${team.id}`
+            });
             console.log(`👥 Joined auction room as ${team.name}`);
         }
     }
@@ -209,6 +246,9 @@ class SocketManager {
 
     handleNewBid(data) {
         window.auctionManager.updateCurrentBid(data);
+        
+        // Add bid to history for real-time updates
+        window.auctionManager.addBidToHistory(data);
         
         // Add visual feedback for new bid
         const currentAuction = document.getElementById('currentAuction');

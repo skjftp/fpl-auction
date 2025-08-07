@@ -129,13 +129,31 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Track connected teams
+const connectedTeams = new Map(); // socketId -> { teamId, teamName }
+
 // Socket.IO for real-time auction
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
   
-  socket.on('join-auction', (teamId) => {
+  socket.on('join-auction', (data) => {
+    // Handle both string teamId and object with teamId and teamName
+    const teamId = typeof data === 'string' ? data : data.teamId;
+    const teamName = typeof data === 'string' ? `Team ${data}` : (data.teamName || `Team ${data.teamId}`);
+    
     socket.join('auction-room');
-    console.log(`Team ${teamId} joined auction room`);
+    
+    // Store team info for this socket
+    connectedTeams.set(socket.id, { teamId, teamName });
+    
+    // Broadcast connection message to all clients
+    socket.to('auction-room').emit('team-connected', {
+      teamId,
+      teamName,
+      message: `${teamName} connected`
+    });
+    
+    console.log(`${teamName} (${teamId}) joined auction room`);
   });
   
   socket.on('place-bid', (bidData) => {
@@ -144,7 +162,22 @@ io.on('connection', (socket) => {
   });
   
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    // Get team info before removing
+    const teamInfo = connectedTeams.get(socket.id);
+    
+    if (teamInfo) {
+      // Broadcast disconnection message to all clients
+      socket.to('auction-room').emit('team-disconnected', {
+        teamId: teamInfo.teamId,
+        teamName: teamInfo.teamName,
+        message: `${teamInfo.teamName} disconnected`
+      });
+      
+      console.log(`${teamInfo.teamName} disconnected:`, socket.id);
+      connectedTeams.delete(socket.id);
+    } else {
+      console.log('User disconnected:', socket.id);
+    }
   });
 });
 
