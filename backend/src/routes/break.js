@@ -65,5 +65,7 @@ router.get('/status', authenticate, async (req, res) => {
     }
 });
 
-module.exports = router;
-module.exports.breakState = breakState;
+module.exports = {
+    router,
+    breakState
+};

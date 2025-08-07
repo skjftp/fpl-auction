@@ -13,8 +13,7 @@ const scoringRoutes = require('./routes/scoring');
 const draftRoutes = require('./routes/draft');
 const autobidRoutes = require('./routes/autobid');
 const draftManagementRoutes = require('./routes/draftManagement');
-const breakRoutes = require('./routes/break');
-const { breakState } = require('./routes/break');
+const { router: breakRoutes, breakState } = require('./routes/break');
 
 const { initializeDatabase } = require('./models/database');
 const { authenticateToken } = require('./middleware/auth');
