@@ -86,6 +86,13 @@ class DraftManager {
         }
     }
 
+    updateDraftOrderModal() {
+        // Use the auction manager's function if available
+        if (window.auctionManager) {
+            window.auctionManager.updateDraftOrderModal();
+        }
+    }
+
     updateDraftUI() {
         if (!this.draftState) return;
 

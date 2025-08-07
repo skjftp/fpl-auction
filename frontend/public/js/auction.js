@@ -894,11 +894,7 @@ class AuctionManager {
         if (!indicator || !this.draftState) return;
 
         if (!this.draftState.is_active) {
-            indicator.innerHTML = `
-                <div class="text-center">
-                    <span class="text-gray-500">Draft not active</span>
-                </div>
-            `;
+            indicator.innerHTML = `<span class="text-gray-500">Draft not active</span>`;
             return;
         }
 
@@ -906,83 +902,86 @@ class AuctionManager {
         const isMyTurn = currentUser && this.draftState.current_team_id === currentUser.id;
         const currentTeamName = this.draftState.current_team_name;
         
-        // Generate the snake draft order display - show all 10 teams in FIXED original order
-        let draftOrderHtml = '';
-        if (this.draftState.draft_order && this.draftState.draft_order.length > 0) {
-            // Get current round
-            const currentRound = Math.ceil(this.draftState.current_position / 10);
-            const isForward = currentRound % 2 === 1; // Odd rounds go forward (1-10), even rounds go reverse (10-1)
+        // Get next team
+        let nextTeamName = '';
+        if (this.draftState.draft_order && this.draftState.current_position < 170) {
+            const nextPosition = this.draftState.current_position + 1;
+            const nextTeam = this.draftState.draft_order.find(t => t.cumulative_position === nextPosition);
+            if (nextTeam) {
+                nextTeamName = nextTeam.name || nextTeam.username || `Team ${nextTeam.team_id}`;
+            }
+        }
+        
+        // Create minimal indicator
+        let html = '';
+        if (isMyTurn) {
+            html = `<span class="text-green-600 font-bold">🎯 Your turn</span>`;
+        } else {
+            html = `<span class="text-gray-700"><strong>Now:</strong> ${currentTeamName}</span>`;
+            if (nextTeamName) {
+                html += ` <span class="text-gray-500 ml-2">Next: ${nextTeamName}</span>`;
+            }
+        }
+        
+        indicator.innerHTML = html;
+    }
+    
+    updateDraftOrderModal() {
+        const modalList = document.getElementById('draftOrderList');
+        if (!modalList || !this.draftState) return;
+        
+        if (!this.draftState.is_active || !this.draftState.draft_order) {
+            modalList.innerHTML = '<div class="text-gray-500 text-center">No draft order available</div>';
+            return;
+        }
+        
+        // Get current round
+        const currentRound = Math.ceil(this.draftState.current_position / 10);
+        const isForward = currentRound % 2 === 1;
+        
+        // Get unique teams for display
+        const uniqueTeams = [];
+        const seenTeamIds = new Set();
+        
+        for (const team of this.draftState.draft_order) {
+            if (!seenTeamIds.has(team.team_id)) {
+                uniqueTeams.push(team);
+                seenTeamIds.add(team.team_id);
+            }
+        }
+        
+        uniqueTeams.sort((a, b) => a.position - b.position);
+        
+        const currentUser = window.app?.currentUser;
+        
+        const teamsHtml = uniqueTeams.map((team, index) => {
+            const isActive = team.team_id === this.draftState.current_team_id;
+            const isMyTeam = currentUser && team.team_id === currentUser.id;
+            const teamName = team.name || team.username || `Team ${team.team_id}`;
             
-            // Use same logic as Draft tab - get first 10 teams (one from each team)
-            const uniqueTeams = [];
-            const seenTeamIds = new Set();
-            
-            // Get the first occurrence of each team to establish the base order
-            for (const team of this.draftState.draft_order) {
-                if (!seenTeamIds.has(team.team_id)) {
-                    uniqueTeams.push(team);
-                    seenTeamIds.add(team.team_id);
-                }
+            let classes = 'p-2 rounded text-sm';
+            if (isActive) {
+                classes += ' bg-green-100 border-2 border-green-500 font-bold';
+            } else if (isMyTeam) {
+                classes += ' bg-blue-50 border border-blue-300';
+            } else {
+                classes += ' bg-gray-50 border border-gray-200';
             }
             
-            // Sort by the original position to maintain consistent order
-            uniqueTeams.sort((a, b) => a.position - b.position);
-            
-            const teamsHtml = uniqueTeams.map((team) => {
-                const isActive = team.team_id === this.draftState.current_team_id;
-                const isMyTeam = currentUser && team.team_id === currentUser.id;
-                
-                let teamClass = 'px-3 py-2 rounded text-sm border';
-                if (isActive) {
-                    teamClass += ' bg-green-500 text-white border-green-600 font-bold shadow-lg';
-                } else if (isMyTeam) {
-                    teamClass += ' bg-blue-100 text-blue-800 border-blue-300';
-                } else {
-                    teamClass += ' bg-gray-100 text-gray-700 border-gray-300';
-                }
-                
-                return `<span class="${teamClass}">${team.name || team.username || 'Team ' + team.team_id}</span>`;
-            }).join('');
-            
-            draftOrderHtml = `
-                <div class="mb-3">
-                    <div class="text-sm font-medium text-gray-600 mb-2 text-center">
-                        Round ${currentRound} ${isForward ? '→' : '←'}
-                    </div>
-                    <div class="flex flex-wrap gap-2 justify-center">
-                        ${teamsHtml}
-                    </div>
+            return `
+                <div class="${classes}">
+                    <span class="font-medium">${index + 1}.</span> ${teamName}
+                    ${isActive ? ' <span class="text-green-600">← Current</span>' : ''}
                 </div>
             `;
-        }
-
-        indicator.innerHTML = `
-            <div class="bg-white border-2 ${isMyTurn ? 'border-green-500' : 'border-gray-300'} rounded-lg p-4">
-                <div class="text-center mb-3">
-                    <div class="text-lg font-bold ${isMyTurn ? 'text-green-600' : 'text-gray-700'}">
-                        ${isMyTurn ? 'Your Turn!' : `${currentTeamName}'s Turn`}
-                    </div>
-                    ${isMyTurn ? '<div class="text-xs text-green-600 mt-1">You can start an auction now!</div>' : ''}
-                </div>
-                
-                ${draftOrderHtml ? `
-                    <div class="border-t pt-3">
-                        ${draftOrderHtml}
-                    </div>
-                ` : ''}
+        }).join('');
+        
+        modalList.innerHTML = `
+            <div class="mb-3 text-center">
+                <span class="text-sm font-medium text-gray-600">Round ${currentRound} - Position ${this.draftState.current_position}/170</span>
+                <span class="ml-2 text-xs text-gray-500">(${isForward ? 'Forward' : 'Reverse'})</span>
             </div>
-        `;
-
-        // Enable/disable auction buttons based on turn
-        const startButtons = document.querySelectorAll('.start-auction-btn');
-        startButtons.forEach(btn => {
-            btn.disabled = !isMyTurn;
-            if (!isMyTurn) {
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        });
+            ${teamsHtml}
     }
 
     async updateSellingStage(stage) {
