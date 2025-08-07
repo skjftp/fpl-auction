@@ -3,10 +3,9 @@ class BidTimer {
     constructor() {
         this.timerInterval = null;
         this.startTime = null;
-        this.timerDuration = 30; // 30 seconds default
         this.isRunning = false;
         this.timerElement = null;
-        this.progressElement = null;
+        this.elapsedSeconds = 0;
         
         this.initializeTimer();
         this.setupSocketListeners();
@@ -26,13 +25,13 @@ class BidTimer {
         }
         
         const timerHTML = `
-            <div id="bidTimerDisplay" class="hidden mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-700">Time Remaining</span>
-                    <span id="bidTimerValue" class="text-2xl font-bold text-blue-600">30</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                    <div id="bidTimerProgress" class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 ease-linear" style="width: 100%"></div>
+            <div id="bidTimerDisplay" class="hidden mt-3 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">Time Since Last Bid</span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span id="bidTimerValue" class="text-xl font-bold text-green-600">00:00</span>
+                    </div>
                 </div>
             </div>
         `;
@@ -45,7 +44,6 @@ class BidTimer {
                 // Insert timer after the auction item
                 auctionItem.insertAdjacentHTML('afterend', timerHTML);
                 this.timerElement = document.getElementById('bidTimerValue');
-                this.progressElement = document.getElementById('bidTimerProgress');
             }
         }
     }
@@ -57,22 +55,13 @@ class BidTimer {
         }
         
         const timerHTML = `
-            <div id="mobileBidTimerDisplay" class="hidden bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-200 mb-3">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-medium text-gray-600">Time Remaining</span>
+            <div id="mobileBidTimerDisplay" class="hidden bg-gradient-to-r from-green-50 to-blue-50 p-3 rounded-lg border border-green-200 mb-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-gray-600">Time Since Last Bid</span>
                     <div class="flex items-center gap-2">
-                        <div class="relative w-8 h-8">
-                            <svg class="transform -rotate-90 w-8 h-8">
-                                <circle cx="16" cy="16" r="14" stroke="#e5e7eb" stroke-width="3" fill="none"></circle>
-                                <circle id="mobileTimerCircle" cx="16" cy="16" r="14" stroke="#3b82f6" stroke-width="3" fill="none"
-                                        stroke-dasharray="88" stroke-dashoffset="0" class="transition-all duration-1000 ease-linear"></circle>
-                            </svg>
-                            <span id="mobileBidTimerValue" class="absolute inset-0 flex items-center justify-center text-sm font-bold text-blue-600">30</span>
-                        </div>
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span id="mobileBidTimerValue" class="text-sm font-bold text-green-600">00:00</span>
                     </div>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                    <div id="mobileBidTimerProgress" class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 ease-linear" style="width: 100%"></div>
                 </div>
             </div>
         `;
@@ -92,12 +81,11 @@ class BidTimer {
             // Store mobile timer elements
             if (!this.timerElement) {
                 this.timerElement = document.getElementById('mobileBidTimerValue');
-                this.progressElement = document.getElementById('mobileBidTimerProgress');
             }
         }
     }
     
-    startTimer(duration = null) {
+    startTimer() {
         // Create timer displays if they don't exist
         this.createDesktopTimer();
         this.createMobileTimer();
@@ -105,18 +93,14 @@ class BidTimer {
         // Clear existing timer if running
         this.stopTimer();
         
-        // Set duration if provided
-        if (duration !== null) {
-            this.timerDuration = duration;
-        }
-        
         this.startTime = Date.now();
+        this.elapsedSeconds = 0;
         this.isRunning = true;
         
         // Show timer displays
         this.showTimerDisplay();
         
-        // Start the countdown
+        // Start the incremental timer
         this.updateTimer();
         this.timerInterval = setInterval(() => this.updateTimer(), 1000);
     }
@@ -124,96 +108,36 @@ class BidTimer {
     updateTimer() {
         if (!this.isRunning) return;
         
-        const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
-        const remaining = Math.max(0, this.timerDuration - elapsed);
+        this.elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
         
         // Update all timer displays
-        this.updateDesktopTimer(remaining);
-        this.updateMobileTimer(remaining);
-        
-        // Check if timer expired
-        if (remaining === 0) {
-            this.onTimerExpired();
-        }
+        this.updateDesktopTimer(this.elapsedSeconds);
+        this.updateMobileTimer(this.elapsedSeconds);
     }
     
-    updateDesktopTimer(remaining) {
+    updateDesktopTimer(elapsedSeconds) {
         const desktopTimer = document.getElementById('bidTimerValue');
-        const desktopProgress = document.getElementById('bidTimerProgress');
         
         if (desktopTimer) {
-            desktopTimer.textContent = remaining;
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
-            // Update color based on time remaining
-            if (remaining <= 5) {
-                desktopTimer.className = 'text-2xl font-bold text-red-600 animate-pulse';
-            } else if (remaining <= 10) {
-                desktopTimer.className = 'text-2xl font-bold text-orange-600';
-            } else {
-                desktopTimer.className = 'text-2xl font-bold text-blue-600';
-            }
-        }
-        
-        if (desktopProgress) {
-            const percentage = (remaining / this.timerDuration) * 100;
-            desktopProgress.style.width = `${percentage}%`;
-            
-            // Update progress bar color
-            if (remaining <= 5) {
-                desktopProgress.className = 'h-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-1000 ease-linear';
-            } else if (remaining <= 10) {
-                desktopProgress.className = 'h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-1000 ease-linear';
-            } else {
-                desktopProgress.className = 'h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 ease-linear';
-            }
+            desktopTimer.textContent = timeString;
+            desktopTimer.className = 'text-xl font-bold text-green-600';
         }
     }
     
-    updateMobileTimer(remaining) {
+    updateMobileTimer(elapsedSeconds) {
         const mobileTimer = document.getElementById('mobileBidTimerValue');
-        const mobileProgress = document.getElementById('mobileBidTimerProgress');
-        const mobileCircle = document.getElementById('mobileTimerCircle');
         
         if (mobileTimer) {
-            mobileTimer.textContent = remaining;
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
-            // Update color based on time remaining
-            if (remaining <= 5) {
-                mobileTimer.className = 'absolute inset-0 flex items-center justify-center text-sm font-bold text-red-600 animate-pulse';
-            } else if (remaining <= 10) {
-                mobileTimer.className = 'absolute inset-0 flex items-center justify-center text-sm font-bold text-orange-600';
-            } else {
-                mobileTimer.className = 'absolute inset-0 flex items-center justify-center text-sm font-bold text-blue-600';
-            }
-        }
-        
-        if (mobileProgress) {
-            const percentage = (remaining / this.timerDuration) * 100;
-            mobileProgress.style.width = `${percentage}%`;
-            
-            // Update progress bar color
-            if (remaining <= 5) {
-                mobileProgress.className = 'h-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-1000 ease-linear';
-            } else if (remaining <= 10) {
-                mobileProgress.className = 'h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-1000 ease-linear';
-            } else {
-                mobileProgress.className = 'h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-1000 ease-linear';
-            }
-        }
-        
-        if (mobileCircle) {
-            const circumference = 88; // 2 * π * r where r = 14
-            const offset = circumference - (remaining / this.timerDuration) * circumference;
-            mobileCircle.style.strokeDashoffset = offset;
-            
-            // Update circle color
-            if (remaining <= 5) {
-                mobileCircle.setAttribute('stroke', '#dc2626');
-            } else if (remaining <= 10) {
-                mobileCircle.setAttribute('stroke', '#ea580c');
-            } else {
-                mobileCircle.setAttribute('stroke', '#3b82f6');
-            }
+            mobileTimer.textContent = timeString;
+            mobileTimer.className = 'text-sm font-bold text-green-600';
         }
     }
     
@@ -254,25 +178,6 @@ class BidTimer {
         }
     }
     
-    onTimerExpired() {
-        this.stopTimer();
-        
-        // Add visual/audio notification
-        if (window.ttsManager && window.ttsManager.enabled) {
-            window.ttsManager.speak('Bidding time expired!');
-        }
-        
-        // Flash the timer display
-        const desktopDisplay = document.getElementById('bidTimerDisplay');
-        const mobileDisplay = document.getElementById('mobileBidTimerDisplay');
-        
-        if (desktopDisplay) {
-            desktopDisplay.classList.add('animate-pulse', 'bg-red-50', 'border-red-300');
-        }
-        if (mobileDisplay) {
-            mobileDisplay.classList.add('animate-pulse', 'bg-red-50', 'border-red-300');
-        }
-    }
     
     setupSocketListeners() {
         // Wait for socket to be available
