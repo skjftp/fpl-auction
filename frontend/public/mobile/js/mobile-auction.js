@@ -433,13 +433,7 @@ class MobileAuctionManager {
             `;
         }
         
-        // Add Break button for admin
-        controlsHTML += `
-            <button onclick="mobileAuction.toggleBreak()" 
-                    style="background: #92400e; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; width: 100%;">
-                ☕ Toggle Break
-            </button>
-        `;
+        // Break button removed from mobile - available in admin panel on desktop
 
         adminControls.innerHTML = controlsHTML;
     }

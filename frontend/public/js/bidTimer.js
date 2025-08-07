@@ -13,22 +13,17 @@ class BidTimer {
     }
     
     initializeTimer() {
-        // Create timer display element for desktop
-        const auctionCard = document.querySelector('#currentAuctionCard');
-        if (auctionCard) {
-            this.createDesktopTimer(auctionCard);
-        }
-        
-        // Create timer display for mobile
-        const mobileAuction = document.querySelector('#currentAuction');
-        if (mobileAuction) {
-            this.createMobileTimer(mobileAuction);
-        }
+        // Timer will be created dynamically when auction starts
+        console.log('Bid timer initialized and ready');
     }
     
-    createDesktopTimer(container) {
+    createDesktopTimer() {
         // Check if timer already exists
-        if (document.getElementById('bidTimerDisplay')) return;
+        if (document.getElementById('bidTimerDisplay')) {
+            this.timerElement = document.getElementById('bidTimerValue');
+            this.progressElement = document.getElementById('bidTimerProgress');
+            return;
+        }
         
         const timerHTML = `
             <div id="bidTimerDisplay" class="hidden mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
@@ -42,18 +37,24 @@ class BidTimer {
             </div>
         `;
         
-        // Insert after auction details
-        const auctionDetails = container.querySelector('.space-y-2');
-        if (auctionDetails) {
-            auctionDetails.insertAdjacentHTML('afterend', timerHTML);
-            this.timerElement = document.getElementById('bidTimerValue');
-            this.progressElement = document.getElementById('bidTimerProgress');
+        // Find the container with auction details
+        const auctionContainer = document.getElementById('currentAuction');
+        if (auctionContainer) {
+            const auctionItem = auctionContainer.querySelector('.auction-item');
+            if (auctionItem) {
+                // Insert timer after the auction item
+                auctionItem.insertAdjacentHTML('afterend', timerHTML);
+                this.timerElement = document.getElementById('bidTimerValue');
+                this.progressElement = document.getElementById('bidTimerProgress');
+            }
         }
     }
     
-    createMobileTimer(container) {
+    createMobileTimer() {
         // Check if timer already exists
-        if (document.getElementById('mobileBidTimerDisplay')) return;
+        if (document.getElementById('mobileBidTimerDisplay')) {
+            return;
+        }
         
         const timerHTML = `
             <div id="mobileBidTimerDisplay" class="hidden bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-200 mb-3">
@@ -77,9 +78,11 @@ class BidTimer {
         `;
         
         // Insert at the top of auction card
-        const auctionContent = container.querySelector('.auction-details');
-        if (auctionContent) {
-            auctionContent.insertAdjacentHTML('beforebegin', timerHTML);
+        const auctionContainer = document.getElementById('currentAuction');
+        if (auctionContainer) {
+            const auctionDetails = auctionContainer.querySelector('.auction-details');
+            if (auctionDetails) {
+                auctionDetails.insertAdjacentHTML('beforebegin', timerHTML);
             
             // Store mobile timer elements
             if (!this.timerElement) {
@@ -90,6 +93,10 @@ class BidTimer {
     }
     
     startTimer(duration = null) {
+        // Create timer displays if they don't exist
+        this.createDesktopTimer();
+        this.createMobileTimer();
+        
         // Clear existing timer if running
         this.stopTimer();
         
