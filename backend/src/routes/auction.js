@@ -101,7 +101,7 @@ router.post('/start-player/:playerId', async (req, res) => {
     await collections.bidHistory.add({
       auction_id: auctionId,
       team_id: teamId,
-      bid_amount: 5,
+      bid_amount: 10,
       created_at: admin.firestore.FieldValue.serverTimestamp()
     });
     
@@ -130,7 +130,7 @@ router.post('/start-player/:playerId', async (req, res) => {
     const responseData = {
       id: auctionId,
       player,
-      currentBid: 5,
+      currentBid: 10,
       currentBidder: team,
       currentBidderId: teamId,
       status: 'active',
@@ -238,7 +238,7 @@ router.post('/start-club/:clubId', async (req, res) => {
     await collections.bidHistory.add({
       auction_id: auctionId,
       team_id: teamId,
-      bid_amount: 5,
+      bid_amount: 10,
       created_at: admin.firestore.FieldValue.serverTimestamp()
     });
     
@@ -259,7 +259,7 @@ router.post('/start-club/:clubId', async (req, res) => {
     const responseData = {
       id: auctionId,
       club,
-      currentBid: 5,
+      currentBid: 10,
       currentBidder: team,
       currentBidderId: teamId,
       status: 'active',

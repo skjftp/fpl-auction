@@ -80,9 +80,14 @@ class BidTimer {
         // Insert at the top of auction card
         const auctionContainer = document.getElementById('currentAuction');
         if (auctionContainer) {
-            const auctionDetails = auctionContainer.querySelector('.auction-details');
-            if (auctionDetails) {
-                auctionDetails.insertAdjacentHTML('beforebegin', timerHTML);
+            // Insert directly after the auction header
+            const auctionHeader = auctionContainer.querySelector('.auction-header');
+            if (auctionHeader) {
+                auctionHeader.insertAdjacentHTML('afterend', timerHTML);
+            } else {
+                // Fallback: insert at the beginning of the container
+                auctionContainer.insertAdjacentHTML('afterbegin', timerHTML);
+            }
             
             // Store mobile timer elements
             if (!this.timerElement) {
