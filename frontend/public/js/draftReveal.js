@@ -102,18 +102,21 @@ class DraftRevealAnimation {
         
         // Don't announce start - will announce with first team
         
-        // Start automatic drawing if initiator
-        if (this.isInitiator) {
-            this.startAutoDraw();
-        }
+        // Start automatic drawing
+        // If initiator, they control the timing
+        // If not initiator, start watching for draws
+        this.startAutoDraw();
     }
     
     async startAutoDraw() {
         // Wait a moment for everyone to see the modal
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Start drawing teams automatically
-        this.autoDrawNextTeam();
+        // Only the initiator starts drawing teams
+        // Others will receive the draws via socket events
+        if (this.isInitiator) {
+            this.autoDrawNextTeam();
+        }
     }
     
     async autoDrawNextTeam() {
@@ -177,12 +180,17 @@ class DraftRevealAnimation {
     createBalls(count) {
         this.ballContainer.innerHTML = '';
         
+        // Check if mobile
+        const isMobile = window.innerWidth < 768;
+        const maxLeft = isMobile ? 110 : 140;
+        const maxTop = isMobile ? 50 : 80;
+        
         // Create balls with random positions
         for (let i = 0; i < count; i++) {
             const ball = document.createElement('div');
             ball.className = 'draft-ball animate-bounce-ball';
-            ball.style.left = `${Math.random() * 80}px`;
-            ball.style.top = `${Math.random() * 80}px`;
+            ball.style.left = `${Math.random() * maxLeft}px`;
+            ball.style.top = `${Math.random() * maxTop}px`;
             ball.style.animationDelay = `${Math.random() * 2}s`;
             
             const span = document.createElement('span');
