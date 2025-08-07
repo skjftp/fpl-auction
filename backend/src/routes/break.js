@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate, isAdmin } = require('../middleware/auth');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 // In-memory break state (can be moved to database if needed)
 let breakState = {
@@ -10,7 +10,7 @@ let breakState = {
 };
 
 // Toggle break status (admin only)
-router.post('/toggle', authenticate, isAdmin, async (req, res) => {
+router.post('/toggle', authenticateToken, requireAdmin, async (req, res) => {
     try {
         breakState.isOnBreak = !breakState.isOnBreak;
         
@@ -37,7 +37,7 @@ router.post('/toggle', authenticate, isAdmin, async (req, res) => {
 });
 
 // End break (admin only)
-router.post('/end', authenticate, isAdmin, async (req, res) => {
+router.post('/end', authenticateToken, requireAdmin, async (req, res) => {
     try {
         breakState.isOnBreak = false;
         breakState.startedAt = null;
@@ -56,7 +56,7 @@ router.post('/end', authenticate, isAdmin, async (req, res) => {
 });
 
 // Get current break status
-router.get('/status', authenticate, async (req, res) => {
+router.get('/status', authenticateToken, async (req, res) => {
     try {
         res.json(breakState);
     } catch (error) {
