@@ -20,12 +20,11 @@ class BidTimer {
         // Check if timer already exists
         if (document.getElementById('bidTimerDisplay')) {
             this.timerElement = document.getElementById('bidTimerValue');
-            this.progressElement = document.getElementById('bidTimerProgress');
             return;
         }
         
         const timerHTML = `
-            <div id="bidTimerDisplay" class="hidden mt-3 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+            <div id="bidTimerDisplay" class="card p-4">
                 <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-gray-700">Time Since Last Bid</span>
                     <div class="flex items-center gap-2">
@@ -36,15 +35,11 @@ class BidTimer {
             </div>
         `;
         
-        // Find the container with auction details
-        const auctionContainer = document.getElementById('currentAuction');
-        if (auctionContainer) {
-            const auctionItem = auctionContainer.querySelector('.auction-item');
-            if (auctionItem) {
-                // Insert timer after the auction item
-                auctionItem.insertAdjacentHTML('afterend', timerHTML);
-                this.timerElement = document.getElementById('bidTimerValue');
-            }
+        // Find the dedicated timer section
+        const timerSection = document.getElementById('timerSection');
+        if (timerSection) {
+            timerSection.innerHTML = timerHTML;
+            this.timerElement = document.getElementById('bidTimerValue');
         }
     }
     
@@ -155,24 +150,28 @@ class BidTimer {
     }
     
     hideTimerDisplay() {
-        const desktopTimer = document.getElementById('bidTimerDisplay');
-        const mobileTimer = document.getElementById('mobileBidTimerDisplay');
-        
-        if (desktopTimer) {
-            desktopTimer.classList.add('hidden');
+        // Hide timer section on desktop
+        const timerSection = document.getElementById('timerSection');
+        if (timerSection) {
+            timerSection.classList.add('hidden');
         }
+        
+        // Hide mobile timer
+        const mobileTimer = document.getElementById('mobileBidTimerDisplay');
         if (mobileTimer) {
             mobileTimer.classList.add('hidden');
         }
     }
     
     showTimerDisplay() {
-        const desktopTimer = document.getElementById('bidTimerDisplay');
-        const mobileTimer = document.getElementById('mobileBidTimerDisplay');
-        
-        if (desktopTimer) {
-            desktopTimer.classList.remove('hidden');
+        // Show timer section on desktop
+        const timerSection = document.getElementById('timerSection');
+        if (timerSection) {
+            timerSection.classList.remove('hidden');
         }
+        
+        // Show mobile timer
+        const mobileTimer = document.getElementById('mobileBidTimerDisplay');
         if (mobileTimer) {
             mobileTimer.classList.remove('hidden');
         }

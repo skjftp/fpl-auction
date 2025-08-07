@@ -502,15 +502,15 @@ body {
 #auctionTab .fixed-bottom-chat {
     background: white;
     border: 1px solid #e5e7eb;
-    margin: 20px 12px calc(12px + env(safe-area-inset-bottom, 0)); /* Bottom margin accounts for safe area */
+    margin: 20px 12px calc(90px + env(safe-area-inset-bottom, 0)); /* Increased bottom margin for admin controls */
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     flex: 1; /* Take remaining space */
     display: flex;
     flex-direction: column;
-    min-height: 180px;
-    max-height: 300px; /* Limit max height */
+    min-height: 140px; /* Reduced to fit with admin controls */
+    max-height: 250px; /* Reduced to fit with admin controls */
 }
 
 .chat-messages-mini {
@@ -1805,7 +1805,7 @@ body {
     }
     
     #auctionTab .fixed-bottom-chat {
-        margin-bottom: calc(20px + env(safe-area-inset-bottom, 0)) !important;
+        margin-bottom: calc(100px + env(safe-area-inset-bottom, 0)) !important; /* Increased for admin controls */
     }
     
     #auctionTab .fixed-bottom-chat .chat-input-bar {
@@ -1829,7 +1829,7 @@ body {
     }
     
     #auctionTab .fixed-bottom-chat {
-        margin-bottom: calc(25px + env(safe-area-inset-bottom, 0)) !important; /* Ensure space above tabs */
+        margin-bottom: calc(110px + env(safe-area-inset-bottom, 0)) !important; /* Increased for admin controls */
     }
     
     /* Further limit chat messages on very small screens */
