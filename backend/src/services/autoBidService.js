@@ -185,11 +185,16 @@ class AutoBidService {
             // Get team's current squad (including the active draft)
             const draftId = await this.getActiveDraftId();
             
+            // Debug logging
+            console.log(`Querying squad for teamId: ${teamId} (type: ${typeof teamId}), draftId: ${draftId}`);
+            
             // Try both string and number formats for team_id
             let squadSnapshot = await collections.teamSquads
                 .where('team_id', '==', teamId)
                 .where('draft_id', '==', draftId)
                 .get();
+            
+            console.log(`First query (team_id == ${teamId}): found ${squadSnapshot.size} records`);
             
             // If no results, try with team_id as a number
             if (squadSnapshot.empty && typeof teamId === 'string') {
@@ -199,6 +204,23 @@ class AutoBidService {
                         .where('team_id', '==', teamIdNum)
                         .where('draft_id', '==', draftId)
                         .get();
+                    console.log(`Second query (team_id == ${teamIdNum}): found ${squadSnapshot.size} records`);
+                }
+            }
+            
+            // If still empty, try without draft_id filter to debug
+            if (squadSnapshot.empty) {
+                const allSquads = await collections.teamSquads
+                    .where('team_id', '==', teamId)
+                    .get();
+                console.log(`Query without draft filter (team_id == ${teamId}): found ${allSquads.size} records`);
+                
+                if (allSquads.size > 0) {
+                    console.log('Squad records exist but with different draft_id. Records:');
+                    allSquads.forEach(doc => {
+                        const data = doc.data();
+                        console.log(`  - draft_id: ${data.draft_id}, price: ${data.price_paid}`);
+                    });
                 }
             }
             
