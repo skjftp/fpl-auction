@@ -78,7 +78,8 @@ router.get('/state', async (req, res) => {
 router.post('/initialize', requireAdmin, async (req, res) => {
   try {
     await initializeDraftOrder();
-    req.io.emit('draft-initialized');
+    // Broadcast to all connected clients
+    req.io.to('auction-room').emit('draft-initialized');
     res.json({ success: true, message: 'Draft order initialized' });
   } catch (err) {
     console.error('Initialize draft error:', err);
@@ -90,7 +91,8 @@ router.post('/initialize', requireAdmin, async (req, res) => {
 router.post('/start', requireAdmin, async (req, res) => {
   try {
     await startDraft();
-    req.io.emit('draft-started');
+    // Broadcast to all connected clients
+    req.io.to('auction-room').emit('draft-started');
     res.json({ success: true, message: 'Draft started' });
   } catch (err) {
     console.error('Start draft error:', err);

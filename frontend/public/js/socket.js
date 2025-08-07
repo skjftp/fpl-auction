@@ -91,6 +91,35 @@ class SocketManager {
             showNotification(`Bid cancelled - Current bid: ${formatCurrencyPlain(data.newCurrentBid)} by ${data.newCurrentBidder}`, 'info');
         });
 
+        // Draft events
+        this.socket.on('draft-initialized', () => {
+            console.log('🎲 Draft order initialized (broadcast)');
+            
+            // Update draft state everywhere
+            if (window.draftManager) {
+                window.draftManager.loadDraftState();
+            }
+            if (window.auctionManager) {
+                window.auctionManager.loadDraftState();
+            }
+            
+            showNotification('Draft order has been initialized', 'success');
+        });
+
+        this.socket.on('draft-started', () => {
+            console.log('🚀 Draft started (broadcast)');
+            
+            // Update draft state everywhere
+            if (window.draftManager) {
+                window.draftManager.loadDraftState();
+            }
+            if (window.auctionManager) {
+                window.auctionManager.loadDraftState();
+            }
+            
+            showNotification('Draft has started!', 'success');
+        });
+
         // Draft turn advancement
         this.socket.on('draft-turn-advanced', (data) => {
             console.log('➡️ Draft turn advanced:', data);

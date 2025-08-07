@@ -56,20 +56,8 @@ class DraftManager {
         // Reset retry count on successful connection
         this.socketRetryCount = 0;
 
-        window.socketManager.socket.on('draft-initialized', () => {
-            console.log('🎲 Draft order initialized');
-            this.loadDraftState();
-        });
-
-        window.socketManager.socket.on('draft-started', () => {
-            console.log('🚀 Draft started');
-            this.loadDraftState();
-        });
-
-        window.socketManager.socket.on('draft-turn-advanced', (data) => {
-            console.log('➡️ Draft turn advanced', data);
-            this.loadDraftState();
-        });
+        // Note: Draft-related socket events are now handled in socket.js
+        // They will call loadDraftState() through the draftManager reference
 
         window.socketManager.socket.on('new-chat-message', (message) => {
             console.log('💬 New chat message', message);
