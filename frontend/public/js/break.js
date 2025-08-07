@@ -25,6 +25,12 @@ class BreakManager {
             }
         }
         
+        // Desktop toggle break button in Admin panel
+        const toggleBreakBtnAdmin = document.getElementById('toggleBreakBtnAdmin');
+        if (toggleBreakBtnAdmin) {
+            toggleBreakBtnAdmin.addEventListener('click', () => this.toggleBreak());
+        }
+        
         // Desktop end break button
         const endBreakBtn = document.getElementById('endBreakBtn');
         if (endBreakBtn) {
