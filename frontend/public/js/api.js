@@ -251,6 +251,10 @@ class API {
     async getActiveDraft() {
         return await this.request('/draft-management/active');
     }
+    
+    async getMaxAllowedBid() {
+        return await this.request('/autobid/max-allowed-bid');
+    }
 }
 
 // Global API instance

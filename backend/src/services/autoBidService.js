@@ -173,61 +173,60 @@ class AutoBidService {
 
     async calculateMaxAllowedBid(teamId, currentBudget) {
         try {
-            // Get team's current squad
+            // Get team's current squad (including the active draft)
+            const draftId = await this.getActiveDraftId();
             const squadSnapshot = await collections.teamSquads
                 .where('team_id', '==', teamId)
+                .where('draft_id', '==', draftId)
                 .get();
             
-            const squad = squadSnapshot.docs.map(doc => doc.data());
+            // Total slots = 15 players + 2 clubs = 17
+            const TOTAL_SLOTS = 17;
+            const currentSquadSize = squadSnapshot.size;
+            const remainingSlots = TOTAL_SLOTS - currentSquadSize;
             
-            // Count positions
-            const positions = {
-                GKP: 0,
-                DEF: 0,
-                MID: 0,
-                FWD: 0,
-                clubs: 0
-            };
+            console.log(`Team ${teamId}: Squad size ${currentSquadSize}, Remaining slots ${remainingSlots}, Budget ${currentBudget}`);
             
-            for (const item of squad) {
-                if (item.club_id) {
-                    positions.clubs++;
-                } else if (item.player_id) {
-                    const playerDoc = await collections.fplPlayers.doc(item.player_id.toString()).get();
-                    if (playerDoc.exists) {
-                        const player = playerDoc.data();
-                        positions[player.position]++;
-                    }
-                }
+            if (remainingSlots <= 0) {
+                // Squad is complete
+                return 0;
             }
             
-            // Calculate remaining slots
-            const requiredSlots = {
-                GKP: Math.max(0, 2 - positions.GKP),
-                DEF: Math.max(0, 5 - positions.DEF),
-                MID: Math.max(0, 5 - positions.MID),
-                FWD: Math.max(0, 3 - positions.FWD),
-                clubs: Math.max(0, 2 - positions.clubs)
-            };
-            
-            const totalRemainingSlots = requiredSlots.GKP + requiredSlots.DEF + 
-                                       requiredSlots.MID + requiredSlots.FWD + 
-                                       requiredSlots.clubs;
-            
-            if (totalRemainingSlots <= 1) {
+            if (remainingSlots === 1) {
                 // Last slot - can use full budget
                 return currentBudget;
             }
             
-            // Need to reserve minimum 5 for each remaining slot
-            const reserveAmount = (totalRemainingSlots - 1) * 5;
+            // Need to reserve minimum 5 for each remaining slot (after this purchase)
+            // So if we have 17 remaining slots and are buying 1, we need to reserve for 16
+            const slotsToReserveFor = remainingSlots - 1;
+            const reserveAmount = slotsToReserveFor * 5;
             const maxBid = currentBudget - reserveAmount;
+            
+            console.log(`Team ${teamId}: Max allowed bid = ${currentBudget} - (${slotsToReserveFor} * 5) = ${maxBid}`);
             
             return Math.max(0, maxBid);
         } catch (error) {
             console.error('Error calculating max allowed bid:', error);
             // Return conservative estimate if error
             return Math.floor(currentBudget * 0.5);
+        }
+    }
+    
+    async getActiveDraftId() {
+        try {
+            const draftStateDoc = await collections.draftState.doc('current').get();
+            if (draftStateDoc.exists) {
+                const draftState = draftStateDoc.data();
+                if (draftState.is_active && draftState.draft_id) {
+                    return draftState.draft_id;
+                }
+            }
+            // Return a default draft ID if no active draft
+            return 'default';
+        } catch (error) {
+            console.error('Error getting active draft ID:', error);
+            return 'default';
         }
     }
 

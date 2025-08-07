@@ -64,6 +64,38 @@ async function openAutoBidModal() {
     document.getElementById('autoBidModal').classList.remove('hidden');
     await loadPlayersForAutoBid();
     loadAutoBidConfig();
+    fetchAndDisplayMaxAllowedBid();
+}
+
+// Fetch and display max allowed bid
+async function fetchAndDisplayMaxAllowedBid() {
+    try {
+        const response = await api.getMaxAllowedBid();
+        if (response && response.maxAllowedBid !== undefined) {
+            // Display max allowed bid in modal header
+            const modalHeader = document.querySelector('#autoBidModal .text-xl.font-bold');
+            if (modalHeader) {
+                const existingInfo = document.getElementById('maxBidInfo');
+                if (existingInfo) {
+                    existingInfo.remove();
+                }
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.id = 'maxBidInfo';
+                infoDiv.className = 'text-sm font-normal text-red-600 mt-2';
+                infoDiv.innerHTML = `⚠️ Maximum allowed bid: <span class="font-bold">J${response.maxAllowedBid}m</span> (based on your budget and remaining slots)`;
+                modalHeader.parentNode.insertBefore(infoDiv, modalHeader.nextSibling);
+            }
+            
+            // Add validation to input fields
+            document.querySelectorAll('.player-max-bid').forEach(input => {
+                input.max = response.maxAllowedBid;
+                input.title = `Maximum allowed: J${response.maxAllowedBid}m`;
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching max allowed bid:', error);
+    }
 }
 
 // Close modal
@@ -204,14 +236,32 @@ function filterAutoBidPlayers() {
 
 // Save auto-bid configuration
 async function saveAutoBidConfig() {
+    // First get the max allowed bid for validation
+    let maxAllowedBid = null;
+    try {
+        const response = await api.getMaxAllowedBid();
+        maxAllowedBid = response.maxAllowedBid;
+    } catch (error) {
+        console.error('Error fetching max allowed bid:', error);
+    }
+    
     // Collect all player configurations
     const playerConfigs = {};
+    let hasInvalidBids = false;
+    const invalidPlayers = [];
     
     document.querySelectorAll('.player-max-bid').forEach(input => {
         const playerId = input.dataset.playerId;
         const maxBid = parseInt(input.value) || 0;
         
         if (maxBid > 0) {
+            // Check if bid exceeds max allowed
+            if (maxAllowedBid !== null && maxBid > maxAllowedBid) {
+                hasInvalidBids = true;
+                const playerName = input.closest('.player-config-item').querySelector('.font-medium').textContent;
+                invalidPlayers.push(`${playerName}: J${maxBid}m`);
+            }
+            
             playerConfigs[playerId] = {
                 maxBid,
                 neverSecondBidder: document.querySelector(`.player-never-second[data-player-id="${playerId}"]`).checked,
@@ -220,6 +270,12 @@ async function saveAutoBidConfig() {
             };
         }
     });
+    
+    // Show error if there are invalid bids
+    if (hasInvalidBids && maxAllowedBid !== null) {
+        showNotification(`Auto-bid amounts exceed maximum allowed bid of J${maxAllowedBid}m. Please adjust: ${invalidPlayers.join(', ')}`, 'error');
+        return;
+    }
 
     autoBidConfig.players = playerConfigs;
     
@@ -233,7 +289,11 @@ async function saveAutoBidConfig() {
         closeAutoBidModal();
     } catch (error) {
         console.error('Error saving auto-bid config:', error);
-        showNotification('Failed to save configuration', 'error');
+        if (error.response && error.response.data && error.response.data.maxAllowedBid) {
+            showNotification(`${error.response.data.error}`, 'error');
+        } else {
+            showNotification('Failed to save configuration', 'error');
+        }
     }
 }
 
