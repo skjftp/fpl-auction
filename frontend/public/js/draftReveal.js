@@ -5,7 +5,6 @@ class DraftRevealAnimation {
         this.ballContainer = document.getElementById('ballContainer');
         this.revealedTeams = document.getElementById('revealedTeams');
         this.drawBtn = document.getElementById('drawTeamBtn');
-        this.skipBtn = document.getElementById('skipRevealBtn');
         this.congratsOverlay = document.getElementById('congratsOverlay');
         
         this.teamsToReveal = [];
@@ -14,16 +13,71 @@ class DraftRevealAnimation {
         this.animationEnabled = true; // Can be toggled by admin
         this.isInitiator = false;
         
+        // Create drum roll audio element
+        this.drumRollAudio = this.createDrumRollAudio();
+        
         this.initializeEventListeners();
         this.setupSocketListeners();
     }
     
-    initializeEventListeners() {
-        // Draw button is hidden and not used in auto-draw mode
+    createDrumRollAudio() {
+        const audio = document.createElement('audio');
+        audio.id = 'drumRollSound';
+        // Use a free drum roll sound 
+        audio.src = 'https://www.soundjay.com/misc/sounds/drum-roll-1.wav';
+        audio.volume = 0.5;
         
-        if (this.skipBtn) {
-            this.skipBtn.addEventListener('click', () => this.skipAnimation());
-        }
+        // Fallback to a simple sound if the main one fails
+        audio.onerror = () => {
+            // Create a simple drum sound using Web Audio API as fallback
+            console.log('Using fallback drum sound');
+            this.createFallbackDrumSound();
+        };
+        
+        document.body.appendChild(audio);
+        return audio;
+    }
+    
+    createFallbackDrumSound() {
+        // Create a simple drum roll using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        this.playDrumRoll = () => {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 200;
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+            
+            // Repeat for drum roll effect
+            for(let i = 0; i < 8; i++) {
+                setTimeout(() => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.frequency.value = 150 + Math.random() * 100;
+                    osc.type = 'square';
+                    gain.gain.value = 0.1;
+                    osc.start();
+                    osc.stop(audioContext.currentTime + 0.1);
+                }, i * 250);
+            }
+        };
+    }
+    
+    initializeEventListeners() {
+        // No buttons to initialize anymore
     }
     
     // Start the reveal animation with draft order data
@@ -75,15 +129,19 @@ class DraftRevealAnimation {
     async autoDrawNextTeam() {
         if (this.revealedCount >= this.teamsToReveal.length) return;
         
+        console.log('Auto-drawing team', this.revealedCount + 1);
+        
         // Show drum roll effect
         await this.showDrumRoll();
         
         // Broadcast the draw event to all clients
         if (this.isInitiator && window.socketManager && window.socketManager.socket) {
             const position = this.revealedCount + 1;
+            const team = this.teamsToReveal[this.revealedCount];
+            console.log('Emitting draft-draw-team:', { position, team });
             window.socketManager.socket.emit('draft-draw-team', { 
                 position,
-                team: this.teamsToReveal[this.revealedCount]
+                team
             });
         }
     }
@@ -92,15 +150,41 @@ class DraftRevealAnimation {
         return new Promise(resolve => {
             // Add drum roll visual effect
             const bowl = document.querySelector('#draftBowl > div');
-            bowl.classList.add('animate-shake');
+            if (bowl) {
+                bowl.classList.add('animate-shake');
+            }
             
             // Create drum roll text
             const drumRollDiv = document.createElement('div');
             drumRollDiv.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold text-yellow-400 animate-pulse z-50';
             drumRollDiv.innerHTML = '🥁 DRUM ROLL 🥁';
-            this.modal.querySelector('.relative').appendChild(drumRollDiv);
+            const bowlContainer = document.getElementById('draftBowl');
+            if (bowlContainer) {
+                bowlContainer.appendChild(drumRollDiv);
+            }
             
-            // Play drum roll sound if TTS enabled
+            // Play drum roll sound
+            try {
+                if (this.playDrumRoll) {
+                    // Use fallback Web Audio API drum roll
+                    this.playDrumRoll();
+                } else {
+                    // Try to play the audio element
+                    this.drumRollAudio.currentTime = 0;
+                    this.drumRollAudio.play().catch(e => {
+                        console.log('Could not play drum roll:', e);
+                        // Try fallback
+                        this.createFallbackDrumSound();
+                        if (this.playDrumRoll) {
+                            this.playDrumRoll();
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log('Error playing drum roll:', e);
+            }
+            
+            // Play drum roll announcement if TTS enabled
             if (window.ttsManager && window.ttsManager.enabled) {
                 window.ttsManager.speak('Drum roll please!');
             }
@@ -108,7 +192,9 @@ class DraftRevealAnimation {
             // After 2 seconds, remove drum roll and resolve
             setTimeout(() => {
                 drumRollDiv.remove();
-                bowl.classList.remove('animate-shake');
+                if (bowl) {
+                    bowl.classList.remove('animate-shake');
+                }
                 resolve();
             }, 2000);
         });
@@ -386,30 +472,10 @@ class DraftRevealAnimation {
         });
     }
     
-    skipAnimation() {
-        if (this.teamsToReveal.length === 0) return;
-        
-        // Stop any ongoing animation
-        this.isAnimating = false;
-        this.isInitiator = false; // Stop auto-draw
-        
-        // Show all teams immediately
-        this.revealedTeams.innerHTML = '';
-        this.teamsToReveal.forEach((team, index) => {
-            this.addRevealedTeam(team, index + 1);
-        });
-        
-        this.revealedCount = this.teamsToReveal.length;
-        
-        // Complete immediately
-        this.completeReveal();
-    }
-    
     showInstantResults(draftOrder) {
         // Show results without animation
         this.modal.classList.remove('hidden');
         if (this.drawBtn) this.drawBtn.style.display = 'none';
-        if (this.skipBtn) this.skipBtn.style.display = 'none';
         
         this.revealedTeams.innerHTML = '';
         draftOrder.forEach((team, index) => {
