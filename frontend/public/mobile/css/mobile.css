@@ -1776,8 +1776,8 @@ body {
 /* Draft Ball Styles */
 .draft-ball {
     position: absolute;
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
     background: radial-gradient(circle at 30% 30%, #ffffff, #3b82f6);
     border-radius: 50%;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -1790,7 +1790,7 @@ body {
 .draft-ball span {
     color: #1e40af;
     font-weight: bold;
-    font-size: 14px;
+    font-size: 11px;
 }
 
 .draft-ball.picked {

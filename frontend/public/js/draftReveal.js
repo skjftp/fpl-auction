@@ -38,11 +38,25 @@ class DraftRevealAnimation {
         audio.src = 'uefa_champions_leagu.mp3';
         audio.volume = 0.3; // Lower volume for background music
         audio.loop = true; // Loop during the reveal
+        audio.setAttribute('playsinline', 'true'); // Important for iOS
+        audio.setAttribute('preload', 'auto');
         
         document.body.appendChild(audio);
         return audio;
     }
     
+    setupMobileAudioFallback() {
+        // Add a one-time touch handler to enable audio on mobile
+        const enableAudio = () => {
+            if (this.anthemAudio && this.anthemAudio.paused) {
+                this.anthemAudio.play().catch(e => console.log('Still cannot play audio:', e));
+            }
+            document.removeEventListener('touchstart', enableAudio);
+            document.removeEventListener('click', enableAudio);
+        };
+        document.addEventListener('touchstart', enableAudio, { once: true });
+        document.addEventListener('click', enableAudio, { once: true });
+    }
     
     initializeEventListeners() {
         // No buttons to initialize anymore
@@ -93,11 +107,23 @@ class DraftRevealAnimation {
         this.modal.classList.remove('hidden');
         
         // Start playing the Champions League anthem
+        // Mobile browsers need user interaction first, so add a play button or user gesture
         try {
             this.anthemAudio.currentTime = 0;
-            this.anthemAudio.play().catch(e => console.log('Could not play anthem:', e));
+            // Try to play with user gesture context (from the socket event that triggered this)
+            const playPromise = this.anthemAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('Anthem playing successfully');
+                }).catch(e => {
+                    console.log('Could not play anthem, trying with user interaction:', e);
+                    // For mobile, we'll add a silent user interaction handler
+                    this.setupMobileAudioFallback();
+                });
+            }
         } catch (e) {
             console.log('Error playing anthem:', e);
+            this.setupMobileAudioFallback();
         }
         
         // Don't announce start - will announce with first team
@@ -182,15 +208,17 @@ class DraftRevealAnimation {
         
         // Check if mobile
         const isMobile = window.innerWidth < 768;
-        const maxLeft = isMobile ? 110 : 140;
-        const maxTop = isMobile ? 50 : 80;
+        const maxLeft = isMobile ? 90 : 140;
+        const maxTop = isMobile ? 40 : 80;
+        const leftOffset = isMobile ? 20 : 10;
+        const topOffset = isMobile ? 15 : 10;
         
         // Create balls with random positions
         for (let i = 0; i < count; i++) {
             const ball = document.createElement('div');
             ball.className = 'draft-ball animate-bounce-ball';
-            ball.style.left = `${Math.random() * maxLeft}px`;
-            ball.style.top = `${Math.random() * maxTop}px`;
+            ball.style.left = `${leftOffset + Math.random() * maxLeft}px`;
+            ball.style.top = `${topOffset + Math.random() * maxTop}px`;
             ball.style.animationDelay = `${Math.random() * 2}s`;
             
             const span = document.createElement('span');
