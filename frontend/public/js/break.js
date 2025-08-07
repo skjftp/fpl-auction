@@ -47,9 +47,10 @@ class BreakManager {
     setupSocketListeners() {
         // Wait for socket to be available
         setTimeout(() => {
-            if (window.socketManager && window.socketManager.socket) {
+            const socket = window.socketManager?.socket || window.mobileSocket?.socket;
+            if (socket) {
                 // Listen for break status updates
-                window.socketManager.socket.on('break-status', (data) => {
+                socket.on('break-status', (data) => {
                     console.log('Break status received:', data);
                     if (data.isOnBreak) {
                         this.showBreakScreen();
@@ -68,16 +69,22 @@ class BreakManager {
     
     async toggleBreak() {
         try {
-            // Use the API instance
-            const response = await window.api.request('/break/toggle', {
+            // Use the API instance (desktop or mobile)
+            const api = window.api || window.mobileAPI;
+            if (!api) {
+                throw new Error('API not initialized');
+            }
+            
+            const response = await api.request('/break/toggle', {
                 method: 'POST'
             });
             
             console.log('Break toggled:', response);
             
             // Emit socket event to notify all clients
-            if (window.socketManager && window.socketManager.socket) {
-                window.socketManager.socket.emit('toggle-break', { 
+            const socket = window.socketManager?.socket || window.mobileSocket?.socket;
+            if (socket) {
+                socket.emit('toggle-break', { 
                     isOnBreak: response.isOnBreak 
                 });
             }
@@ -90,16 +97,22 @@ class BreakManager {
     
     async endBreak() {
         try {
-            // Use the API instance
-            const response = await window.api.request('/break/end', {
+            // Use the API instance (desktop or mobile)
+            const api = window.api || window.mobileAPI;
+            if (!api) {
+                throw new Error('API not initialized');
+            }
+            
+            const response = await api.request('/break/end', {
                 method: 'POST'
             });
             
             console.log('Break ended:', response);
             
             // Emit socket event to notify all clients
-            if (window.socketManager && window.socketManager.socket) {
-                window.socketManager.socket.emit('toggle-break', { 
+            const socket = window.socketManager?.socket || window.mobileSocket?.socket;
+            if (socket) {
+                socket.emit('toggle-break', { 
                     isOnBreak: false 
                 });
             }
@@ -117,7 +130,11 @@ class BreakManager {
             breakScreen.classList.remove('hidden');
             
             // Show end break button for admin
-            const currentUser = window.app?.currentUser || window.mobileAPI?.getCurrentUser();
+            let currentUser = window.app?.currentUser;
+            if (!currentUser && window.mobileAPI?.getCurrentUser) {
+                currentUser = window.mobileAPI.getCurrentUser();
+            }
+            
             if (currentUser?.is_admin) {
                 const endBreakBtn = document.getElementById('endBreakBtn') || 
                                    document.getElementById('endBreakBtnMobile');
@@ -129,7 +146,12 @@ class BreakManager {
     }
     
     updateAdminVisibility() {
-        const currentUser = window.app?.currentUser || window.mobileAPI?.getCurrentUser();
+        // Get current user from desktop or mobile app
+        let currentUser = window.app?.currentUser;
+        if (!currentUser && window.mobileAPI?.getCurrentUser) {
+            currentUser = window.mobileAPI.getCurrentUser();
+        }
+        
         const toggleBreakBtnAuction = document.getElementById('toggleBreakBtnAuction');
         
         if (toggleBreakBtnAuction) {
