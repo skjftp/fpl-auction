@@ -184,17 +184,30 @@ class AutoBidService {
         try {
             // Get team's current squad (including the active draft)
             const draftId = await this.getActiveDraftId();
-            const squadSnapshot = await collections.teamSquads
+            
+            // Try both string and number formats for team_id
+            let squadSnapshot = await collections.teamSquads
                 .where('team_id', '==', teamId)
                 .where('draft_id', '==', draftId)
                 .get();
+            
+            // If no results, try with team_id as a number
+            if (squadSnapshot.empty && typeof teamId === 'string') {
+                const teamIdNum = parseInt(teamId);
+                if (!isNaN(teamIdNum)) {
+                    squadSnapshot = await collections.teamSquads
+                        .where('team_id', '==', teamIdNum)
+                        .where('draft_id', '==', draftId)
+                        .get();
+                }
+            }
             
             // Total slots = 15 players + 2 clubs = 17
             const TOTAL_SLOTS = 17;
             const currentSquadSize = squadSnapshot.size;
             const remainingSlots = TOTAL_SLOTS - currentSquadSize;
             
-            console.log(`Team ${teamId}: Squad size ${currentSquadSize}, Remaining slots ${remainingSlots}, Budget ${currentBudget}`);
+            console.log(`Team ${teamId} (draft: ${draftId}): Squad size ${currentSquadSize}, Remaining slots ${remainingSlots}, Budget ${currentBudget}`);
             
             if (remainingSlots <= 0) {
                 // Squad is complete
