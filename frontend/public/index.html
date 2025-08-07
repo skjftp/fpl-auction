@@ -480,22 +480,28 @@
                         </button>
                     </div>
                     
-                    <!-- Auto-Bid Controls -->
-                    <div class="card p-2">
-                        <div class="flex items-center space-x-3">
-                            <label class="flex items-center cursor-pointer">
-                                <input type="checkbox" id="autoBidToggle" class="mr-2 h-4 w-4 text-emerald-600 rounded">
-                                <span class="text-sm font-medium text-gray-700">Auto-Bid</span>
-                            </label>
-                            <button id="autoBidConfigBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
-                                Config
-                            </button>
-                            <div id="autoBidStatus" class="hidden">
-                                <span class="animate-pulse bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-medium">
-                                    🤖 Active
-                                </span>
+                    <!-- Auto-Bid Controls and Admin Break Button -->
+                    <div class="flex items-center space-x-2">
+                        <div class="card p-2">
+                            <div class="flex items-center space-x-3">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" id="autoBidToggle" class="mr-2 h-4 w-4 text-emerald-600 rounded">
+                                    <span class="text-sm font-medium text-gray-700">Auto-Bid</span>
+                                </label>
+                                <button id="autoBidConfigBtn" class="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded transition-colors">
+                                    Config
+                                </button>
+                                <div id="autoBidStatus" class="hidden">
+                                    <span class="animate-pulse bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                                        🤖 Active
+                                    </span>
+                                </div>
                             </div>
                         </div>
+                        <!-- Break Button for Admin -->
+                        <button id="toggleBreakBtnAuction" class="hidden bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg font-medium text-sm transition-colors">
+                            ☕ Break
+                        </button>
                     </div>
                 </div>
                 

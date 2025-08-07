@@ -227,6 +227,11 @@ class App {
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('navbar').classList.remove('hidden');
         
+        // Update break button visibility for admins
+        if (window.breakManager) {
+            window.breakManager.updateAdminVisibility();
+        }
+        
         // Show admin tab if user is admin
         const adminTab = document.querySelector('[data-tab="admin"]');
         const adminTabNav = document.querySelector('.nav-item[data-tab="admin"]');

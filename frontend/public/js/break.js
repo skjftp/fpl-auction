@@ -7,10 +7,22 @@ class BreakManager {
     }
     
     initializeEventListeners() {
-        // Desktop toggle break button
+        // Desktop toggle break button in Draft tab
         const toggleBreakBtn = document.getElementById('toggleBreakBtn');
         if (toggleBreakBtn) {
             toggleBreakBtn.addEventListener('click', () => this.toggleBreak());
+        }
+        
+        // Desktop toggle break button in Auction tab
+        const toggleBreakBtnAuction = document.getElementById('toggleBreakBtnAuction');
+        if (toggleBreakBtnAuction) {
+            toggleBreakBtnAuction.addEventListener('click', () => this.toggleBreak());
+            
+            // Show button for admins
+            const currentUser = window.app?.currentUser;
+            if (currentUser?.is_admin) {
+                toggleBreakBtnAuction.classList.remove('hidden');
+            }
         }
         
         // Desktop end break button
@@ -121,6 +133,19 @@ class BreakManager {
                 if (endBreakBtn) {
                     endBreakBtn.classList.remove('hidden');
                 }
+            }
+        }
+    }
+    
+    updateAdminVisibility() {
+        const currentUser = window.app?.currentUser || window.mobileAPI?.getCurrentUser();
+        const toggleBreakBtnAuction = document.getElementById('toggleBreakBtnAuction');
+        
+        if (toggleBreakBtnAuction) {
+            if (currentUser?.is_admin) {
+                toggleBreakBtnAuction.classList.remove('hidden');
+            } else {
+                toggleBreakBtnAuction.classList.add('hidden');
             }
         }
     }
