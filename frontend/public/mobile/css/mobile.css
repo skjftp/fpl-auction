@@ -1714,6 +1714,90 @@ body {
     50% { opacity: 0.7; }
 }
 
+/* Draft Reveal Animations */
+@keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+}
+
+@keyframes scale-up {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
+}
+
+@keyframes float-up {
+    0% { 
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% { 
+        transform: translateY(-200px) scale(1.5);
+        opacity: 0;
+    }
+}
+
+@keyframes bounce-ball {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.animate-shimmer {
+    background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.2) 50%, transparent 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+.animate-shake {
+    animation: shake 0.5s infinite;
+}
+
+.animate-scale-up {
+    animation: scale-up 0.3s ease-out forwards;
+}
+
+.animate-float-up {
+    animation: float-up 2s ease-out forwards;
+}
+
+.animate-bounce-ball {
+    animation: bounce-ball 2s ease-in-out infinite;
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Draft Ball Styles */
+.draft-ball {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #3b82f6);
+    border-radius: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.draft-ball span {
+    color: #1e40af;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.draft-ball.picked {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
 /* Small Screen Support (iPhone SE and similar) */
 @media (max-height: 667px) {
     .tab-content {

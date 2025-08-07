@@ -274,6 +274,7 @@ router.post('/chat', async (req, res) => {
       id: messageRef.id,
       message: message.trim(),
       created_at: new Date().toISOString(),
+      team_id: teamId,
       team_name: team.name,
       username: team.username
     };
