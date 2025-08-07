@@ -117,6 +117,18 @@ class MobileSocketManager {
                 window.draftRevealAnimation.drawTeam(data.position, data.team);
             }
         });
+
+        // Draft reset event
+        this.socket.on('draft-reset', (data) => {
+            console.log('🔄 Mobile: Draft reset:', data);
+            if (window.mobileApp) {
+                window.mobileApp.showToast(data.message || 'Draft has been reset', 'warning');
+                // Reload the page after a short delay to refresh all data
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        });
     }
 
     disconnect() {
