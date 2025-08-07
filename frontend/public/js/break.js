@@ -68,25 +68,17 @@ class BreakManager {
     
     async toggleBreak() {
         try {
-            const response = await fetch(`${window.API_BASE_URL}/api/break/toggle`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+            // Use the API instance
+            const response = await window.api.request('/break/toggle', {
+                method: 'POST'
             });
             
-            if (!response.ok) {
-                throw new Error('Failed to toggle break');
-            }
-            
-            const result = await response.json();
-            console.log('Break toggled:', result);
+            console.log('Break toggled:', response);
             
             // Emit socket event to notify all clients
             if (window.socketManager && window.socketManager.socket) {
                 window.socketManager.socket.emit('toggle-break', { 
-                    isOnBreak: result.isOnBreak 
+                    isOnBreak: response.isOnBreak 
                 });
             }
             
@@ -98,19 +90,12 @@ class BreakManager {
     
     async endBreak() {
         try {
-            const response = await fetch(`${window.API_BASE_URL}/api/break/end`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+            // Use the API instance
+            const response = await window.api.request('/break/end', {
+                method: 'POST'
             });
             
-            if (!response.ok) {
-                throw new Error('Failed to end break');
-            }
-            
-            console.log('Break ended');
+            console.log('Break ended:', response);
             
             // Emit socket event to notify all clients
             if (window.socketManager && window.socketManager.socket) {
