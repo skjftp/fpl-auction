@@ -878,6 +878,18 @@ class MobileApp {
         const wasScrolledToBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 5;
 
         container.innerHTML = messagesToShow.map(msg => {
+            // Handle system messages
+            if (msg.isSystem) {
+                const color = msg.systemType === 'connect' ? '#10b981' : msg.systemType === 'disconnect' ? '#ef4444' : '#6b7280';
+                const arrow = msg.systemType === 'connect' ? '→' : msg.systemType === 'disconnect' ? '←' : '';
+                return `
+                    <div style="text-align: center; padding: 4px 0;">
+                        <span style="color: ${color}; font-size: 11px; font-weight: 500;">
+                            ${arrow} ${this.escapeHtml(msg.message || '')}
+                        </span>
+                    </div>
+                `;
+            }
             let timeString = 'Now';
             try {
                 if (msg.created_at) {
@@ -966,6 +978,15 @@ class MobileApp {
             if (this.currentTab === 'auction') {
                 this.renderChatMessagesMini();
             }
+        }
+    }
+
+    addSystemChatMessage(message) {
+        // Add system message without duplicate check
+        this.chatMessages.push(message);
+        // Update mini chat at bottom if on auction tab
+        if (this.currentTab === 'auction') {
+            this.renderChatMessagesMini();
         }
     }
 

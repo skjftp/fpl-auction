@@ -93,6 +93,30 @@ class MobileSocketManager {
             console.error('Socket error:', error);
             window.mobileApp.showToast('Connection error', 'error');
         });
+
+        // Team connection events for chat
+        this.socket.on('team-connected', (data) => {
+            console.log('🟢 Mobile: Team connected:', data.teamName);
+            this.addSystemMessageToChat(`${data.teamName} connected`, 'connect');
+        });
+        
+        this.socket.on('team-disconnected', (data) => {
+            console.log('🔴 Mobile: Team disconnected:', data.teamName);
+            this.addSystemMessageToChat(`${data.teamName} disconnected`, 'disconnect');
+        });
+
+        // Draft reveal events
+        this.socket.on('draft-initialized', (data) => {
+            console.log('🎲 Mobile: Draft order initialized', data);
+            this.handleDraftInitialized(data);
+        });
+
+        this.socket.on('draft-team-drawn', (data) => {
+            console.log('🎰 Mobile: Team drawn event received:', data);
+            if (window.draftRevealAnimation) {
+                window.draftRevealAnimation.drawTeam(data.position, data.team);
+            }
+        });
     }
 
     disconnect() {
@@ -124,7 +148,11 @@ class MobileSocketManager {
         const team = window.mobileAPI.getCurrentUser();
         console.log('🔍 Mobile: Attempting to join auction room, team:', team);
         if (team && team.id && this.socket) {
-            this.socket.emit('join-auction', team.id);
+            // Send both teamId and teamName for proper identification
+            this.socket.emit('join-auction', {
+                teamId: team.id,
+                teamName: team.name || `Team ${team.id}`
+            });
             console.log(`👥 Mobile: Joined auction room as ${team.name || 'Team' + team.id}`);
         } else {
             console.warn('⚠️ Mobile: Cannot join auction room - missing team data or socket:', { team, socketConnected: !!this.socket });
@@ -320,6 +348,39 @@ class MobileSocketManager {
     vibrate(pattern) {
         if ('vibrate' in navigator) {
             navigator.vibrate(pattern);
+        }
+    }
+
+    addSystemMessageToChat(message, type) {
+        if (!window.mobileApp) return;
+        
+        // Create a system message object
+        const systemMessage = {
+            team_name: 'System',
+            message: message,
+            created_at: new Date().toISOString(),
+            isSystem: true,
+            systemType: type
+        };
+        
+        // Add to chat messages
+        window.mobileApp.addSystemChatMessage(systemMessage);
+    }
+
+    handleDraftInitialized(data) {
+        // Check if animation is enabled
+        const animationEnabled = localStorage.getItem('draftRevealAnimation') !== 'false';
+        
+        if (data && data.draft_order && window.draftRevealAnimation && animationEnabled) {
+            // Show the reveal animation for mobile users (not initiator)
+            window.draftRevealAnimation.startReveal(data.draft_order, animationEnabled, false);
+        } else {
+            // Update draft state without animation
+            if (window.mobileApp) {
+                window.mobileApp.loadDraftState();
+            }
+            
+            window.mobileApp.showToast('Draft order has been initialized', 'success');
         }
     }
 }

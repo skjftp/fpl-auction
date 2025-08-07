@@ -343,10 +343,55 @@
         </div>
     </div>
 
+    <!-- Draft Reveal Modal -->
+    <div id="draftRevealModal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-[70] flex items-center justify-center">
+        <div class="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 rounded-xl p-4 w-11/12 max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-white mb-2 animate-shimmer">
+                    ⚽ Draft Order Reveal ⚽
+                </h2>
+                <p class="text-blue-200">Champions League Style Draw</p>
+            </div>
+            
+            <!-- Bowl Container -->
+            <div id="draftBowl" class="relative h-32 mb-6">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-48 h-24 bg-gradient-to-t from-gray-800 to-gray-600 rounded-b-full shadow-2xl relative overflow-hidden">
+                        <div id="ballContainer" class="absolute inset-0"></div>
+                    </div>
+                </div>
+                <!-- Picked Ball Animation -->
+                <div id="pickedBall" class="hidden absolute w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center z-50">
+                    <span class="text-xl font-bold text-blue-900"></span>
+                </div>
+            </div>
+            
+            <!-- Draw Button (hidden for auto-draw) -->
+            <button id="drawTeamBtn" class="hidden mx-auto mb-6 px-8 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2">
+                <span>Draw Team</span>
+                🎲
+            </button>
+            
+            <!-- Revealed Teams List -->
+            <div id="revealedTeams" class="space-y-2 max-h-64 overflow-y-auto"></div>
+        </div>
+        
+        <!-- Congratulations Overlay -->
+        <div id="congratsOverlay" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[75] flex items-center justify-center">
+            <div class="text-center text-white transform scale-0">
+                <div class="text-6xl mb-4">🎉</div>
+                <h3 id="congratsTeamName" class="text-3xl font-bold mb-2"></h3>
+                <p id="congratsPosition" class="text-xl mb-2"></p>
+                <p id="congratsMessage" class="text-lg opacity-90"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="mobile/js/mobile-api.js"></script>
     <script src="js/tts.js"></script>
+    <script src="js/draftReveal.js"></script>
     <script src="mobile/js/mobile-socket.js"></script>
     <script src="mobile/js/mobile-currency.js"></script>
     <script src="mobile/js/mobile-auction.js"></script>
