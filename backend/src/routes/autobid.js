@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { collections } = require('../models/database');
 const admin = require('firebase-admin');
+const { getActiveDraftId } = require('../utils/draft');
 
 // Get auto-bid configuration for the authenticated team
 router.get('/config', authenticateToken, async (req, res) => {
@@ -39,15 +40,8 @@ async function calculateMaxAllowedBid(teamId) {
         const team = teamQuery.docs[0].data();
         const currentBudget = team.budget || 0;
         
-        // Get active draft ID
-        const draftStateDoc = await collections.draftState.doc('current').get();
-        let draftId = 'default';
-        if (draftStateDoc.exists) {
-            const draftState = draftStateDoc.data();
-            if (draftState.is_active && draftState.draft_id) {
-                draftId = draftState.draft_id;
-            }
-        }
+        // Get active draft ID using the shared function
+        const draftId = await getActiveDraftId();
         
         // Try both string and number formats for team_id
         let squadSnapshot = await collections.teamSquads

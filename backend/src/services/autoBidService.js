@@ -1,5 +1,6 @@
 const { collections, canTeamAcquirePlayer } = require('../models/database');
 const admin = require('firebase-admin');
+const { getActiveDraftId } = require('../utils/draft');
 
 class AutoBidService {
     constructor(io) {
@@ -183,7 +184,7 @@ class AutoBidService {
     async calculateMaxAllowedBid(teamId, currentBudget) {
         try {
             // Get team's current squad (including the active draft)
-            const draftId = await this.getActiveDraftId();
+            const draftId = await getActiveDraftId(); // Use the shared function from utils/draft
             
             // Debug logging
             console.log(`Querying squad for teamId: ${teamId} (type: ${typeof teamId}), draftId: ${draftId}`);
@@ -254,23 +255,6 @@ class AutoBidService {
             console.error('Error calculating max allowed bid:', error);
             // Return conservative estimate if error
             return Math.floor(currentBudget * 0.5);
-        }
-    }
-    
-    async getActiveDraftId() {
-        try {
-            const draftStateDoc = await collections.draftState.doc('current').get();
-            if (draftStateDoc.exists) {
-                const draftState = draftStateDoc.data();
-                if (draftState.is_active && draftState.draft_id) {
-                    return draftState.draft_id;
-                }
-            }
-            // Return a default draft ID if no active draft
-            return 'default';
-        } catch (error) {
-            console.error('Error getting active draft ID:', error);
-            return 'default';
         }
     }
 
