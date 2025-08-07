@@ -204,6 +204,98 @@
                 right: 20px;
             }
         }
+        
+        /* Draft Reveal Animations */
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes scale-up {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+        
+        @keyframes float-up {
+            0% { 
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(-300px) scale(1.5);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        
+        @keyframes bounce-ball {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-5px) rotate(90deg); }
+            50% { transform: translateY(0) rotate(180deg); }
+            75% { transform: translateY(-5px) rotate(270deg); }
+        }
+        
+        .animate-shimmer {
+            animation: shimmer 2s linear infinite;
+        }
+        
+        .animate-spin-slow {
+            animation: spin-slow 2s linear infinite;
+        }
+        
+        .animate-scale-up {
+            animation: scale-up 0.5s ease-out forwards;
+        }
+        
+        .animate-float-up {
+            animation: float-up 2s ease-out forwards;
+        }
+        
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        .animate-bounce-ball {
+            animation: bounce-ball 1s ease-in-out infinite;
+        }
+        
+        /* Ball styles */
+        .draft-ball {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .draft-ball:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+        }
+        
+        .draft-ball span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen pb-16">
@@ -566,6 +658,23 @@
                 <div class="card p-6">
                     <h3 class="text-xl font-bold mb-6 text-gray-900">⚙️ Admin Panel</h3>
                     
+                    <!-- Draft Animation Settings -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900">🎯 Draft Settings</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <div>
+                                    <label class="font-medium text-gray-700">Draft Reveal Animation</label>
+                                    <p class="text-sm text-gray-500">Enable Champions League style animation for draft order reveal</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="draftAnimationToggle" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Admin Management -->
                     <div class="mb-8">
                         <h4 class="text-lg font-semibold mb-4 text-gray-900">Admin Access Management</h4>
@@ -757,10 +866,81 @@
         </div>
     </div>
 
+    <!-- Draft Reveal Animation Modal -->
+    <div id="draftRevealModal" class="modal hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] overflow-hidden">
+            <!-- Header -->
+            <div class="text-center py-6 bg-black bg-opacity-30">
+                <h2 class="text-4xl font-bold text-white mb-2">⚡ DRAFT ORDER REVEAL ⚡</h2>
+                <p class="text-xl text-yellow-300 animate-pulse">The moment of truth has arrived!</p>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="flex h-[calc(100%-120px)] p-8">
+                <!-- Bowl Animation Side -->
+                <div class="w-1/2 flex flex-col items-center justify-center relative">
+                    <div id="draftBowl" class="relative">
+                        <!-- Bowl Container -->
+                        <div class="w-64 h-64 rounded-full bg-gradient-to-b from-yellow-600 to-yellow-800 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                            <!-- Shimmer Effect -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-shimmer"></div>
+                            <!-- Inner Bowl -->
+                            <div class="w-56 h-56 rounded-full bg-gradient-to-b from-yellow-700 to-yellow-900 shadow-inner flex items-center justify-center">
+                                <!-- Ball Container -->
+                                <div id="ballContainer" class="relative">
+                                    <!-- Balls will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Draw Button -->
+                        <button id="drawTeamBtn" class="mt-8 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-xl rounded-full shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 animate-bounce">
+                            🎲 DRAW TEAM
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Results Side -->
+                <div class="w-1/2 pl-8">
+                    <div class="bg-black bg-opacity-40 rounded-xl p-6 h-full">
+                        <h3 class="text-2xl font-bold text-white mb-4">Draft Order</h3>
+                        <div id="revealedTeams" class="space-y-3 overflow-y-auto max-h-[calc(100%-60px)]">
+                            <!-- Teams will be revealed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Skip Button (for admin) -->
+            <button id="skipRevealBtn" class="absolute top-4 right-4 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 text-sm">
+                Skip Animation
+            </button>
+        </div>
+    </div>
+    
+    <!-- Picked Ball Animation -->
+    <div id="pickedBall" class="hidden fixed z-[60] pointer-events-none">
+        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-white to-gray-300 shadow-2xl flex items-center justify-center animate-spin-slow">
+            <span class="text-2xl font-bold text-gray-800"></span>
+        </div>
+    </div>
+    
+    <!-- Congratulatory Message Overlay -->
+    <div id="congratsOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
+        <div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-8 shadow-2xl transform scale-0 animate-scale-up max-w-2xl">
+            <div class="text-center">
+                <div class="text-6xl mb-4">🎉</div>
+                <h3 id="congratsTeamName" class="text-3xl font-bold text-white mb-2"></h3>
+                <p id="congratsMessage" class="text-xl text-white mb-4"></p>
+                <div id="congratsPosition" class="text-5xl font-bold text-white animate-pulse"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/api.js"></script>
     <script src="js/tts.js"></script>
     <script src="js/socket.js"></script>
+    <script src="js/draftReveal.js"></script>
     <script src="js/draft.js"></script>
     <script src="js/auction.js"></script>
     <script src="js/team.js"></script>
@@ -778,6 +958,20 @@
             const clubsTabBtn = document.getElementById('clubsTabBtn');
             const playersSection = document.getElementById('playersSection');
             const clubsSection = document.getElementById('clubsSection');
+            
+            // Draft animation toggle
+            const draftAnimationToggle = document.getElementById('draftAnimationToggle');
+            if (draftAnimationToggle) {
+                // Load saved preference
+                const animationEnabled = localStorage.getItem('draftRevealAnimation') !== 'false';
+                draftAnimationToggle.checked = animationEnabled;
+                
+                // Handle toggle change
+                draftAnimationToggle.addEventListener('change', function() {
+                    localStorage.setItem('draftRevealAnimation', this.checked ? 'true' : 'false');
+                    showNotification(`Draft animation ${this.checked ? 'enabled' : 'disabled'}`, 'info');
+                });
+            }
             
             // Draft order modal controls
             const draftOrderInfoBtn = document.getElementById('draftOrderInfoBtn');

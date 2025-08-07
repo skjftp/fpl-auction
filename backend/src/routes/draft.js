@@ -78,9 +78,41 @@ router.get('/state', async (req, res) => {
 router.post('/initialize', requireAdmin, async (req, res) => {
   try {
     await initializeDraftOrder();
-    // Broadcast to all connected clients
-    req.io.to('auction-room').emit('draft-initialized');
-    res.json({ success: true, message: 'Draft order initialized' });
+    
+    // Get the draft order to return and broadcast
+    const draftOrderSnapshot = await collections.draftOrder
+      .orderBy('position', 'asc')
+      .get();
+    
+    const draft_order = [];
+    for (const doc of draftOrderSnapshot.docs) {
+      const orderItem = doc.data();
+      
+      // Get team details
+      const teamQuery = await collections.teams
+        .where('id', '==', orderItem.team_id)
+        .limit(1)
+        .get();
+      
+      if (!teamQuery.empty) {
+        const team = teamQuery.docs[0].data();
+        draft_order.push({
+          position: orderItem.position,
+          team_id: orderItem.team_id,
+          name: team.name,
+          username: team.username
+        });
+      }
+    }
+    
+    // Broadcast to all connected clients with draft order
+    req.io.to('auction-room').emit('draft-initialized', { draft_order });
+    
+    res.json({ 
+      success: true, 
+      message: 'Draft order initialized',
+      draft_order 
+    });
   } catch (err) {
     console.error('Initialize draft error:', err);
     res.status(500).json({ error: 'Failed to initialize draft' });

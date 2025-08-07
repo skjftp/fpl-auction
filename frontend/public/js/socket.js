@@ -92,18 +92,26 @@ class SocketManager {
         });
 
         // Draft events
-        this.socket.on('draft-initialized', () => {
-            console.log('🎲 Draft order initialized (broadcast)');
+        this.socket.on('draft-initialized', (data) => {
+            console.log('🎲 Draft order initialized (broadcast)', data);
             
-            // Update draft state everywhere
-            if (window.draftManager) {
-                window.draftManager.loadDraftState();
-            }
-            if (window.auctionManager) {
-                window.auctionManager.loadDraftState();
-            }
+            // Check if animation is enabled and we have draft order data
+            const animationEnabled = localStorage.getItem('draftRevealAnimation') !== 'false';
             
-            showNotification('Draft order has been initialized', 'success');
+            if (data && data.draft_order && window.draftRevealAnimation) {
+                // Show the reveal animation for all users
+                window.draftRevealAnimation.startReveal(data.draft_order, animationEnabled);
+            } else {
+                // Update draft state everywhere without animation
+                if (window.draftManager) {
+                    window.draftManager.loadDraftState();
+                }
+                if (window.auctionManager) {
+                    window.auctionManager.loadDraftState();
+                }
+                
+                showNotification('Draft order has been initialized', 'success');
+            }
         });
 
         this.socket.on('draft-started', () => {

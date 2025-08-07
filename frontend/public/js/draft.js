@@ -251,12 +251,30 @@ class DraftManager {
 
     async initializeDraft() {
         try {
-            await window.api.initializeDraft();
-            this.showNotification('Draft order initialized!', 'success');
+            // Check if animation is enabled (stored in localStorage for admin preference)
+            const animationEnabled = localStorage.getItem('draftRevealAnimation') !== 'false';
+            
+            const result = await window.api.initializeDraft();
+            
+            // If we have the draft order and animation is available, show it
+            if (result && result.draft_order && window.draftRevealAnimation) {
+                // Start the reveal animation
+                window.draftRevealAnimation.startReveal(result.draft_order, animationEnabled);
+            } else {
+                this.showNotification('Draft order initialized!', 'success');
+                // Reload draft state immediately if no animation
+                await this.loadDraftState();
+            }
         } catch (error) {
             console.error('Error initializing draft:', error);
             this.showNotification('Failed to initialize draft', 'error');
         }
+    }
+    
+    // Called when reveal animation completes
+    onRevealComplete() {
+        this.showNotification('Draft order revealed! Ready to start!', 'success');
+        this.loadDraftState();
     }
 
     async startDraft() {
