@@ -337,141 +337,29 @@ let autoBidInterval = null;
 
 // Start auto-bidding
 function startAutoBidding() {
-    if (autoBidInterval) return;
+    // Client-side auto-bidding is disabled since server-side handles it
+    console.log('Auto-bid enabled - server will handle bidding automatically');
     
-    console.log('Starting auto-bid interval');
-    
-    // Check for bidding opportunities every 2 seconds
-    autoBidInterval = setInterval(() => {
-        checkAndPlaceAutoBids();
-    }, 2000);
-    
-    // Also check immediately
-    checkAndPlaceAutoBids();
+    // Don't start client-side interval anymore
+    // The server-side AutoBidService handles all auto-bidding with proper budget checks
 }
 
 // Stop auto-bidding
 function stopAutoBidding() {
-    if (autoBidInterval) {
-        clearInterval(autoBidInterval);
-        autoBidInterval = null;
-    }
+    // Client-side auto-bidding is disabled
+    console.log('Auto-bid disabled');
 }
 
-// Check and place auto-bids
-async function checkAndPlaceAutoBids() {
-    console.log('Checking auto-bid:', {
-        enabled: autoBidEnabled,
-        hasAuctionManager: !!window.auctionManager,
-        hasCurrentAuction: !!(window.auctionManager && window.auctionManager.currentAuction)
-    });
-    
-    if (!autoBidEnabled || !window.auctionManager || !window.auctionManager.currentAuction) return;
+// Client-side auto-bid checking is disabled - server handles everything
+// The checkAndPlaceAutoBids function is no longer used since server-side 
+// AutoBidService handles all auto-bidding with proper budget enforcement
 
-    const auction = window.auctionManager.currentAuction;
-    
-    // Only auto-bid on player auctions, not clubs
-    if (auction.type !== 'player' || !auction.player) return;
-    
-    console.log('Current auction:', auction);
-    console.log('Player object:', auction.player);
-    
-    // Try to get player ID from different possible locations
-    const playerId = auction.player.id || auction.player.player_id || auction.playerId || auction.player_id;
-    
-    console.log('Player ID:', playerId);
-    console.log('Auto-bid config:', autoBidConfig);
-    
-    if (!playerId) {
-        console.log('No player ID found in auction data');
-        return;
-    }
-    
-    const playerConfig = autoBidConfig.players[playerId];
-    console.log('Player config for ID', playerId, ':', playerConfig);
-    
-    if (!playerConfig || !playerConfig.maxBid) {
-        console.log('No config or max bid for this player');
-        return;
-    }
-
-    // Use player-specific rules only
-    const config = playerConfig;
-
-    // Check if we should bid
-    if (!shouldAutoBid(auction, config)) {
-        console.log('Should not auto-bid based on rules');
-        return;
-    }
-
-    // Calculate next bid amount
-    const currentBid = auction.currentBid || 0;
-    const nextBid = currentBid + 5;
-
-    console.log('Current bid:', currentBid, 'Next bid would be:', nextBid, 'Max bid:', playerConfig.maxBid);
-
-    // Check if within max bid limit
-    if (nextBid > playerConfig.maxBid) {
-        console.log('Next bid exceeds max bid limit');
-        return;
-    }
-
-    // Get current team info
-    const currentTeam = JSON.parse(localStorage.getItem('fpl_team') || '{}');
-    
-    // Check if we're already the highest bidder
-    if (auction.currentBidder === currentTeam.name) {
-        console.log('Already the highest bidder');
-        return;
-    }
-
-    // Place bid
-    try {
-        await api.placeBid(auction.id, nextBid, true);
-        console.log(`Auto-bid placed: ${formatCurrencyPlain(nextBid, false)} for player ${playerId}`);
-    } catch (error) {
-        console.error('Auto-bid failed:', error);
-    }
-}
-
-// Determine if we should auto-bid based on rules
-function shouldAutoBid(auction, config) {
-    // Check selling stage rule
-    if (config.onlySellingStage) {
-        if (auction.status !== 'selling1' && auction.status !== 'selling2' && 
-            auction.selling_stage !== 'selling1' && auction.selling_stage !== 'selling2') {
-            console.log('Not bidding: Only selling stage is enabled but auction is in', auction.status || 'active', 'status');
-            return false;
-        }
-    }
-
-    // Check second bidder rule
-    if (config.neverSecondBidder) {
-        // Check if we would be the second unique bidder
-        // The auction starter is the first bidder, if current bidder is different, there are already 2 bidders
-        
-        // Get current team info
-        const currentTeam = JSON.parse(localStorage.getItem('fpl_team') || '{}');
-        
-        // If auction was started by someone else and no one else has bid yet
-        // (current bid is still from the starter), we would be the second bidder
-        if (auction.currentBid === 5 && auction.currentBidder !== currentTeam.name) {
-            console.log('Not bidding: Never second bidder is enabled and we would be the second bidder');
-            return false;
-        }
-        
-        // Log for debugging
-        console.log('Second bidder check passed - current bid:', auction.currentBid, 'by', auction.currentBidder);
-    }
-
-    // Check club player rule
-    if (config.skipIfTeamHasClubPlayer) {
-        // This would need access to all teams' squads
-        // Implementation depends on available data
-    }
-
-    return true;
-}
+/* DEPRECATED - Server-side handles auto-bidding now
+ * The entire client-side auto-bidding logic has been moved to the server
+ * where it can properly enforce budget limits in real-time.
+ * Server-side AutoBidService runs every 2 seconds and checks all teams'
+ * auto-bid configurations, applying proper budget constraints.
+ */
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
