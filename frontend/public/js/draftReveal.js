@@ -134,15 +134,21 @@ class DraftRevealAnimation {
         // Show drum roll effect
         await this.showDrumRoll();
         
-        // Broadcast the draw event to all clients
+        // Get the team to draw
+        const position = this.revealedCount + 1;
+        const team = this.teamsToReveal[this.revealedCount];
+        
+        // Broadcast the draw event to all clients (including self)
         if (this.isInitiator && window.socketManager && window.socketManager.socket) {
-            const position = this.revealedCount + 1;
-            const team = this.teamsToReveal[this.revealedCount];
             console.log('Emitting draft-draw-team:', { position, team });
             window.socketManager.socket.emit('draft-draw-team', { 
                 position,
                 team
             });
+        } else if (this.isInitiator) {
+            // If socket not available, draw locally
+            console.log('Socket not available, drawing locally');
+            await this.drawTeam(position, team);
         }
     }
     
@@ -260,13 +266,24 @@ class DraftRevealAnimation {
     
     // Setup socket listeners for synchronized drawing
     setupSocketListeners() {
-        if (window.socketManager && window.socketManager.socket) {
-            // Listen for draw events from the initiator
-            window.socketManager.socket.on('draft-team-drawn', async (data) => {
-                console.log('Team drawn event received:', data);
-                await this.drawTeam(data.position, data.team);
-            });
-        }
+        // Check if socket exists after a delay (socket might not be ready)
+        setTimeout(() => {
+            if (window.socketManager && window.socketManager.socket) {
+                // Remove any existing listener first
+                window.socketManager.socket.off('draft-team-drawn');
+                
+                // Listen for draw events from the initiator
+                window.socketManager.socket.on('draft-team-drawn', async (data) => {
+                    console.log('Team drawn event received:', data);
+                    await this.drawTeam(data.position, data.team);
+                });
+                console.log('Draft reveal socket listener set up');
+            } else {
+                console.log('Socket not available for draft reveal');
+                // Retry after a moment
+                setTimeout(() => this.setupSocketListeners(), 1000);
+            }
+        }, 500);
     }
     
     async animateBallPick(ball, team, position) {
