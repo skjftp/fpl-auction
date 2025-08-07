@@ -982,6 +982,7 @@ class AuctionManager {
                 <span class="ml-2 text-xs text-gray-500">(${isForward ? 'Forward' : 'Reverse'})</span>
             </div>
             ${teamsHtml}
+        `;
     }
 
     async updateSellingStage(stage) {
