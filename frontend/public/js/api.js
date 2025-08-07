@@ -80,7 +80,7 @@ class API {
     }
 
     async getAllTeams() {
-        return await this.request('/auth/teams');
+        return await this.request('/teams');
     }
 
     // Player endpoints

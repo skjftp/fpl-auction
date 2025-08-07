@@ -666,12 +666,75 @@ class AuctionManager {
     clearCurrentAuction() {
         this.currentAuction = null;
         const container = document.getElementById('currentAuction');
-        container.innerHTML = '<p class="text-gray-500 text-center py-8">No active auction</p>';
+        
+        // Show teams overview instead of just "No active auction"
+        container.innerHTML = `
+            <div id="noAuctionContent" class="space-y-2 text-xs">
+                <div class="text-center py-2 text-gray-500 font-medium">Teams Overview</div>
+                <div id="teamsOverview" class="space-y-1">
+                    <div class="text-gray-400 text-center py-8">Loading teams...</div>
+                </div>
+            </div>
+        `;
+        
+        // Load teams overview
+        this.loadTeamsOverview();
         
         // Stop the bid timer
         if (window.bidTimer) {
             window.bidTimer.stopTimer();
             window.bidTimer.hideTimerDisplay();
+        }
+    }
+
+    async loadTeamsOverview() {
+        try {
+            const teams = await api.getAllTeams();
+            const teamsOverviewContainer = document.getElementById('teamsOverview');
+            
+            if (!teamsOverviewContainer) return;
+            
+            if (!teams || teams.length === 0) {
+                teamsOverviewContainer.innerHTML = '<div class="text-gray-400 text-center py-8">No teams found</div>';
+                return;
+            }
+            
+            // Sort teams by budget descending
+            const sortedTeams = teams.sort((a, b) => (b.budget || 0) - (a.budget || 0));
+            
+            const teamsHTML = sortedTeams.map(team => {
+                const budget = team.budget || 0;
+                const playersCount = team.player_count || 0;
+                const clubsCount = team.club_count || 0;
+                
+                return `
+                    <div class="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
+                                ${team.id}
+                            </div>
+                            <span class="font-medium text-gray-700">${team.name}</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-right">
+                            <div class="text-emerald-600 font-bold">
+                                <span class="currency-j">J</span>${budget}
+                            </div>
+                            <div class="text-gray-500 text-xs">
+                                ${playersCount}P • ${clubsCount}C
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            teamsOverviewContainer.innerHTML = teamsHTML;
+            
+        } catch (error) {
+            console.error('Error loading teams overview:', error);
+            const teamsOverviewContainer = document.getElementById('teamsOverview');
+            if (teamsOverviewContainer) {
+                teamsOverviewContainer.innerHTML = '<div class="text-gray-400 text-center py-8">Error loading teams</div>';
+            }
         }
     }
 
@@ -737,9 +800,14 @@ class AuctionManager {
                 }
                 
                 await this.displayCurrentAuction(auctionData);
+            } else {
+                // No active auctions - show teams overview
+                this.clearCurrentAuction();
             }
         } catch (error) {
             console.error('Error loading active auctions:', error);
+            // If there's an error, also show teams overview instead of empty state
+            this.clearCurrentAuction();
         }
     }
 

@@ -569,7 +569,14 @@
                         <div class="card p-3 flex flex-col" style="height: 100%;">
                             <h3 class="text-sm font-semibold mb-2 text-gray-900" style="flex-shrink: 0;">Current Auction</h3>
                             <div id="currentAuction" style="flex: 1; overflow-y: auto; min-height: 0;">
-                                <p class="text-gray-500 text-center py-4 text-sm">No active auction</p>
+                                <!-- Default content when no auction - Teams Overview -->
+                                <div id="noAuctionContent" class="space-y-2 text-xs">
+                                    <div class="text-center py-2 text-gray-500 font-medium">Teams Overview</div>
+                                    <div id="teamsOverview" class="space-y-1">
+                                        <!-- Teams will be populated here -->
+                                        <div class="text-gray-400 text-center py-8">Loading teams...</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -588,13 +595,13 @@
                             </div>
                             
                             <!-- Chat Input -->
-                            <div class="p-2 border-t border-gray-200 bg-white" style="flex-shrink: 0;">
-                                <form id="chatForm" class="flex gap-1">
+                            <div class="p-3 border-t border-gray-200 bg-white" style="flex-shrink: 0;">
+                                <form id="chatForm" class="flex gap-2">
                                     <input type="text" id="chatInput" 
                                            placeholder="Type a message..." 
-                                           class="flex-1 px-2 py-1 text-xs border border-gray-200 rounded"
+                                           class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                            maxlength="500">
-                                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 text-xs rounded transition-colors">
+                                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 text-sm font-medium rounded-lg transition-colors">
                                         Send
                                     </button>
                                 </form>
