@@ -73,13 +73,7 @@ class AutoBidService {
                 const playerConfig = config.players?.[auction.player_id];
                 if (!playerConfig || !playerConfig.maxBid) continue;
                 
-                // Calculate next bid
-                const nextBid = auction.current_bid + 5;
-                
-                // Skip if next bid exceeds max bid
-                if (nextBid > playerConfig.maxBid) continue;
-                
-                // Check team budget BEFORE placing bid
+                // Check team budget BEFORE calculating bid
                 const teamQuery = await collections.teams
                     .where('id', '==', teamId)
                     .limit(1)
@@ -92,12 +86,22 @@ class AutoBidService {
                 // Calculate maximum allowed bid based on team composition
                 const maxAllowedBid = await this.calculateMaxAllowedBid(teamId, team.budget);
                 
-                // Use the lower of maxAllowedBid and team budget
-                const effectiveBudget = Math.min(team.budget, maxAllowedBid);
+                // Calculate next bid
+                const nextBid = auction.current_bid + 5;
                 
-                // Skip if team doesn't have enough budget
-                if (effectiveBudget < nextBid) {
-                    console.log(`Team ${teamId} cannot afford bid of ${nextBid} (budget: ${team.budget}, max allowed: ${maxAllowedBid})`);
+                // The actual max we can bid is the minimum of:
+                // 1. Player's configured max bid
+                // 2. Team's calculated max allowed bid (budget - reserve for remaining slots)
+                // 3. Team's current budget
+                const effectiveMaxBid = Math.min(
+                    playerConfig.maxBid,
+                    maxAllowedBid,
+                    team.budget
+                );
+                
+                // Skip if next bid exceeds what we can actually afford
+                if (nextBid > effectiveMaxBid) {
+                    console.log(`Team ${teamId} cannot bid ${nextBid} (config max: ${playerConfig.maxBid}, allowed: ${maxAllowedBid}, budget: ${team.budget})`);
                     continue;
                 }
                 

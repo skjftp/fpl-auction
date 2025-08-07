@@ -1,13 +1,16 @@
 // Text-to-Speech announcements for auction events
 class TTSManager {
     constructor() {
-        this.enabled = true;
+        this.enabled = false; // Start disabled by default, will load from localStorage
         this.voices = [];
         this.selectedVoice = null;
         this.init();
     }
 
     init() {
+        // Load settings from localStorage FIRST
+        this.loadSettings();
+        
         // Check if TTS is supported
         if (!('speechSynthesis' in window)) {
             console.warn('TTS not supported in this browser');
@@ -22,9 +25,6 @@ class TTSManager {
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = () => this.loadVoices();
         }
-
-        // Load settings from localStorage
-        this.loadSettings();
         
         console.log('TTS Manager initialized, enabled:', this.enabled);
     }
@@ -52,8 +52,16 @@ class TTSManager {
     loadSettings() {
         const settings = localStorage.getItem('fpl-tts-settings');
         if (settings) {
-            const parsed = JSON.parse(settings);
-            this.enabled = parsed.enabled !== false; // Default to true
+            try {
+                const parsed = JSON.parse(settings);
+                this.enabled = parsed.enabled === true; // Only enable if explicitly true
+            } catch (e) {
+                console.error('Error parsing TTS settings:', e);
+                this.enabled = false; // Default to disabled if parsing fails
+            }
+        } else {
+            // No saved settings, keep default (disabled)
+            this.enabled = false;
         }
     }
 

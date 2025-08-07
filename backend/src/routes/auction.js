@@ -550,10 +550,33 @@ async function completeAuction(req, res, auctionId, auction) {
     }
     
     const teamDoc = teamQuery.docs[0];
-    const currentBudget = teamDoc.data().budget;
+    const team = teamDoc.data();
+    const currentBudget = team.budget;
+    
+    // Validate budget before completing
+    if (currentBudget < auction.current_bid) {
+      return res.status(400).json({ error: `Team cannot afford final bid of ${auction.current_bid} (budget: ${currentBudget})` });
+    }
+    
+    // Calculate remaining slots after this purchase
+    const squadSnapshot = await collections.teamSquads
+      .where('team_id', '==', auction.current_bidder_id)
+      .get();
+    
+    const currentSquadSize = squadSnapshot.size;
+    const remainingSlots = 17 - currentSquadSize - 1; // 15 players + 2 clubs - current squad - this purchase
+    const minimumReserve = remainingSlots * 5; // Need at least 5 for each remaining slot
+    
+    // Check if this purchase would leave enough for remaining slots
+    const budgetAfterPurchase = currentBudget - auction.current_bid;
+    if (budgetAfterPurchase < minimumReserve) {
+      return res.status(400).json({ 
+        error: `Cannot complete: Would leave only ${budgetAfterPurchase} for ${remainingSlots} remaining slots (need at least ${minimumReserve})` 
+      });
+    }
     
     batch.update(teamDoc.ref, {
-      budget: currentBudget - auction.current_bid
+      budget: budgetAfterPurchase
     });
     
     // Mark auction as completed
