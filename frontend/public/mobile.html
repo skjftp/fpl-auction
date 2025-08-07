@@ -429,17 +429,25 @@
                     </div>
                 </div>
                 
-                <!-- Cigarette -->
+                <!-- Joint -->
                 <div class="relative scale-75">
-                    <div class="w-20 h-2 bg-gradient-to-r from-white via-gray-100 to-orange-400 rounded-full shadow-lg transform rotate-12">
-                        <!-- Burning tip -->
-                        <div class="absolute -right-1 top-0 w-3 h-2 bg-gradient-to-r from-orange-500 to-red-600 rounded-full animate-glow"></div>
+                    <!-- Joint body with twisted paper end -->
+                    <div class="relative">
+                        <div class="w-16 h-3 bg-gradient-to-r from-amber-100 via-amber-50 to-amber-200 rounded-lg shadow-lg transform rotate-12">
+                            <!-- Twisted paper tip -->
+                            <div class="absolute -left-1.5 top-0.5 w-1.5 h-1.5 bg-amber-100 transform rotate-45"></div>
+                            <!-- Burning tip with ember glow -->
+                            <div class="absolute -right-1 -top-0.5 w-4 h-3 bg-gradient-to-r from-orange-600 via-red-500 to-orange-400 rounded-full animate-glow blur-sm"></div>
+                            <!-- Cherry (burning ember) -->
+                            <div class="absolute right-0 top-0.5 w-2 h-1.5 bg-gradient-to-r from-red-600 to-orange-500 rounded-full animate-pulse"></div>
+                        </div>
                     </div>
-                    <!-- Smoke -->
+                    <!-- Smoke with greenish tint -->
                     <div class="absolute -top-3 right-0">
-                        <div class="smoke-particle-mobile"></div>
-                        <div class="smoke-particle-mobile" style="animation-delay: 0.7s"></div>
-                        <div class="smoke-particle-mobile" style="animation-delay: 1.4s"></div>
+                        <div class="smoke-particle-mobile-joint"></div>
+                        <div class="smoke-particle-mobile-joint" style="animation-delay: 0.7s"></div>
+                        <div class="smoke-particle-mobile-joint" style="animation-delay: 1.4s"></div>
+                        <div class="smoke-particle-mobile-joint" style="animation-delay: 2.1s"></div>
                     </div>
                     <!-- Ash tray -->
                     <div class="w-16 h-2 bg-gray-400 rounded-full mt-6 shadow-md"></div>
@@ -478,6 +486,17 @@
             animation: smoke-rise-mobile 4s ease-out infinite;
         }
         
+        /* Mobile Joint smoke with greenish tint */
+        .smoke-particle-mobile-joint {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle, rgba(180,200,180,0.5) 0%, rgba(150,170,150,0.3) 40%, transparent 70%);
+            border-radius: 50%;
+            animation: joint-smoke-rise-mobile 5s ease-out infinite;
+            filter: blur(1px);
+        }
+        
         @keyframes steam-rise-mobile {
             0% {
                 transform: translateY(0) scale(0.5);
@@ -502,6 +521,20 @@
             }
             100% {
                 transform: translateY(-40px) translateX(15px) scale(1.8);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes joint-smoke-rise-mobile {
+            0% {
+                transform: translateY(0) translateX(0) scale(0.3) rotate(0deg);
+                opacity: 0;
+            }
+            15% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-50px) translateX(20px) scale(2.2) rotate(180deg);
                 opacity: 0;
             }
         }
