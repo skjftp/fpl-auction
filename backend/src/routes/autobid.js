@@ -94,40 +94,42 @@ router.post('/config', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Invalid configuration' });
         }
         
-        // Calculate max allowed bid for validation
+        // Calculate max allowed bid for informational purposes only
         const maxAllowedBid = await calculateMaxAllowedBid(teamId);
         
-        // Validate player configurations
+        // Log if any configs exceed current max (but don't block saving)
         if (config.players && typeof config.players === 'object') {
-            const invalidPlayers = [];
+            const highBids = [];
             
             for (const [playerId, playerConfig] of Object.entries(config.players)) {
                 if (playerConfig.maxBid && playerConfig.maxBid > maxAllowedBid) {
-                    invalidPlayers.push({
+                    highBids.push({
                         playerId,
                         configuredMax: playerConfig.maxBid,
-                        allowedMax: maxAllowedBid
+                        currentAllowedMax: maxAllowedBid
                     });
                 }
             }
             
-            if (invalidPlayers.length > 0) {
-                return res.status(400).json({ 
-                    error: `Auto-bid amounts exceed maximum allowed bid of J${maxAllowedBid}m`,
-                    invalidPlayers,
-                    maxAllowedBid
-                });
+            if (highBids.length > 0) {
+                console.log(`Team ${teamId} saved auto-bid config with bids exceeding current max of J${maxAllowedBid}m:`, highBids);
+                console.log('These will be limited to the allowed max at bidding time');
             }
         }
         
-        // Save configuration
+        // Save configuration (allow saving even if exceeds current max)
         await collections.autoBidConfigs.doc(`team_${teamId}`).set({
             ...config,
             teamId,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
         
-        res.json({ success: true, message: 'Auto-bid configuration saved' });
+        res.json({ 
+            success: true, 
+            message: 'Auto-bid configuration saved',
+            currentMaxAllowed: maxAllowedBid,
+            note: 'Auto-bid will respect budget limits at bidding time'
+        });
     } catch (error) {
         console.error('Error saving auto-bid config:', error);
         res.status(500).json({ error: 'Failed to save auto-bid configuration' });

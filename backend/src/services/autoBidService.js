@@ -99,9 +99,18 @@ class AutoBidService {
                     team.budget
                 );
                 
+                console.log(`Team ${teamId} auto-bid check for player ${auction.player_id}:
+                    - Current bid: ${auction.current_bid}
+                    - Next bid would be: ${nextBid}
+                    - Config max bid: ${playerConfig.maxBid}
+                    - Current budget: ${team.budget}
+                    - Max allowed bid (calculated): ${maxAllowedBid}
+                    - Effective max bid: ${effectiveMaxBid}
+                    - Will bid: ${nextBid <= effectiveMaxBid ? 'YES' : 'NO'}`);
+                
                 // Skip if next bid exceeds what we can actually afford
                 if (nextBid > effectiveMaxBid) {
-                    console.log(`Team ${teamId} cannot bid ${nextBid} (config max: ${playerConfig.maxBid}, allowed: ${maxAllowedBid}, budget: ${team.budget})`);
+                    console.log(`Team ${teamId} SKIPPING bid - ${nextBid} exceeds effective max of ${effectiveMaxBid}`);
                     continue;
                 }
                 

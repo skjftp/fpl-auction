@@ -82,15 +82,27 @@ async function fetchAndDisplayMaxAllowedBid() {
                 
                 const infoDiv = document.createElement('div');
                 infoDiv.id = 'maxBidInfo';
-                infoDiv.className = 'text-sm font-normal text-red-600 mt-2';
-                infoDiv.innerHTML = `⚠️ Maximum allowed bid: <span class="font-bold">J${response.maxAllowedBid}m</span> (based on your budget and remaining slots)`;
+                infoDiv.className = 'text-sm font-normal mt-2';
+                infoDiv.innerHTML = `
+                    <div class="text-blue-600">ℹ️ Current max allowed bid: <span class="font-bold">J${response.maxAllowedBid}m</span></div>
+                    <div class="text-gray-500 text-xs mt-1">This will change as you acquire players. Auto-bid will respect the current limit at bidding time.</div>
+                `;
                 modalHeader.parentNode.insertBefore(infoDiv, modalHeader.nextSibling);
             }
             
-            // Add validation to input fields
+            // Store max allowed bid for validation
+            window.currentMaxAllowedBid = response.maxAllowedBid;
+            
+            // Add visual indicators to input fields that exceed current max
             document.querySelectorAll('.player-max-bid').forEach(input => {
-                input.max = response.maxAllowedBid;
-                input.title = `Maximum allowed: J${response.maxAllowedBid}m`;
+                const currentValue = parseInt(input.value) || 0;
+                if (currentValue > response.maxAllowedBid) {
+                    input.style.borderColor = 'orange';
+                    input.title = `Currently exceeds max allowed (J${response.maxAllowedBid}m), but will be limited at bidding time`;
+                } else {
+                    input.style.borderColor = '';
+                    input.title = `Current max allowed: J${response.maxAllowedBid}m`;
+                }
             });
         }
     } catch (error) {
@@ -236,7 +248,7 @@ function filterAutoBidPlayers() {
 
 // Save auto-bid configuration
 async function saveAutoBidConfig() {
-    // First get the max allowed bid for validation
+    // First get the max allowed bid for information
     let maxAllowedBid = null;
     try {
         const response = await api.getMaxAllowedBid();
@@ -247,19 +259,19 @@ async function saveAutoBidConfig() {
     
     // Collect all player configurations
     const playerConfigs = {};
-    let hasInvalidBids = false;
-    const invalidPlayers = [];
+    let hasHighBids = false;
+    const highBidPlayers = [];
     
     document.querySelectorAll('.player-max-bid').forEach(input => {
         const playerId = input.dataset.playerId;
         const maxBid = parseInt(input.value) || 0;
         
         if (maxBid > 0) {
-            // Check if bid exceeds max allowed
+            // Check if bid exceeds current max allowed (just for warning)
             if (maxAllowedBid !== null && maxBid > maxAllowedBid) {
-                hasInvalidBids = true;
+                hasHighBids = true;
                 const playerName = input.closest('.player-config-item').querySelector('.font-medium').textContent;
-                invalidPlayers.push(`${playerName}: J${maxBid}m`);
+                highBidPlayers.push(`${playerName} (J${maxBid}m)`);
             }
             
             playerConfigs[playerId] = {
@@ -271,10 +283,9 @@ async function saveAutoBidConfig() {
         }
     });
     
-    // Show error if there are invalid bids
-    if (hasInvalidBids && maxAllowedBid !== null) {
-        showNotification(`Auto-bid amounts exceed maximum allowed bid of J${maxAllowedBid}m. Please adjust: ${invalidPlayers.join(', ')}`, 'error');
-        return;
+    // Show warning if there are bids exceeding current max, but still allow saving
+    if (hasHighBids && maxAllowedBid !== null) {
+        showNotification(`Note: Some bids exceed current max of J${maxAllowedBid}m. Auto-bid will respect your budget limits at bidding time.`, 'warning');
     }
 
     autoBidConfig.players = playerConfigs;
@@ -289,11 +300,7 @@ async function saveAutoBidConfig() {
         closeAutoBidModal();
     } catch (error) {
         console.error('Error saving auto-bid config:', error);
-        if (error.response && error.response.data && error.response.data.maxAllowedBid) {
-            showNotification(`${error.response.data.error}`, 'error');
-        } else {
-            showNotification('Failed to save configuration', 'error');
-        }
+        showNotification('Failed to save configuration', 'error');
     }
 }
 
