@@ -368,13 +368,26 @@ class MobileSocketManager {
     }
 
     handleDraftInitialized(data) {
+        console.log('Mobile: handleDraftInitialized called', { 
+            data, 
+            hasDraftOrder: !!(data && data.draft_order),
+            animationExists: !!window.draftRevealAnimation 
+        });
+        
         // Check if animation is enabled
         const animationEnabled = localStorage.getItem('draftRevealAnimation') !== 'false';
         
         if (data && data.draft_order && window.draftRevealAnimation && animationEnabled) {
+            console.log('Mobile: Calling startReveal with', data.draft_order.length, 'teams');
             // Show the reveal animation for mobile users (not initiator)
             window.draftRevealAnimation.startReveal(data.draft_order, animationEnabled, false);
         } else {
+            console.log('Mobile: Skipping animation', {
+                hasData: !!data,
+                hasDraftOrder: !!(data && data.draft_order),
+                hasAnimation: !!window.draftRevealAnimation,
+                animationEnabled
+            });
             // Update draft state without animation
             if (window.mobileApp) {
                 window.mobileApp.loadDraftState();

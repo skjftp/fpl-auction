@@ -1,11 +1,17 @@
 // Draft Reveal Animation System
 class DraftRevealAnimation {
     constructor() {
+        // Add null checks for mobile compatibility
         this.modal = document.getElementById('draftRevealModal');
         this.ballContainer = document.getElementById('ballContainer');
         this.revealedTeams = document.getElementById('revealedTeams');
         this.drawBtn = document.getElementById('drawTeamBtn');
         this.congratsOverlay = document.getElementById('congratsOverlay');
+        
+        if (!this.modal) {
+            console.error('Draft reveal modal not found in DOM');
+            return;
+        }
         
         this.teamsToReveal = [];
         this.revealedCount = 0;
@@ -40,6 +46,13 @@ class DraftRevealAnimation {
     
     // Start the reveal animation with draft order data
     async startReveal(draftOrder, animationEnabled = true, isInitiator = false) {
+        console.log('Starting draft reveal:', { draftOrder, animationEnabled, isInitiator, modalExists: !!this.modal });
+        
+        if (!this.modal) {
+            console.error('Cannot start reveal - modal not found');
+            return;
+        }
+        
         this.animationEnabled = animationEnabled;
         this.isInitiator = isInitiator; // Only the admin who initiated will control the draw
         
@@ -398,9 +411,11 @@ class DraftRevealAnimation {
             setTimeout(() => {
                 this.modal.classList.add('hidden');
                 
-                // Notify that reveal is complete
+                // Notify that reveal is complete (desktop has draftManager, mobile has mobileApp)
                 if (window.draftManager) {
                     window.draftManager.onRevealComplete();
+                } else if (window.mobileApp) {
+                    window.mobileApp.loadDraftState();
                 }
             }, 3000);
         }, 2000);
@@ -458,10 +473,21 @@ class DraftRevealAnimation {
             this.modal.classList.add('hidden');
             if (window.draftManager) {
                 window.draftManager.onRevealComplete();
+            } else if (window.mobileApp) {
+                window.mobileApp.loadDraftState();
             }
         }, 5000);
     }
 }
 
 // Initialize when DOM is ready
-window.draftRevealAnimation = new DraftRevealAnimation();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.draftRevealAnimation = new DraftRevealAnimation();
+        console.log('Draft reveal animation initialized on DOMContentLoaded');
+    });
+} else {
+    // DOM is already ready
+    window.draftRevealAnimation = new DraftRevealAnimation();
+    console.log('Draft reveal animation initialized immediately');
+}
