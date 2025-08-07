@@ -395,11 +395,142 @@
     <script src="mobile/js/mobile-api.js"></script>
     <script src="js/tts.js"></script>
     <script src="js/draftReveal.js"></script>
+    <script src="js/break.js"></script>
     <script src="mobile/js/mobile-socket.js"></script>
     <script src="mobile/js/mobile-currency.js"></script>
     <script src="mobile/js/mobile-auction.js"></script>
     <script src="mobile/js/mobile-autobid.js"></script>
     <script src="mobile/js/mobile-viewport.js"></script>
     <script src="mobile/js/mobile-app.js"></script>
+    
+    <!-- Break Screen Modal -->
+    <div id="breakScreen" class="hidden fixed inset-0 bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 z-[100] flex items-center justify-center p-4">
+        <div class="text-center">
+            <!-- Title -->
+            <h1 class="text-3xl font-bold text-amber-800 mb-6 animate-pulse">Tea Break! ☕</h1>
+            
+            <!-- Tea and Cigarette Container -->
+            <div class="flex justify-center items-end gap-8 mb-6">
+                <!-- Tea Cup -->
+                <div class="relative scale-75">
+                    <div class="w-24 h-24 bg-gradient-to-b from-amber-600 to-amber-700 rounded-b-full relative overflow-hidden shadow-xl">
+                        <!-- Tea liquid -->
+                        <div class="absolute bottom-0 w-full h-20 bg-gradient-to-b from-amber-500 to-amber-600 animate-gentle-wave"></div>
+                    </div>
+                    <!-- Cup handle -->
+                    <div class="absolute -right-6 top-6 w-10 h-12 border-4 border-amber-700 rounded-r-full border-l-0"></div>
+                    <!-- Saucer -->
+                    <div class="w-32 h-3 bg-gradient-to-b from-amber-600 to-amber-700 rounded-full mt-1 shadow-lg"></div>
+                    <!-- Steam -->
+                    <div class="absolute -top-6 left-1/2 transform -translate-x-1/2">
+                        <div class="steam-particle-mobile"></div>
+                        <div class="steam-particle-mobile" style="animation-delay: 0.5s"></div>
+                        <div class="steam-particle-mobile" style="animation-delay: 1s"></div>
+                    </div>
+                </div>
+                
+                <!-- Cigarette -->
+                <div class="relative scale-75">
+                    <div class="w-20 h-2 bg-gradient-to-r from-white via-gray-100 to-orange-400 rounded-full shadow-lg transform rotate-12">
+                        <!-- Burning tip -->
+                        <div class="absolute -right-1 top-0 w-3 h-2 bg-gradient-to-r from-orange-500 to-red-600 rounded-full animate-glow"></div>
+                    </div>
+                    <!-- Smoke -->
+                    <div class="absolute -top-3 right-0">
+                        <div class="smoke-particle-mobile"></div>
+                        <div class="smoke-particle-mobile" style="animation-delay: 0.7s"></div>
+                        <div class="smoke-particle-mobile" style="animation-delay: 1.4s"></div>
+                    </div>
+                    <!-- Ash tray -->
+                    <div class="w-16 h-2 bg-gray-400 rounded-full mt-6 shadow-md"></div>
+                </div>
+            </div>
+            
+            <!-- Message -->
+            <p class="text-xl text-amber-700 mb-2">Admin has called for a break!</p>
+            <p class="text-sm text-amber-600">Grab your tea and relax...</p>
+            
+            <!-- Admin control to end break -->
+            <button id="endBreakBtnMobile" class="hidden mt-6 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg shadow-lg">
+                🏁 End Break
+            </button>
+        </div>
+    </div>
+    
+    <style>
+        /* Mobile Steam animation */
+        .steam-particle-mobile {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: steam-rise-mobile 3s ease-out infinite;
+        }
+        
+        /* Mobile Smoke animation */
+        .smoke-particle-mobile {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, rgba(150,150,150,0.6) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: smoke-rise-mobile 4s ease-out infinite;
+        }
+        
+        @keyframes steam-rise-mobile {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-30px) translateX(8px) scale(1.3);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes smoke-rise-mobile {
+            0% {
+                transform: translateY(0) translateX(0) scale(0.3);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-40px) translateX(15px) scale(1.8);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes gentle-wave {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-2px);
+            }
+        }
+        
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 3px rgba(255, 100, 0, 0.8);
+            }
+            50% {
+                box-shadow: 0 0 10px rgba(255, 50, 0, 1);
+            }
+        }
+        
+        .animate-gentle-wave {
+            animation: gentle-wave 2s ease-in-out infinite;
+        }
+        
+        .animate-glow {
+            animation: glow 1s ease-in-out infinite;
+        }
+    </style>
 </body>
 </html>

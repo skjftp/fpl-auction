@@ -13,6 +13,8 @@ const scoringRoutes = require('./routes/scoring');
 const draftRoutes = require('./routes/draft');
 const autobidRoutes = require('./routes/autobid');
 const draftManagementRoutes = require('./routes/draftManagement');
+const breakRoutes = require('./routes/break');
+const { breakState } = require('./routes/break');
 
 const { initializeDatabase } = require('./models/database');
 const { authenticateToken } = require('./middleware/auth');
@@ -102,6 +104,7 @@ app.use('/api/scoring', authenticateToken, scoringRoutes);
 app.use('/api/draft', authenticateToken, draftRoutes);
 app.use('/api/autobid', authenticateToken, autobidRoutes);
 app.use('/api/draft-management', authenticateToken, draftManagementRoutes);
+app.use('/api/break', authenticateToken, breakRoutes);
 
 // Preflight requests are handled by cors() middleware above
 
@@ -143,6 +146,11 @@ io.on('connection', (socket) => {
     
     socket.join('auction-room');
     
+    // Send current break status to the new client
+    if (breakState && breakState.isOnBreak) {
+      socket.emit('break-status', { isOnBreak: true });
+    }
+    
     // Store team info for this socket
     connectedTeams.set(socket.id, { teamId, teamName });
     
@@ -166,6 +174,13 @@ io.on('connection', (socket) => {
     // Broadcast the drawn team to all users (including sender)
     io.to('auction-room').emit('draft-team-drawn', data);
     console.log(`Draft team drawn: Position ${data.position} - ${data.team.name}`);
+  });
+  
+  // Break events
+  socket.on('toggle-break', (data) => {
+    // Broadcast break status to all users
+    io.to('auction-room').emit('break-status', data);
+    console.log(`Break ${data.isOnBreak ? 'started' : 'ended'}`);
   });
   
   socket.on('disconnect', () => {

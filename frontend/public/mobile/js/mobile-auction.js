@@ -422,11 +422,19 @@ class MobileAuctionManager {
         if (sellingStage && !waitRequested) {
             controlsHTML += `
                 <button onclick="mobileAuction.updateSellingStage('sold')" 
-                        style="background: #7c2d12; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; width: 100%;">
+                        style="background: #7c2d12; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; width: 100%; margin-bottom: 4px;">
                     Sold (Skip wait)
                 </button>
             `;
         }
+        
+        // Add Break button for admin
+        controlsHTML += `
+            <button onclick="mobileAuction.toggleBreak()" 
+                    style="background: #92400e; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; width: 100%;">
+                ☕ Toggle Break
+            </button>
+        `;
 
         adminControls.innerHTML = controlsHTML;
     }
@@ -741,6 +749,15 @@ class MobileAuctionManager {
         } else {
             container.classList.add('hidden');
             toggleBtn.textContent = 'Show';
+        }
+    }
+    
+    toggleBreak() {
+        // Use the global break manager
+        if (window.breakManager) {
+            window.breakManager.toggleBreak();
+        } else {
+            console.error('Break manager not initialized');
         }
     }
 }

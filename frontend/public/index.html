@@ -439,6 +439,9 @@
                                 <button id="clearChatBtn" class="btn-secondary">
                                     🗑️ Clear All Chats
                                 </button>
+                                <button id="toggleBreakBtn" class="btn-secondary">
+                                    ☕ Toggle Break
+                                </button>
                             </div>
                         </div>
 
@@ -937,6 +940,7 @@
     <script src="js/socket.js"></script>
     <script src="js/draftReveal.js"></script>
     <script src="js/draft.js"></script>
+    <script src="js/break.js"></script>
     <script src="js/auction.js"></script>
     <script src="js/team.js"></script>
     <script src="js/scoring.js"></script>
@@ -1148,5 +1152,135 @@
             }
         });
     </script>
+    
+    <!-- Break Screen Modal -->
+    <div id="breakScreen" class="hidden fixed inset-0 bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 z-[100] flex items-center justify-center">
+        <div class="text-center">
+            <!-- Title -->
+            <h1 class="text-5xl font-bold text-amber-800 mb-8 animate-pulse">Tea Break Time! ☕</h1>
+            
+            <!-- Tea and Cigarette Container -->
+            <div class="flex justify-center items-end gap-16 mb-8">
+                <!-- Tea Cup -->
+                <div class="relative">
+                    <div class="w-32 h-32 bg-gradient-to-b from-amber-600 to-amber-700 rounded-b-full relative overflow-hidden shadow-xl">
+                        <!-- Tea liquid -->
+                        <div class="absolute bottom-0 w-full h-24 bg-gradient-to-b from-amber-500 to-amber-600 animate-gentle-wave"></div>
+                    </div>
+                    <!-- Cup handle -->
+                    <div class="absolute -right-8 top-8 w-12 h-16 border-4 border-amber-700 rounded-r-full border-l-0"></div>
+                    <!-- Saucer -->
+                    <div class="w-40 h-4 bg-gradient-to-b from-amber-600 to-amber-700 rounded-full mt-1 shadow-lg"></div>
+                    <!-- Steam -->
+                    <div class="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                        <div class="steam-particle"></div>
+                        <div class="steam-particle" style="animation-delay: 0.5s"></div>
+                        <div class="steam-particle" style="animation-delay: 1s"></div>
+                    </div>
+                </div>
+                
+                <!-- Cigarette -->
+                <div class="relative">
+                    <div class="w-24 h-3 bg-gradient-to-r from-white via-gray-100 to-orange-400 rounded-full shadow-lg transform rotate-12">
+                        <!-- Burning tip -->
+                        <div class="absolute -right-1 top-0 w-4 h-3 bg-gradient-to-r from-orange-500 to-red-600 rounded-full animate-glow"></div>
+                    </div>
+                    <!-- Smoke -->
+                    <div class="absolute -top-4 right-0">
+                        <div class="smoke-particle"></div>
+                        <div class="smoke-particle" style="animation-delay: 0.7s"></div>
+                        <div class="smoke-particle" style="animation-delay: 1.4s"></div>
+                    </div>
+                    <!-- Ash tray -->
+                    <div class="w-20 h-2 bg-gray-400 rounded-full mt-8 shadow-md"></div>
+                </div>
+            </div>
+            
+            <!-- Message -->
+            <p class="text-2xl text-amber-700 mb-4">Admin has called for a break!</p>
+            <p class="text-lg text-amber-600">Grab your tea and relax for a moment...</p>
+            
+            <!-- Admin control to end break -->
+            <button id="endBreakBtn" class="hidden mt-8 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg shadow-lg hover:from-green-600 hover:to-green-700 transform hover:scale-105 transition-all">
+                🏁 End Break
+            </button>
+        </div>
+    </div>
+    
+    <style>
+        /* Steam animation */
+        .steam-particle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: steam-rise 3s ease-out infinite;
+        }
+        
+        /* Smoke animation */
+        .smoke-particle {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: radial-gradient(circle, rgba(150,150,150,0.6) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: smoke-rise 4s ease-out infinite;
+        }
+        
+        @keyframes steam-rise {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-40px) translateX(10px) scale(1.5);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes smoke-rise {
+            0% {
+                transform: translateY(0) translateX(0) scale(0.3);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-50px) translateX(20px) scale(2);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes gentle-wave {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-3px);
+            }
+        }
+        
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(255, 100, 0, 0.8);
+            }
+            50% {
+                box-shadow: 0 0 15px rgba(255, 50, 0, 1);
+            }
+        }
+        
+        .animate-gentle-wave {
+            animation: gentle-wave 2s ease-in-out infinite;
+        }
+        
+        .animate-glow {
+            animation: glow 1s ease-in-out infinite;
+        }
+    </style>
 </body>
 </html>
