@@ -258,8 +258,8 @@ class DraftManager {
             
             // If we have the draft order and animation is available, show it
             if (result && result.draft_order && window.draftRevealAnimation) {
-                // Start the reveal animation
-                window.draftRevealAnimation.startReveal(result.draft_order, animationEnabled);
+                // Start the reveal animation - admin is the initiator
+                window.draftRevealAnimation.startReveal(result.draft_order, animationEnabled, true);
             } else {
                 this.showNotification('Draft order initialized!', 'success');
                 // Reload draft state immediately if no animation

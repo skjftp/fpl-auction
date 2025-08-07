@@ -99,8 +99,8 @@ class SocketManager {
             const animationEnabled = localStorage.getItem('draftRevealAnimation') !== 'false';
             
             if (data && data.draft_order && window.draftRevealAnimation) {
-                // Show the reveal animation for all users
-                window.draftRevealAnimation.startReveal(data.draft_order, animationEnabled);
+                // Show the reveal animation for all users (not initiator - they'll watch)
+                window.draftRevealAnimation.startReveal(data.draft_order, animationEnabled, false);
             } else {
                 // Update draft state everywhere without animation
                 if (window.draftManager) {

@@ -12,14 +12,14 @@ class DraftRevealAnimation {
         this.revealedCount = 0;
         this.isAnimating = false;
         this.animationEnabled = true; // Can be toggled by admin
+        this.isInitiator = false;
         
         this.initializeEventListeners();
+        this.setupSocketListeners();
     }
     
     initializeEventListeners() {
-        if (this.drawBtn) {
-            this.drawBtn.addEventListener('click', () => this.drawNextTeam());
-        }
+        // Draw button is hidden and not used in auto-draw mode
         
         if (this.skipBtn) {
             this.skipBtn.addEventListener('click', () => this.skipAnimation());
@@ -27,8 +27,9 @@ class DraftRevealAnimation {
     }
     
     // Start the reveal animation with draft order data
-    async startReveal(draftOrder, animationEnabled = true) {
+    async startReveal(draftOrder, animationEnabled = true, isInitiator = false) {
         this.animationEnabled = animationEnabled;
+        this.isInitiator = isInitiator; // Only the admin who initiated will control the draw
         
         // If animation is disabled, show results immediately
         if (!this.animationEnabled) {
@@ -44,6 +45,11 @@ class DraftRevealAnimation {
         // Create balls in the bowl
         this.createBalls(draftOrder.length);
         
+        // Hide draw button - we'll use auto-draw
+        if (this.drawBtn) {
+            this.drawBtn.style.display = 'none';
+        }
+        
         // Show modal
         this.modal.classList.remove('hidden');
         
@@ -51,6 +57,61 @@ class DraftRevealAnimation {
         if (window.ttsManager && window.ttsManager.enabled) {
             window.ttsManager.speak('The draft order reveal is about to begin! Get ready for the most exciting moment of the auction!');
         }
+        
+        // Start automatic drawing with drum roll if initiator
+        if (this.isInitiator) {
+            this.startAutoDraw();
+        }
+    }
+    
+    async startAutoDraw() {
+        // Wait a moment for everyone to see the modal
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Start drawing teams automatically
+        this.autoDrawNextTeam();
+    }
+    
+    async autoDrawNextTeam() {
+        if (this.revealedCount >= this.teamsToReveal.length) return;
+        
+        // Show drum roll effect
+        await this.showDrumRoll();
+        
+        // Broadcast the draw event to all clients
+        if (this.isInitiator && window.socketManager && window.socketManager.socket) {
+            const position = this.revealedCount + 1;
+            window.socketManager.socket.emit('draft-draw-team', { 
+                position,
+                team: this.teamsToReveal[this.revealedCount]
+            });
+        }
+    }
+    
+    async showDrumRoll() {
+        return new Promise(resolve => {
+            // Add drum roll visual effect
+            const bowl = document.querySelector('#draftBowl > div');
+            bowl.classList.add('animate-shake');
+            
+            // Create drum roll text
+            const drumRollDiv = document.createElement('div');
+            drumRollDiv.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl font-bold text-yellow-400 animate-pulse z-50';
+            drumRollDiv.innerHTML = '🥁 DRUM ROLL 🥁';
+            this.modal.querySelector('.relative').appendChild(drumRollDiv);
+            
+            // Play drum roll sound if TTS enabled
+            if (window.ttsManager && window.ttsManager.enabled) {
+                window.ttsManager.speak('Drum roll please!');
+            }
+            
+            // After 2 seconds, remove drum roll and resolve
+            setTimeout(() => {
+                drumRollDiv.remove();
+                bowl.classList.remove('animate-shake');
+                resolve();
+            }, 2000);
+        });
     }
     
     createBalls(count) {
@@ -72,20 +133,11 @@ class DraftRevealAnimation {
         }
     }
     
-    async drawNextTeam() {
-        if (this.isAnimating || this.revealedCount >= this.teamsToReveal.length) return;
+    // Handle the actual team draw (called by socket event or locally)
+    async drawTeam(position, team) {
+        if (this.isAnimating || position !== this.revealedCount + 1) return;
         
         this.isAnimating = true;
-        this.drawBtn.disabled = true;
-        this.drawBtn.classList.remove('animate-bounce');
-        
-        // Get next team
-        const team = this.teamsToReveal[this.revealedCount];
-        const position = this.revealedCount + 1;
-        
-        // Shake the bowl
-        const bowl = document.querySelector('#draftBowl > div');
-        bowl.classList.add('animate-shake');
         
         // Pick a random ball
         const balls = this.ballContainer.querySelectorAll('.draft-ball');
@@ -99,11 +151,6 @@ class DraftRevealAnimation {
             await this.animateBallPick(randomBall, team, position);
         }
         
-        // Remove shake
-        setTimeout(() => {
-            bowl.classList.remove('animate-shake');
-        }, 500);
-        
         // Add team to revealed list
         this.addRevealedTeam(team, position);
         
@@ -115,14 +162,25 @@ class DraftRevealAnimation {
         // Check if all teams revealed
         if (this.revealedCount >= this.teamsToReveal.length) {
             await this.completeReveal();
-        } else {
-            // Re-enable draw button
-            this.drawBtn.disabled = false;
-            this.drawBtn.classList.add('animate-bounce');
-            this.drawBtn.innerHTML = `🎲 DRAW TEAM #${this.revealedCount + 1}`;
+        } else if (this.isInitiator) {
+            // Continue auto-drawing if we're the initiator
+            setTimeout(() => {
+                this.autoDrawNextTeam();
+            }, 1000); // Wait 1 second before next draw
         }
         
         this.isAnimating = false;
+    }
+    
+    // Setup socket listeners for synchronized drawing
+    setupSocketListeners() {
+        if (window.socketManager && window.socketManager.socket) {
+            // Listen for draw events from the initiator
+            window.socketManager.socket.on('draft-team-drawn', async (data) => {
+                console.log('Team drawn event received:', data);
+                await this.drawTeam(data.position, data.team);
+            });
+        }
     }
     
     async animateBallPick(ball, team, position) {
@@ -275,11 +333,6 @@ class DraftRevealAnimation {
     }
     
     async completeReveal() {
-        // Disable draw button
-        this.drawBtn.disabled = true;
-        this.drawBtn.innerHTML = '✅ REVEAL COMPLETE!';
-        this.drawBtn.classList.remove('animate-bounce');
-        
         // Show completion message
         setTimeout(async () => {
             // Show "Auction will begin shortly" popup
@@ -336,11 +389,17 @@ class DraftRevealAnimation {
     skipAnimation() {
         if (this.teamsToReveal.length === 0) return;
         
+        // Stop any ongoing animation
+        this.isAnimating = false;
+        this.isInitiator = false; // Stop auto-draw
+        
         // Show all teams immediately
         this.revealedTeams.innerHTML = '';
         this.teamsToReveal.forEach((team, index) => {
             this.addRevealedTeam(team, index + 1);
         });
+        
+        this.revealedCount = this.teamsToReveal.length;
         
         // Complete immediately
         this.completeReveal();
@@ -349,8 +408,8 @@ class DraftRevealAnimation {
     showInstantResults(draftOrder) {
         // Show results without animation
         this.modal.classList.remove('hidden');
-        this.drawBtn.style.display = 'none';
-        this.skipBtn.style.display = 'none';
+        if (this.drawBtn) this.drawBtn.style.display = 'none';
+        if (this.skipBtn) this.skipBtn.style.display = 'none';
         
         this.revealedTeams.innerHTML = '';
         draftOrder.forEach((team, index) => {

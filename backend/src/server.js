@@ -161,6 +161,13 @@ io.on('connection', (socket) => {
     socket.to('auction-room').emit('new-bid', bidData);
   });
   
+  // Draft reveal events
+  socket.on('draft-draw-team', (data) => {
+    // Broadcast the drawn team to all users (including sender)
+    io.to('auction-room').emit('draft-team-drawn', data);
+    console.log(`Draft team drawn: Position ${data.position} - ${data.team.name}`);
+  });
+  
   socket.on('disconnect', () => {
     // Get team info before removing
     const teamInfo = connectedTeams.get(socket.id);
