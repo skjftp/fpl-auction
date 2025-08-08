@@ -41,6 +41,20 @@ class App {
             this.hidePasswordModal();
         });
 
+        // Team name change functionality
+        document.getElementById('changeTeamNameBtn').addEventListener('click', () => {
+            this.showTeamNameModal();
+        });
+
+        document.getElementById('changeTeamNameForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handleTeamNameChange();
+        });
+
+        document.getElementById('cancelTeamNameBtn').addEventListener('click', () => {
+            this.hideTeamNameModal();
+        });
+
         // Tab navigation
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -98,10 +112,17 @@ class App {
             
             if (response.success) {
                 this.currentUser = response.team;
+                this.isViewer = response.team.is_viewer || false;
                 console.log('Logged in user:', this.currentUser); // Debug log
                 this.showMainApp();
                 window.socketManager.connect();
-                showNotification(`Welcome, ${response.team.name}!`, 'success');
+                
+                // Show viewer notification
+                if (this.isViewer) {
+                    showNotification(`Welcome, ${response.team.name}! (View-only mode)`, 'info');
+                } else {
+                    showNotification(`Welcome, ${response.team.name}!`, 'success');
+                }
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -166,6 +187,73 @@ class App {
 
     hidePasswordModal() {
         document.getElementById('changePasswordModal').classList.add('hidden');
+    }
+
+    showTeamNameModal() {
+        document.getElementById('changeTeamNameModal').classList.remove('hidden');
+        document.getElementById('currentTeamName').textContent = this.currentTeam.name;
+        document.getElementById('newTeamName').value = '';
+        document.getElementById('teamNamePassword').value = '';
+        document.getElementById('teamNameError').classList.add('hidden');
+    }
+
+    hideTeamNameModal() {
+        document.getElementById('changeTeamNameModal').classList.add('hidden');
+    }
+
+    async handleTeamNameChange() {
+        const currentPassword = document.getElementById('teamNamePassword').value;
+        const newTeamName = document.getElementById('newTeamName').value;
+        const errorDiv = document.getElementById('teamNameError');
+        const saveBtn = document.getElementById('saveTeamNameBtn');
+        
+        // Reset error
+        errorDiv.classList.add('hidden');
+        errorDiv.textContent = '';
+        
+        // Disable button to prevent double submission
+        saveBtn.disabled = true;
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = 'Changing...';
+        
+        try {
+            const response = await fetch(`${api.baseURL}/auth/change-team-name`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${api.token}`
+                },
+                body: JSON.stringify({
+                    currentPassword,
+                    newTeamName
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Update local token and team info
+                api.setToken(data.token);
+                this.currentTeam = data.team;
+                
+                // Update UI with new team name
+                document.getElementById('teamName').textContent = data.team.name;
+                
+                showNotification('Team name changed successfully', 'success');
+                this.hideTeamNameModal();
+            } else {
+                errorDiv.textContent = data.error || 'Failed to change team name';
+                errorDiv.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error changing team name:', error);
+            errorDiv.textContent = 'Network error. Please try again.';
+            errorDiv.classList.remove('hidden');
+        } finally {
+            // Re-enable button
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
+        }
     }
 
     async handlePasswordChange() {
@@ -242,7 +330,27 @@ class App {
             adminTabNav.style.display = this.currentUser?.is_admin ? 'flex' : 'none';
         }
         
+        // Hide action buttons for viewers
+        if (this.isViewer) {
+            // Hide password and team name change buttons
+            document.getElementById('changePasswordBtn').style.display = 'none';
+            document.getElementById('changeTeamNameBtn').style.display = 'none';
+            
+            // Hide auto-bid functionality
+            const autoBidCard = document.querySelector('.auto-bid-card');
+            if (autoBidCard) {
+                autoBidCard.style.display = 'none';
+            }
+            
+            // Update team budget display for viewer
+            const budgetElement = document.getElementById('teamBudget');
+            if (budgetElement) {
+                budgetElement.innerHTML = '<span class="text-gray-500">Viewer Mode</span>';
+            }
+        }
+        
         console.log('Current user admin status:', this.currentUser?.is_admin);
+        console.log('Is viewer:', this.isViewer);
         console.log('Admin tab visibility:', adminTab?.style.display, adminTabNav?.style.display);
         
         // Initialize TTS button state

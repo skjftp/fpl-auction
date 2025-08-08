@@ -77,6 +77,11 @@
                         <path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                     </svg>
                 </button>
+                <button id="teamNameBtn" class="team-name-btn" title="Change Team Name">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </button>
                 <button id="logoutBtn" class="logout-btn">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M16 17l5-5-5-5M19.8 12H9M10 3H6a2 2 0 00-2 2v14a2 2 0 002 2h4"/>
@@ -341,6 +346,40 @@
                     <div id="passwordError" class="error-message hidden"></div>
                     
                     <button type="submit" class="btn-primary full-width">Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Name Change Modal -->
+    <div id="teamNameModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Change Team Name</h3>
+                <button id="closeTeamNameModalBtn" class="close-btn">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="teamNameForm">
+                    <div class="form-group">
+                        <label for="currentTeamNameDisplay">Current Team Name</label>
+                        <div id="currentTeamNameDisplay" class="form-input bg-gray-100"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newTeamName">New Team Name</label>
+                        <input type="text" id="newTeamName" class="form-input" required minlength="3" maxlength="30">
+                        <small class="form-hint">3-30 characters</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="teamNamePassword">Password (for verification)</label>
+                        <input type="password" id="teamNamePassword" class="form-input" required>
+                    </div>
+                    
+                    <div id="teamNameError" class="error-message hidden"></div>
+                    
+                    <button type="submit" class="btn-primary full-width">Change Team Name</button>
                 </form>
             </div>
         </div>

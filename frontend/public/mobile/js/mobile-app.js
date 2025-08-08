@@ -71,6 +71,32 @@ class MobileApp {
         document.getElementById('mainApp').classList.add('hidden');
     }
 
+    hideViewerRestrictedElements() {
+        // Hide password and team name buttons
+        const passwordBtn = document.getElementById('passwordBtn');
+        const teamNameBtn = document.getElementById('teamNameBtn');
+        if (passwordBtn) passwordBtn.style.display = 'none';
+        if (teamNameBtn) teamNameBtn.style.display = 'none';
+        
+        // Hide auto-bid card
+        const autoBidCard = document.querySelector('.auto-bid-card');
+        if (autoBidCard) autoBidCard.style.display = 'none';
+        
+        // Update budget display for viewer
+        const budgetElement = document.getElementById('teamBudget');
+        if (budgetElement) {
+            budgetElement.innerHTML = '<span style="color: #999; font-size: 12px;">Viewer</span>';
+        }
+        
+        // Hide bid controls in auction tab
+        const bidControls = document.querySelector('.bid-controls');
+        if (bidControls) bidControls.style.display = 'none';
+        
+        // Hide wait button
+        const waitBtn = document.getElementById('waitBtn');
+        if (waitBtn) waitBtn.style.display = 'none';
+    }
+
     setupLoginForm() {
         const loginForm = document.getElementById('loginForm');
         if (loginForm) {
@@ -111,8 +137,14 @@ class MobileApp {
             }
             
             this.currentUser = response.team;
+            this.isViewer = response.team.is_viewer || false;
             
-            this.showToast(`Welcome, ${this.currentUser.name || 'User'}!`, 'success');
+            // Show different welcome message for viewers
+            if (this.isViewer) {
+                this.showToast(`Welcome, ${this.currentUser.name || 'Viewer'}! (View-only mode)`, 'info');
+            } else {
+                this.showToast(`Welcome, ${this.currentUser.name || 'User'}!`, 'success');
+            }
             await this.initializeMainApp();
         } catch (error) {
             console.error('Login error:', error);
@@ -136,6 +168,11 @@ class MobileApp {
             
             // Update user info in header
             this.updateUserInfo();
+            
+            // Hide viewer-restricted UI elements
+            if (this.isViewer) {
+                this.hideViewerRestrictedElements();
+            }
             
             // Setup event listeners
             this.setupEventListeners();
@@ -214,8 +251,17 @@ class MobileApp {
             passwordBtn.addEventListener('click', () => this.showPasswordModal());
         }
 
+        // Team name button
+        const teamNameBtn = document.getElementById('teamNameBtn');
+        if (teamNameBtn) {
+            teamNameBtn.addEventListener('click', () => this.showTeamNameModal());
+        }
+
         // Password modal
         this.initializePasswordModal();
+
+        // Team name modal
+        this.initializeTeamNameModal();
 
         // Tab navigation
         const tabBtns = document.querySelectorAll('.tab-btn');
@@ -1406,6 +1452,115 @@ class MobileApp {
         } catch (error) {
             console.error('Password change error:', error);
             this.showPasswordError(error.message || 'Failed to change password');
+        }
+    }
+
+    // Team name change functionality
+    initializeTeamNameModal() {
+        const modal = document.getElementById('teamNameModal');
+        const closeBtn = document.getElementById('closeTeamNameModalBtn');
+        const form = document.getElementById('teamNameForm');
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.hideTeamNameModal());
+        }
+
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.hideTeamNameModal();
+                }
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', (e) => this.handleTeamNameChange(e));
+        }
+    }
+
+    showTeamNameModal() {
+        const modal = document.getElementById('teamNameModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            // Set current team name
+            const currentNameDisplay = document.getElementById('currentTeamNameDisplay');
+            if (currentNameDisplay && this.currentTeam) {
+                currentNameDisplay.textContent = this.currentTeam.name;
+            }
+            // Reset form
+            document.getElementById('teamNameForm')?.reset();
+            this.hideTeamNameError();
+        }
+    }
+
+    hideTeamNameModal() {
+        const modal = document.getElementById('teamNameModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    showTeamNameError(message) {
+        const errorDiv = document.getElementById('teamNameError');
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+    }
+
+    hideTeamNameError() {
+        const errorDiv = document.getElementById('teamNameError');
+        if (errorDiv) {
+            errorDiv.classList.add('hidden');
+        }
+    }
+
+    async handleTeamNameChange(e) {
+        e.preventDefault();
+        
+        const currentPassword = document.getElementById('teamNamePassword').value;
+        const newTeamName = document.getElementById('newTeamName').value;
+
+        // Validate team name length
+        if (newTeamName.length < 3 || newTeamName.length > 30) {
+            this.showTeamNameError('Team name must be between 3 and 30 characters');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${window.mobileAPI.baseURL}/auth/change-team-name`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${window.mobileAPI.token}`
+                },
+                body: JSON.stringify({
+                    currentPassword,
+                    newTeamName
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Update local token and team info
+                window.mobileAPI.setToken(data.token);
+                this.currentTeam = data.team;
+                
+                // Update UI with new team name
+                const teamNameElement = document.getElementById('teamName');
+                if (teamNameElement) {
+                    teamNameElement.textContent = data.team.name;
+                }
+                
+                this.showToast('Team name changed successfully', 'success');
+                this.hideTeamNameModal();
+            } else {
+                this.showTeamNameError(data.error || 'Failed to change team name');
+            }
+        } catch (error) {
+            console.error('Team name change error:', error);
+            this.showTeamNameError('Network error. Please try again.');
         }
     }
 }

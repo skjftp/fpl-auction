@@ -1,13 +1,13 @@
 const express = require('express');
 const { collections, advanceDraftTurn, isTeamCompleted, canTeamAcquirePlayer } = require('../models/database');
 const admin = require('firebase-admin');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, blockViewer } = require('../middleware/auth');
 const { getActiveDraftId } = require('../utils/draft');
 
 const router = express.Router();
 
 // Start auction for a player (with draft validation)
-router.post('/start-player/:playerId', async (req, res) => {
+router.post('/start-player/:playerId', blockViewer, async (req, res) => {
   const playerId = parseInt(req.params.playerId);
   const requestingTeamId = req.user.teamId;
   
@@ -150,7 +150,7 @@ router.post('/start-player/:playerId', async (req, res) => {
 });
 
 // Start auction for a club (with draft validation)
-router.post('/start-club/:clubId', async (req, res) => {
+router.post('/start-club/:clubId', blockViewer, async (req, res) => {
   const clubId = parseInt(req.params.clubId);
   const requestingTeamId = req.user.teamId;
   
@@ -279,7 +279,7 @@ router.post('/start-club/:clubId', async (req, res) => {
 });
 
 // Place a bid
-router.post('/bid/:auctionId', async (req, res) => {
+router.post('/bid/:auctionId', blockViewer, async (req, res) => {
   const auctionId = req.params.auctionId;
   const { bidAmount, isAutoBid } = req.body;
   const teamId = req.user.teamId;
@@ -410,7 +410,7 @@ router.post('/selling-stage/:auctionId', requireAdmin, async (req, res) => {
 });
 
 // Request wait during selling stage - Team only
-router.post('/request-wait/:auctionId', async (req, res) => {
+router.post('/request-wait/:auctionId', blockViewer, async (req, res) => {
   const auctionId = req.params.auctionId;
   const teamId = req.user.teamId;
   

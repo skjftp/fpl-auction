@@ -16,6 +16,34 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password required' });
     }
     
+    // Handle viewer login
+    if (username === 'viewer' && password === 'viewer123') {
+      const token = jwt.sign(
+        { 
+          teamId: -1, 
+          username: 'viewer', 
+          teamName: 'Viewer', 
+          is_admin: false,
+          is_viewer: true 
+        },
+        process.env.JWT_SECRET || 'default_secret',
+        { expiresIn: '24h' }
+      );
+      
+      return res.json({
+        success: true,
+        token,
+        team: {
+          id: -1,
+          name: 'Viewer',
+          username: 'viewer',
+          budget: 0,
+          is_admin: false,
+          is_viewer: true
+        }
+      });
+    }
+    
     // Get team from Firestore
     const teamDoc = await collections.teams.doc(username).get();
     
@@ -31,7 +59,13 @@ router.post('/login', async (req, res) => {
     }
     
     const token = jwt.sign(
-      { teamId: team.id, username: team.username, teamName: team.name, is_admin: team.is_admin || false },
+      { 
+        teamId: team.id, 
+        username: team.username, 
+        teamName: team.name, 
+        is_admin: team.is_admin || false,
+        is_viewer: false 
+      },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '24h' }
     );
@@ -44,7 +78,8 @@ router.post('/login', async (req, res) => {
         name: team.name,
         username: team.username,
         budget: team.budget,
-        is_admin: team.is_admin || false
+        is_admin: team.is_admin || false,
+        is_viewer: false
       }
     });
   } catch (error) {
@@ -111,6 +146,67 @@ router.post('/change-password', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error changing password:', error);
     res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// Change team name endpoint
+router.post('/change-team-name', authenticateToken, async (req, res) => {
+  const { currentPassword, newTeamName } = req.body;
+  
+  try {
+    // Validate input
+    if (!currentPassword || !newTeamName) {
+      return res.status(400).json({ error: 'Password and new team name are required' });
+    }
+    
+    if (newTeamName.length < 3 || newTeamName.length > 30) {
+      return res.status(400).json({ error: 'Team name must be between 3 and 30 characters' });
+    }
+    
+    // Get team from database using username as document ID
+    const teamDoc = await collections.teams.doc(req.user.username).get();
+    
+    if (!teamDoc.exists) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    
+    const team = teamDoc.data();
+    
+    // Verify password for security
+    const isValidPassword = await bcrypt.compare(currentPassword, team.password_hash);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Password is incorrect' });
+    }
+    
+    // Update team name in database
+    await teamDoc.ref.update({
+      name: newTeamName,
+      name_updated_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Generate new token with updated team name
+    const token = jwt.sign(
+      { teamId: team.id, username: team.username, teamName: newTeamName, is_admin: team.is_admin || false },
+      process.env.JWT_SECRET || 'default_secret',
+      { expiresIn: '24h' }
+    );
+    
+    res.json({ 
+      success: true, 
+      message: 'Team name changed successfully',
+      token,
+      team: {
+        id: team.id,
+        name: newTeamName,
+        username: team.username,
+        budget: team.budget,
+        is_admin: team.is_admin || false
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error changing team name:', error);
+    res.status(500).json({ error: 'Failed to change team name' });
   }
 });
 

@@ -36,8 +36,17 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+function blockViewer(req, res, next) {
+  if (req.user && req.user.is_viewer) {
+    return res.status(403).json({ error: 'Viewers cannot perform this action' });
+  }
+  
+  next();
+}
+
 module.exports = {
   authenticateToken,
   authorizeTeam,
-  requireAdmin
+  requireAdmin,
+  blockViewer
 };
