@@ -211,7 +211,20 @@ router.get('/chat', async (req, res) => {
     for (const doc of messagesSnapshot.docs) {
       const message = doc.data();
       
-      // Get team info
+      // Handle viewer messages
+      if (message.is_viewer || message.team_id === -1) {
+        messages.push({
+          id: doc.id,
+          message: message.message,
+          created_at: message.created_at,
+          team_name: 'Viewer',
+          username: 'viewer',
+          is_viewer: true
+        });
+        continue;
+      }
+      
+      // Get team info for regular messages
       const teamQuery = await collections.teams
         .where('id', '==', message.team_id)
         .limit(1)
@@ -240,6 +253,7 @@ router.get('/chat', async (req, res) => {
 // Send chat message
 router.post('/chat', async (req, res) => {
   const teamId = req.user.teamId;
+  const isViewer = req.user.is_viewer || false;
   const { message } = req.body;
   
   if (!message || message.trim().length === 0) {
@@ -251,7 +265,32 @@ router.post('/chat', async (req, res) => {
   }
   
   try {
-    // Add message to Firestore
+    // Handle viewer messages differently
+    if (isViewer) {
+      // Add message to Firestore with viewer flag
+      const messageRef = await collections.chatMessages.add({
+        team_id: -1,  // Special ID for viewer
+        message: message.trim(),
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        is_viewer: true
+      });
+      
+      const messageData = {
+        id: messageRef.id,
+        message: message.trim(),
+        created_at: new Date().toISOString(),
+        team_id: -1,
+        team_name: 'Viewer',
+        username: 'viewer',
+        is_viewer: true
+      };
+      
+      // Broadcast to all clients in auction room
+      req.io.to('auction-room').emit('new-chat-message', messageData);
+      return res.json({ success: true, message: messageData });
+    }
+    
+    // Regular team message handling
     const messageRef = await collections.chatMessages.add({
       team_id: teamId,
       message: message.trim(),
