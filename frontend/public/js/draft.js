@@ -19,9 +19,10 @@ class DraftManager {
     }
 
     isAuthenticated() {
-        // Check if we have a token and user data
+        // Check if we have a token (don't wait for app.currentUser on initial load)
         const token = localStorage.getItem('fpl_token');
-        return token && window.app?.currentUser;
+        const team = localStorage.getItem('fpl_team');
+        return !!(token && team);
     }
 
     // Called after successful login to load data

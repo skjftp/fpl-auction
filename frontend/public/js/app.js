@@ -90,13 +90,15 @@ class App {
                 this.showMainApp();
                 window.socketManager.connect();
                 
-                // Load data for managers after restoring auth
-                if (window.auctionManager) {
-                    window.auctionManager.onUserLogin();
-                }
-                if (window.draftManager) {
-                    window.draftManager.onUserLogin();
-                }
+                // Trigger data load after a small delay to ensure DOM is ready
+                setTimeout(() => {
+                    if (window.auctionManager) {
+                        window.auctionManager.onUserLogin();
+                    }
+                    if (window.draftManager) {
+                        window.draftManager.onUserLogin();
+                    }
+                }, 100);
             } catch (error) {
                 console.error('Error parsing stored team data:', error);
                 this.showLogin();
