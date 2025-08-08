@@ -526,15 +526,23 @@
             animation: smoke-rise-mobile 4s ease-out infinite;
         }
         
-        /* Mobile Joint smoke with greenish tint */
+        /* Mobile Joint smoke rings with greenish tint */
         .smoke-particle-mobile-joint {
             position: absolute;
             width: 16px;
             height: 16px;
-            background: radial-gradient(circle, rgba(180,200,180,0.5) 0%, rgba(150,170,150,0.3) 40%, transparent 70%);
+            border: 1.5px solid rgba(180,200,180,0.6);
             border-radius: 50%;
-            animation: joint-smoke-rise-mobile 5s ease-out infinite;
-            filter: blur(1px);
+            animation: joint-smoke-ring-mobile 4s ease-out infinite;
+        }
+        
+        .smoke-particle-mobile-joint::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border: 1px solid rgba(150,170,150,0.3);
+            border-radius: 50%;
+            animation: ring-expand-mobile 4s ease-out infinite;
         }
         
         @keyframes steam-rise-mobile {
@@ -565,16 +573,48 @@
             }
         }
         
-        @keyframes joint-smoke-rise-mobile {
+        @keyframes joint-smoke-ring-mobile {
             0% {
-                transform: translateY(0) translateX(0) scale(0.3) rotate(0deg);
+                transform: translateY(0) translateX(0) scale(0.3);
                 opacity: 0;
+                width: 16px;
+                height: 16px;
             }
-            15% {
-                opacity: 0.6;
+            20% {
+                opacity: 0.7;
+                width: 20px;
+                height: 20px;
+            }
+            40% {
+                transform: translateY(-15px) translateX(8px) scale(0.9);
+                width: 24px;
+                height: 24px;
+            }
+            60% {
+                transform: translateY(-28px) translateX(12px) scale(1.2);
+                opacity: 0.4;
+                width: 28px;
+                height: 28px;
             }
             100% {
-                transform: translateY(-50px) translateX(20px) scale(2.2) rotate(180deg);
+                transform: translateY(-45px) translateX(18px) scale(1.6);
+                opacity: 0;
+                width: 35px;
+                height: 35px;
+            }
+        }
+        
+        @keyframes ring-expand-mobile {
+            0% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+            50% {
+                transform: scale(1.15);
+                opacity: 0.2;
+            }
+            100% {
+                transform: scale(1.4);
                 opacity: 0;
             }
         }
