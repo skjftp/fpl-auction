@@ -588,7 +588,7 @@
                     </div>
                     
                     <!-- Right Column: Chat -->
-                    <div class="col-span-1" style="height: 100%;">
+                    <div class="col-span-1" style="height: calc(100vh - 200px); max-height: 600px;">
                         <div class="card flex flex-col" style="height: 100%;">
                             <!-- Chat Header -->
                             <div class="p-2 border-b border-gray-200" style="flex-shrink: 0;">
@@ -596,7 +596,7 @@
                             </div>
                             
                             <!-- Chat Messages -->
-                            <div id="chatMessages" class="p-2 bg-gray-50 text-xs" style="flex: 1; overflow-y: auto; min-height: 0;">
+                            <div id="chatMessages" class="p-2 bg-gray-50 text-xs" style="flex: 1; overflow-y: auto; min-height: 0; max-height: calc(100% - 120px);">
                                 <div class="text-gray-500 text-center">No messages yet...</div>
                             </div>
                             

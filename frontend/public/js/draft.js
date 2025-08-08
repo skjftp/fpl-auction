@@ -340,7 +340,22 @@ class DraftManager {
         
         chatContainer.innerHTML = recentMessages.map(msg => {
             const isCurrentUser = msg.username === window.app.currentUser?.username;
-            const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // Handle date properly - check if created_at exists and is valid
+            let timeStr = '';
+            if (msg.created_at) {
+                const date = new Date(msg.created_at);
+                // Check if date is valid
+                if (!isNaN(date.getTime())) {
+                    timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    // If created_at is invalid, try to use current time
+                    timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+            } else {
+                // If no created_at, use current time
+                timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
             
             return `
                 <div class="mb-2 ${isCurrentUser ? 'text-right' : ''}">
@@ -349,7 +364,7 @@ class DraftManager {
                             ? 'bg-blue-500 text-white' 
                             : 'bg-gray-200 text-gray-800'
                     }">
-                        <div class="text-xs opacity-75">${msg.team_name} • ${time}</div>
+                        <div class="text-xs opacity-75">${msg.team_name} • ${timeStr}</div>
                         <div>${this.escapeHtml(msg.message)}</div>
                     </div>
                 </div>
