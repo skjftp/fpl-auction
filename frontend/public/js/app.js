@@ -86,8 +86,17 @@ class App {
         if (token && team) {
             try {
                 this.currentUser = JSON.parse(team);
+                this.isViewer = this.currentUser.is_viewer || false;
                 this.showMainApp();
                 window.socketManager.connect();
+                
+                // Load data for managers after restoring auth
+                if (window.auctionManager) {
+                    window.auctionManager.onUserLogin();
+                }
+                if (window.draftManager) {
+                    window.draftManager.onUserLogin();
+                }
             } catch (error) {
                 console.error('Error parsing stored team data:', error);
                 this.showLogin();
@@ -320,9 +329,15 @@ class App {
             window.breakManager.updateAdminVisibility();
         }
 
-        // Update auction manager admin controls
+        // Update auction manager admin controls and load data
         if (window.auctionManager) {
             window.auctionManager.updateAdminControls();
+            window.auctionManager.onUserLogin();
+        }
+
+        // Load draft manager data after login
+        if (window.draftManager) {
+            window.draftManager.onUserLogin();
         }
         
         // Show admin tab if user is admin

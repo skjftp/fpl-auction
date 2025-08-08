@@ -10,9 +10,27 @@ class DraftManager {
 
     init() {
         this.bindEvents();
-        this.loadDraftState();
-        this.loadChatMessages();
-        this.setupSocketListeners();
+        // Only load data if user is authenticated
+        if (this.isAuthenticated()) {
+            this.loadDraftState();
+            this.loadChatMessages();
+            this.setupSocketListeners();
+        }
+    }
+
+    isAuthenticated() {
+        // Check if we have a token and user data
+        const token = localStorage.getItem('fpl_token');
+        return token && window.app?.currentUser;
+    }
+
+    // Called after successful login to load data
+    onUserLogin() {
+        if (this.isAuthenticated()) {
+            this.loadDraftState();
+            this.loadChatMessages();
+            this.setupSocketListeners();
+        }
     }
 
     bindEvents() {

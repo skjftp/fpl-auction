@@ -15,9 +15,18 @@ class AuctionManager {
 
     init() {
         this.bindEvents();
-        this.loadInitialData();
-        this.initializeChat();
-        this.loadDraftState();
+        // Only load data if user is authenticated
+        if (this.isAuthenticated()) {
+            this.loadInitialData();
+            this.initializeChat();
+            this.loadDraftState();
+        }
+    }
+
+    isAuthenticated() {
+        // Check if we have a token and user data
+        const token = localStorage.getItem('fpl_token');
+        return token && window.app?.currentUser;
     }
 
     updateAdminControls() {
@@ -26,6 +35,15 @@ class AuctionManager {
         if (syncBtn) {
             const isAdmin = window.app?.currentUser?.is_admin || false;
             syncBtn.style.display = isAdmin ? 'block' : 'none';
+        }
+    }
+
+    // Called after successful login to load data
+    onUserLogin() {
+        if (this.isAuthenticated()) {
+            this.loadInitialData();
+            this.initializeChat();
+            this.loadDraftState();
         }
     }
 
