@@ -554,8 +554,8 @@
                                            class="w-full border border-gray-200 rounded px-2 py-1 text-xs">
                                 </div>
                                 
-                                <!-- Players List with fixed height for ~10 items -->
-                                <div id="playersList" class="space-y-1 pr-1" style="flex: 1; overflow-y: auto; min-height: 0; max-height: 400px;">
+                                <!-- Players List with dynamic height -->
+                                <div id="playersList" class="space-y-1 pr-1" style="flex: 1; overflow-y: auto; min-height: 0; max-height: calc(100vh - 320px);">
                                     <!-- Players will be loaded here -->
                                 </div>
                             </div>
@@ -596,7 +596,7 @@
                             </div>
                             
                             <!-- Chat Messages -->
-                            <div id="chatMessages" class="p-2 bg-gray-50 text-xs" style="flex: 1; overflow-y: auto; min-height: 0; max-height: calc(100% - 120px);">
+                            <div id="chatMessages" class="p-2 pr-3 bg-gray-50 text-xs" style="flex: 1; overflow-y: auto; min-height: 0; max-height: calc(100% - 120px); overflow-x: hidden;">
                                 <div class="text-gray-500 text-center">No messages yet...</div>
                             </div>
                             

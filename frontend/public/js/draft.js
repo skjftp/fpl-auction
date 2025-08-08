@@ -377,12 +377,12 @@ class DraftManager {
             }
             
             return `
-                <div class="mb-2 ${isCurrentUser ? 'text-right' : ''}">
+                <div class="mb-2 ${isCurrentUser ? 'text-right' : ''}" style="${isCurrentUser ? 'padding-right: 8px;' : ''}">
                     <div class="inline-block max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
                         isCurrentUser 
                             ? 'bg-blue-500 text-white' 
                             : 'bg-gray-200 text-gray-800'
-                    }">
+                    }" style="word-wrap: break-word; word-break: break-word;">
                         <div class="text-xs opacity-75">${msg.team_name} • ${timeStr}</div>
                         <div>${this.escapeHtml(msg.message)}</div>
                     </div>
