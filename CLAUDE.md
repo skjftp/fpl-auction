@@ -19,10 +19,10 @@ A Fantasy Premier League (FPL) auction system that allows 10 teams to bid on pla
   - Backend: Google Cloud Run
 
 ## Key Features
-1. **Snake Draft System**: 17 rounds with 10 teams
+1. **Snake Draft System**: 22 rounds with 10 teams
    - Odd rounds (1,3,5...): Teams pick 1→10
    - Even rounds (2,4,6...): Teams pick 10→1
-   - Uses cumulative positions (1-170)
+   - Uses cumulative positions (1-220)
 2. **Team Composition**: 15 players + 2 clubs per team
 3. **Position Limits**: 2 GKP, 5 DEF, 5 MID, 3 FWD
 4. **Club Limits**: Max 3 players per club
@@ -112,8 +112,8 @@ The system uses 'J' as the currency symbol (styled in green italic) instead of p
 - Implemented team squad viewing dropdown in My Team tab
 
 ## Snake Draft Logic
-- 17 rounds × 10 teams = 170 total picks
-- Positions 1-170 are cumulative across all rounds
+- 22 rounds × 10 teams = 220 total picks
+- Positions 1-220 are cumulative across all rounds
 - Position calculation: `round = ceil(position / 10)`
 - Team calculation for even rounds: `team = 10 - positionInRound + 1`
 - Example: Position 13 = Round 2, 3rd pick = Team 8

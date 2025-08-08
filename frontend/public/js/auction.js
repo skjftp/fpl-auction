@@ -570,18 +570,18 @@ class AuctionManager {
             const currentBudget = currentUser.budget;
             
             // Get actual squad count from backend
-            let remainingPicks = 17; // Default to full picks
+            let remainingPicks = 22; // Default to full picks
             
             try {
                 const squadData = await api.getTeamSquad(currentUser.id);
                 const totalOwned = (squadData.counts?.players || 0) + (squadData.counts?.clubs || 0);
-                remainingPicks = Math.max(0, 17 - totalOwned);
+                remainingPicks = Math.max(0, 22 - totalOwned);
             } catch (error) {
                 console.warn('Could not get squad data, using estimated remaining picks');
                 // Fallback to estimation based on draft position
                 if (this.draftState && this.draftState.current_position) {
                     const userCompletedPicks = Math.floor((this.draftState.current_position - 1) / (this.draftState.total_teams || 10));
-                    remainingPicks = Math.max(0, 17 - userCompletedPicks);
+                    remainingPicks = Math.max(0, 22 - userCompletedPicks);
                 }
             }
             
@@ -1031,7 +1031,7 @@ class AuctionManager {
         
         // Get next team
         let nextTeamName = '';
-        if (this.draftState.draft_order && this.draftState.current_position < 170) {
+        if (this.draftState.draft_order && this.draftState.current_position < 220) {
             const nextPosition = this.draftState.current_position + 1;
             const nextTeam = this.draftState.draft_order.find(t => t.cumulative_position === nextPosition);
             if (nextTeam) {
@@ -1105,7 +1105,7 @@ class AuctionManager {
         
         modalList.innerHTML = `
             <div class="mb-3 text-center">
-                <span class="text-sm font-medium text-gray-600">Round ${currentRound} - Position ${this.draftState.current_position}/170</span>
+                <span class="text-sm font-medium text-gray-600">Round ${currentRound} - Position ${this.draftState.current_position}/220</span>
                 <span class="ml-2 text-xs text-gray-500">(${isForward ? 'Forward' : 'Reverse'})</span>
             </div>
             ${teamsHtml}

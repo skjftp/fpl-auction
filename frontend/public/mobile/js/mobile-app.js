@@ -462,7 +462,7 @@ class MobileApp {
     }
 
     calculateNextTurn(draftState) {
-        // Snake draft logic: 17 rounds, 10 teams
+        // Snake draft logic: 22 rounds, 10 teams
         // Positions 1-10: Round 1 (teams 1→10)
         // Positions 11-20: Round 2 (teams 10→1) 
         // Positions 21-30: Round 3 (teams 1→10)
@@ -477,8 +477,8 @@ class MobileApp {
         // Calculate next cumulative position
         const nextCumulativePosition = currentCumulativePosition + 1;
         
-        // Check if draft is complete (17 rounds * 10 teams = 170 picks)
-        if (nextCumulativePosition > 170) {
+        // Check if draft is complete (22 rounds * 10 teams = 220 picks)
+        if (nextCumulativePosition > 220) {
             return { teamId: null, teamName: 'Draft Complete' };
         }
         

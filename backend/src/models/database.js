@@ -72,9 +72,9 @@ async function initializeDraftOrder() {
     [teams[i], teams[j]] = [teams[j], teams[i]];
   }
 
-  // Create snake draft order for 17 rounds
+  // Create snake draft order for 22 rounds
   const draftOrder = [];
-  const totalRounds = 17;
+  const totalRounds = 22;
   let position = 1;
   
   for (let round = 1; round <= totalRounds; round++) {
