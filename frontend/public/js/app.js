@@ -319,6 +319,11 @@ class App {
         if (window.breakManager) {
             window.breakManager.updateAdminVisibility();
         }
+
+        // Update auction manager admin controls
+        if (window.auctionManager) {
+            window.auctionManager.updateAdminControls();
+        }
         
         // Show admin tab if user is admin
         const adminTab = document.querySelector('[data-tab="admin"]');

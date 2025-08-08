@@ -20,11 +20,29 @@ class AuctionManager {
         this.loadDraftState();
     }
 
+    updateAdminControls() {
+        // Update sync button visibility based on admin status
+        const syncBtn = document.getElementById('syncDataBtn');
+        if (syncBtn) {
+            const isAdmin = window.app?.currentUser?.is_admin || false;
+            syncBtn.style.display = isAdmin ? 'block' : 'none';
+        }
+    }
+
     bindEvents() {
-        // Sync data button
-        document.getElementById('syncDataBtn').addEventListener('click', () => {
-            this.syncFPLData();
-        });
+        // Sync data button - only show for admins
+        const syncBtn = document.getElementById('syncDataBtn');
+        if (syncBtn) {
+            // Hide sync button if not admin
+            const isAdmin = window.app?.currentUser?.is_admin || false;
+            if (!isAdmin) {
+                syncBtn.style.display = 'none';
+            } else {
+                syncBtn.addEventListener('click', () => {
+                    this.syncFPLData();
+                });
+            }
+        }
 
         // Filter events
         document.getElementById('positionFilter').addEventListener('change', () => {
