@@ -365,14 +365,18 @@ class AuctionManager {
 
     createClubCard(club) {
         const div = document.createElement('div');
-        div.className = 'bg-gray-50 p-2 rounded border hover:shadow-md text-center';
+        const isSold = this.soldClubs.has(club.id);
+        div.className = `bg-gray-50 p-2 rounded border ${isSold ? 'opacity-50' : 'hover:shadow-md'} text-center`;
         
         div.innerHTML = `
             <div class="text-xs font-medium truncate">${club.short_name}</div>
-            <button onclick="auctionManager.startClubAuction(${club.id})" 
-                    class="start-auction-btn bg-blue-500 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-600 mt-1 w-full">
-                Auction
-            </button>
+            ${isSold ? 
+                '<span class="inline-block bg-red-500 text-white px-2 py-0.5 rounded text-xs w-full">Sold</span>' :
+                `<button onclick="auctionManager.startClubAuction(${club.id})" 
+                        class="start-auction-btn bg-blue-500 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-600 mt-1 w-full">
+                    Auction
+                </button>`
+            }
         `;
         
         return div;

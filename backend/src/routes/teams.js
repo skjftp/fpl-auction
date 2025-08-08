@@ -65,11 +65,20 @@ router.get('/:teamId/squad', async (req, res) => {
           console.error('Error fetching player details:', err);
         }
       } else if (squadItem.club_id) {
-        // Handle club purchases if any
-        clubs.push({
-          ...squadItem,
-          price_paid: pricePaid
-        });
+        // Get club details
+        try {
+          const clubDoc = await collections.fplClubs.doc(squadItem.club_id.toString()).get();
+          if (clubDoc.exists) {
+            const club = clubDoc.data();
+            clubs.push({
+              ...club,
+              price_paid: pricePaid,
+              acquired_at: squadItem.acquired_at
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching club details:', err);
+        }
       }
     }
     
