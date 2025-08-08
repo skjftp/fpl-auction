@@ -431,10 +431,6 @@ class AuctionManager {
         this.currentAuction = auction;
         const container = document.getElementById('currentAuction');
         
-        // Start or reset the bid timer
-        if (window.bidTimer) {
-            window.bidTimer.startTimer();
-        }
         
         const item = auction.player || auction.club;
         const itemName = auction.player ? item.web_name : item.name;
@@ -721,11 +717,6 @@ class AuctionManager {
         // Load teams overview
         this.loadTeamsOverview();
         
-        // Stop the bid timer
-        if (window.bidTimer) {
-            window.bidTimer.stopTimer();
-            window.bidTimer.hideTimerDisplay();
-        }
     }
 
     async loadTeamsOverview() {
