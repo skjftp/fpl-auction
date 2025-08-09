@@ -473,7 +473,7 @@ body {
 .tab-content {
     flex: 1;
     overflow-y: auto;
-    padding-top: 155px;
+    padding-top: 60px; /* Reduced from 155px - only top bar height now */
     padding-bottom: calc(90px + env(safe-area-inset-bottom, 20px)); /* Space for tab nav + safe area */
     position: relative;
 }
@@ -1073,7 +1073,7 @@ body {
 
 .team-header {
     position: fixed;
-    top: 165px; /* Below the main header */
+    top: 60px; /* Reduced from 165px - directly below top bar */
     left: 0;
     right: 0;
     z-index: 20;
@@ -1150,7 +1150,7 @@ body {
 }
 
 .team-squad {
-    padding: 175px 16px 80px; /* Top padding for header, bottom for nav */
+    padding: 110px 16px 80px; /* Reduced top padding from 175px */
     height: 100%;
     overflow: hidden; /* No scrolling - static layout */
 }
