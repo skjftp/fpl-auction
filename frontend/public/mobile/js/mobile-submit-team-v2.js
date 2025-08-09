@@ -79,108 +79,61 @@ class MobileSubmitTeamManagerV2 {
     }
 
     async initialize() {
-        try {
-            const startTime = Date.now();
-            console.log('Initializing Submit Team V2...');
-            
-            // Check if already initialized
-            if (this.initialized) {
-                console.log('Already initialized, re-rendering...');
-                this.renderHeader();
-                this.renderView();
-                return;
-            }
-            
-            // Prevent multiple simultaneous initializations
-            if (this.loading) {
-                console.log('Already loading, skipping...');
-                return;
-            }
-            
-            this.loading = true;
-            this.showLoader();
-            
-            try {
-                // Load squad data - should be instant from cache
-                await this.loadMySquad();
-            } catch (error) {
-                console.error('Error loading squad:', error);
-                // Continue with empty squad
-                this.mySquad = [];
-                this.myClubs = [];
-            }
-            
-            // IMMEDIATELY render - no delays
-            this.loading = false;
-            this.initialized = true;
+        // If already initialized, just re-render
+        if (this.initialized) {
             this.renderHeader();
             this.renderView();
-            this.setupEventListeners();
-            
-            // Load non-critical data in background - don't wait or log time
-            // These are fire-and-forget, they update UI when ready
-            setTimeout(() => {
-                // Load gameweek data
-                this.loadCurrentGameweek().then(() => {
-                    if (this.deadline) {
-                        this.startDeadlineTimer();
-                    }
-                    this.renderHeader();
-                }).catch(e => console.log('Gameweek not loaded:', e.message));
-                
-                // Load submission if gameweek exists  
-                setTimeout(() => {
-                    if (this.currentGameweek) {
-                        this.loadExistingSubmission().catch(e => {
-                            // 404 is expected if no submission yet
-                            if (!e.message.includes('No submission found')) {
-                                console.error('Submission error:', e);
-                            }
-                        });
-                    }
-                }, 500);
-                
-                // Load chips last - least important
-                setTimeout(() => {
-                    this.loadChipStatus().catch(e => console.log('Chips not loaded'));
-                }, 1000);
-            }, 100);
-            
-            const loadTime = Date.now() - startTime;
-            console.log(`Submit Team V2 initial render in ${loadTime}ms`);
-        } catch (error) {
-            console.error('Failed to initialize submit team:', error);
-            this.loading = false;
-            this.initialized = true; // Mark as initialized to prevent retry loop
-            this.showError('Failed to load team data');
+            return;
+        }
+        
+        // Get cached squad - this is instant
+        const currentUser = window.mobileAPI.getCurrentUser();
+        const cacheKey = `fpl_squad_cache_${currentUser.id}`;
+        const cached = localStorage.getItem(cacheKey);
+        
+        if (cached) {
+            const data = JSON.parse(cached);
+            this.mySquad = data.players || [];
+            this.myClubs = data.clubs || [];
+        }
+        
+        // Set some defaults
+        this.currentGameweek = 1;
+        this.deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        
+        // Auto-select team if needed
+        if (this.starting11.length === 0 && this.mySquad.length >= 15) {
+            this.autoSelectTeam();
+        }
+        
+        // Render immediately
+        this.initialized = true;
+        this.renderHeader();
+        this.renderView();
+        this.setupEventListeners();
+        
+        // If no cache, fetch in background (don't block)
+        if (!cached) {
+            window.mobileAPI.getTeamSquad(currentUser.id).then(squadData => {
+                this.mySquad = squadData.players || [];
+                this.myClubs = squadData.clubs || [];
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    players: this.mySquad,
+                    clubs: this.myClubs,
+                    timestamp: Date.now()
+                }));
+                if (this.starting11.length === 0 && this.mySquad.length >= 15) {
+                    this.autoSelectTeam();
+                }
+                this.renderView();
+            }).catch(() => {
+                // Ignore errors - just show empty
+            });
         }
     }
     
     showLoader() {
-        // First ensure the container exists
-        let container = document.getElementById('submitTeamContent');
-        
-        // If container doesn't exist, wait a bit and try again
-        if (!container) {
-            setTimeout(() => {
-                container = document.getElementById('submitTeamContent');
-                if (container) {
-                    container.innerHTML = `
-                        <div class="loader-container">
-                            <div class="spinner"></div>
-                            <p class="loading-text">Loading your team...</p>
-                        </div>
-                    `;
-                }
-            }, 100);
-        } else {
-            container.innerHTML = `
-                <div class="loader-container">
-                    <div class="spinner"></div>
-                    <p class="loading-text">Loading your team...</p>
-                </div>
-            `;
-        }
+        // Not needed anymore - we render immediately
     }
     
     showError(message) {
