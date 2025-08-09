@@ -256,6 +256,8 @@ class MobileSubmitTeamManagerV2 {
                 <div class="gameweek-row">
                     <div class="gameweek-info">
                         <span class="gw-label">Gameweek ${this.currentGameweek || 1}</span>
+                        ${this.gameweekType && this.gameweekType !== 'Normal' ? 
+                            `<span class="gw-type-badge ${this.gameweekType.toLowerCase()}">${this.gameweekType}</span>` : ''}
                         <span class="deadline-label">Deadline: <span id="deadlineTime">${this.getDeadlineDisplay()}</span></span>
                     </div>
                     <button id="editModeBtn" class="edit-mode-btn ${this.editMode ? 'active' : ''}" title="Edit Team">
@@ -1115,11 +1117,13 @@ class MobileSubmitTeamManagerV2 {
 
         let timeStr = '';
         if (days > 0) {
-            timeStr += `${days}d ${hours}h ${minutes}m`;
+            timeStr += `${days}d ${hours}h ${minutes}m ${seconds}s`;
         } else if (hours > 0) {
             timeStr += `${hours}h ${minutes}m ${seconds}s`;
-        } else {
+        } else if (minutes > 0) {
             timeStr += `${minutes}m ${seconds}s`;
+        } else {
+            timeStr += `${seconds}s`;
         }
 
         return timeStr;

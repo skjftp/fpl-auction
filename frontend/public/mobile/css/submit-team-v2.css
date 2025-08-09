@@ -166,16 +166,38 @@
 /* Gameweek Info */
 .gameweek-info {
     display: flex;
-    justify-content: space-between;
-    padding: 8px 16px;
-    background: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
 }
 
 .gw-label {
     font-size: 14px;
     font-weight: 600;
     color: #374151;
+}
+
+.gw-type-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.gw-type-badge.double {
+    background: #fef3c7;
+    color: #f59e0b;
+}
+
+.gw-type-badge.blank {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.gw-type-badge.triple {
+    background: #dbeafe;
+    color: #3b82f6;
 }
 
 /* Gameweek type badges */
@@ -192,15 +214,17 @@
 }
 
 .deadline-label {
-    font-size: 13px;
+    font-size: 12px;
     color: #6b7280;
+    margin-left: auto;
 }
 
 #deadlineTime {
-    font-weight: 600;
+    font-weight: 700;
     color: #374151;
     margin-left: 4px;
-}
+    font-family: monospace;
+    font-size: 13px;
 }
 
 /* Club Selector Row */
