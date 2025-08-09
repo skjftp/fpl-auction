@@ -92,15 +92,20 @@ class MobileSubmitTeamManagerV2 {
         this.initialized = true;
         
         // Get cached squad if available
+        let cached = false;
+        let currentUser = null;
+        let cacheKey = null;
+        
         try {
-            const currentUser = window.mobileAPI.getCurrentUser();
-            const cacheKey = `fpl_squad_cache_${currentUser.id}`;
-            const cached = localStorage.getItem(cacheKey);
+            currentUser = window.mobileAPI.getCurrentUser();
+            cacheKey = `fpl_squad_cache_${currentUser.id}`;
+            const cachedData = localStorage.getItem(cacheKey);
             
-            if (cached) {
-                const data = JSON.parse(cached);
+            if (cachedData) {
+                const data = JSON.parse(cachedData);
                 this.mySquad = data.players || [];
                 this.myClubs = data.clubs || [];
+                cached = true;
             }
         } catch (e) {
             console.log('Cache read failed:', e);
@@ -121,7 +126,7 @@ class MobileSubmitTeamManagerV2 {
         this.setupEventListeners();
         
         // If no cache, fetch in background (don't block)
-        if (!cached) {
+        if (!cached && currentUser) {
             window.mobileAPI.getTeamSquad(currentUser.id).then(squadData => {
                 this.mySquad = squadData.players || [];
                 this.myClubs = squadData.clubs || [];
