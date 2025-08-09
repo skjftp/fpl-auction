@@ -100,19 +100,9 @@ class MobileSubmitTeamManagerV2 {
             this.loading = true;
             this.showLoader();
             
-            // Instant timeout - force render quickly
-            setTimeout(() => {
-                if (this.loading && !this.initialized) {
-                    console.error('Taking too long - forcing render');
-                    this.forceRenderEmpty();
-                }
-            }, 500); // 500ms max - should be instant
-            
             try {
-                // Load squad data - should be instant from cache or fast from API
-                console.time('Loading squad');
+                // Load squad data - should be instant from cache
                 await this.loadMySquad();
-                console.timeEnd('Loading squad');
             } catch (error) {
                 console.error('Error loading squad:', error);
                 // Continue with empty squad
@@ -120,7 +110,7 @@ class MobileSubmitTeamManagerV2 {
                 this.myClubs = [];
             }
             
-            // Always render something to avoid infinite loader
+            // IMMEDIATELY render - no delays
             this.loading = false;
             this.initialized = true;
             this.renderHeader();
@@ -883,26 +873,37 @@ class MobileSubmitTeamManagerV2 {
                 }
             }
             
-            // No cache - fetch from API (should still be fast)
-            console.log('❌ No cache, fetching from API...');
-            const squadData = await window.mobileAPI.getTeamSquad(currentUser.id);
+            // No cache - need to fetch from API
+            console.log('No cache found, need to fetch from API');
             
-            this.mySquad = squadData.players || [];
-            this.myClubs = squadData.clubs || [];
+            // Don't wait for API - render with empty data first
+            this.mySquad = [];
+            this.myClubs = [];
             
-            console.log(`Loaded squad from API in ${performance.now() - startTime}ms`);
-            
-            // Cache the squad data
-            localStorage.setItem(cacheKey, JSON.stringify({
-                players: this.mySquad,
-                clubs: this.myClubs,
-                timestamp: Date.now()
-            }));
-            
-            // Initialize with default formation if no existing submission
-            if (this.starting11.length === 0 && this.mySquad.length >= 15) {
-                this.autoSelectTeam();
-            }
+            // Fetch in background after rendering
+            window.mobileAPI.getTeamSquad(currentUser.id).then(squadData => {
+                this.mySquad = squadData.players || [];
+                this.myClubs = squadData.clubs || [];
+                console.log(`Background squad fetch completed in ${performance.now() - startTime}ms`);
+                
+                // Cache it
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    players: this.mySquad,
+                    clubs: this.myClubs,
+                    timestamp: Date.now()
+                }));
+                
+                // Re-render with the data
+                if (this.initialized) {
+                    this.renderView();
+                    if (this.starting11.length === 0 && this.mySquad.length >= 15) {
+                        this.autoSelectTeam();
+                        this.renderView();
+                    }
+                }
+            }).catch(err => {
+                console.error('Background squad fetch failed:', err);
+            });
         } catch (error) {
             console.error(`Squad load failed after ${performance.now() - startTime}ms:`, error);
             // Don't throw - continue with empty data
