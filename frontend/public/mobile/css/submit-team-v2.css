@@ -188,7 +188,7 @@
 
 .club-select-btn {
     flex: 0 0 auto;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
@@ -196,13 +196,20 @@
     background: #f3f4f6;
     border: 2px solid transparent;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: #374151;
     cursor: pointer;
     transition: all 0.2s;
-    min-width: 145px;
+    min-width: fit-content;
     white-space: nowrap;
+}
+
+.club-select-btn .club-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
 }
 
 .club-select-btn.selected {
@@ -309,6 +316,19 @@
     padding: 12px 16px;
     background: white;
     border-bottom: 2px solid #e5e7eb;
+}
+
+.submission-info {
+    margin-top: 8px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.submission-info small {
+    background: #f3f4f6;
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 .confirm-team-btn {

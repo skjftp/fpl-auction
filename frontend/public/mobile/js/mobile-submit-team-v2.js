@@ -143,6 +143,33 @@ class MobileSubmitTeamManagerV2 {
                 // Ignore errors - just show empty
             });
         }
+        
+        // Load existing submission for this gameweek
+        window.mobileAPI.getTeamSubmission(this.currentGameweek || 1).then(submission => {
+            if (submission) {
+                this.existingSubmission = submission;
+                // Apply the submission to current state
+                if (submission.starting_11) this.starting11 = submission.starting_11;
+                if (submission.bench) this.bench = submission.bench;
+                if (submission.captain_id) this.captainId = submission.captain_id;
+                if (submission.vice_captain_id) this.viceCaptainId = submission.vice_captain_id;
+                if (submission.club_multiplier_id) this.clubMultiplierId = submission.club_multiplier_id;
+                if (submission.chip_used) this.selectedChip = submission.chip_used;
+                
+                this.renderHeader();
+                this.renderView();
+            }
+        }).catch(() => {
+            // No existing submission - that's ok
+        });
+        
+        // Load chip status
+        window.mobileAPI.getChipStatus().then(chipStatus => {
+            this.chipStatus = chipStatus;
+            this.renderHeader();
+        }).catch(() => {
+            // Ignore errors
+        });
     }
     
     showLoader() {
@@ -331,8 +358,13 @@ class MobileSubmitTeamManagerV2 {
                 ${!this.editMode ? `
                     <div class="submit-section">
                         <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.clubMultiplierId ? 'disabled' : ''}>
-                            Submit Team
+                            ${this.existingSubmission ? 'Update Team' : 'Submit Team'}
                         </button>
+                        ${this.existingSubmission && this.existingSubmission.chip_used ? `
+                            <div class="submission-info">
+                                <small>Chip used: ${this.chips[this.existingSubmission.chip_used]?.name || this.existingSubmission.chip_used}</small>
+                            </div>
+                        ` : ''}
                     </div>
                 ` : ''}
             </div>
@@ -1113,6 +1145,8 @@ class MobileSubmitTeamManagerV2 {
 
     async submitTeam() {
         try {
+            console.log('Submitting team...');
+            
             // Check deadline
             if (new Date() > this.deadline) {
                 window.mobileApp.showToast('Deadline has passed!', 'error');
@@ -1140,12 +1174,24 @@ class MobileSubmitTeamManagerV2 {
                 chip_used: this.selectedChip
             };
 
-            await window.mobileAPI.submitTeam(submission);
+            console.log('Submission data:', submission);
+            
+            const result = await window.mobileAPI.submitTeam(submission);
+            console.log('Submission result:', result);
             
             window.mobileApp.showToast('Team submitted successfully!', 'success');
             
-            // Go back to main tab
-            window.mobileApp.switchTab('team');
+            // Mark existing submission
+            this.existingSubmission = submission;
+            
+            // Update UI to show submission was saved
+            this.renderHeader();
+            
+            // If chip was used, reload chip status
+            if (this.selectedChip) {
+                await this.loadChipStatus();
+            }
+            
         } catch (error) {
             console.error('Error submitting team:', error);
             window.mobileApp.showToast(error.message || 'Failed to submit team', 'error');
