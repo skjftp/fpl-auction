@@ -229,20 +229,6 @@
                 <div id="teamSquad" class="team-squad"></div>
             </div>
 
-            <!-- Clubs Tab -->
-            <div id="clubsTab" class="tab-pane">
-                <div class="clubs-container">
-                    <div class="clubs-header">
-                        <h3 class="clubs-title">All Clubs</h3>
-                        <div class="clubs-filter">
-                            <button class="filter-btn active" data-filter="all">All</button>
-                            <button class="filter-btn" data-filter="available">Available</button>
-                            <button class="filter-btn" data-filter="sold">Sold</button>
-                        </div>
-                    </div>
-                    <div id="clubsList" class="clubs-list"></div>
-                </div>
-            </div>
 
             <!-- History Tab -->
             <div id="historyTab" class="tab-pane">
@@ -292,19 +278,14 @@
             <div id="moreTab" class="tab-pane">
                 <div class="more-container">
                     <div class="more-menu">
-                        <button class="more-item" onclick="mobileApp.switchToSubTab('auction')">
-                            <span class="more-icon">🔨</span>
-                            <span>Auction</span>
-                            <span class="more-arrow">›</span>
-                        </button>
-                        <button class="more-item" onclick="mobileApp.switchToSubTab('players')">
+                        <button class="more-item" onclick="mobileApp.switchTab('players')">
                             <span class="more-icon">👥</span>
-                            <span>Players</span>
+                            <span>All Players</span>
                             <span class="more-arrow">›</span>
                         </button>
-                        <button class="more-item" onclick="mobileApp.switchToSubTab('history')">
+                        <button class="more-item" onclick="mobileApp.switchTab('history')">
                             <span class="more-icon">📊</span>
-                            <span>History</span>
+                            <span>Bid History</span>
                             <span class="more-arrow">›</span>
                         </button>
                         <button class="more-item" onclick="mobileApp.showLeaderboard()">
@@ -315,6 +296,11 @@
                         <button class="more-item" onclick="mobileApp.showPointsBreakdown()">
                             <span class="more-icon">📈</span>
                             <span>Points Breakdown</span>
+                            <span class="more-arrow">›</span>
+                        </button>
+                        <button class="more-item" onclick="mobileApp.showAllClubs()">
+                            <span class="more-icon">🏟️</span>
+                            <span>All Clubs</span>
                             <span class="more-arrow">›</span>
                         </button>
                     </div>
@@ -383,9 +369,9 @@
             <div class="tab-icon">⚽</div>
             <span>Submit</span>
         </button>
-        <button class="tab-btn" data-tab="clubs">
-            <div class="tab-icon">🏟️</div>
-            <span>Clubs</span>
+        <button class="tab-btn" data-tab="auction">
+            <div class="tab-icon">🔨</div>
+            <span>Auction</span>
         </button>
         <button class="tab-btn" data-tab="more">
             <div class="tab-icon">☰</div>
@@ -506,6 +492,27 @@
                 </div>
                 <div id="pointsBreakdownContent" class="points-breakdown-content">
                     <!-- Points breakdown will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Clubs Modal -->
+    <div id="allClubsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>All Clubs</h3>
+                <button id="closeAllClubsBtn" class="close-btn">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="clubs-filter">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="available">Available</button>
+                    <button class="filter-btn" data-filter="sold">Sold</button>
+                </div>
+                <div id="allClubsList" class="clubs-list">
+                    <!-- Clubs will be populated here -->
                 </div>
             </div>
         </div>

@@ -408,19 +408,39 @@ class MobileSubmitTeamManager {
         const clubContainer = document.getElementById('clubMultiplier');
         if (!clubContainer) return;
 
+        // Show message if no clubs owned yet
+        if (!this.myClubs || this.myClubs.length === 0) {
+            clubContainer.innerHTML = `
+                <div class="club-selector">
+                    <h4 class="selector-title">Club Multiplier (1.5x points)</h4>
+                    <div class="no-clubs-message">
+                        <p>You haven't acquired any clubs yet.</p>
+                        <p class="text-sm text-gray-500">Clubs will appear here once you win them in auction.</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // Show the 2 owned clubs for selection
         clubContainer.innerHTML = `
             <div class="club-selector">
-                <h4 class="selector-title">Club Multiplier (1.5x points)</h4>
+                <h4 class="selector-title">Select Club for 1.5x Points (Required)</h4>
+                <p class="selector-subtitle">All players from selected club get 1.5x multiplier</p>
                 <div class="clubs-grid">
                     ${this.myClubs.map(club => `
                         <div class="club-option ${this.clubMultiplierId === club.id ? 'selected' : ''}"
                              onclick="mobileSubmitTeam.selectClubMultiplier(${club.id})">
                             <div class="club-badge">🏟️</div>
-                            <div class="club-name">${club.name}</div>
-                            ${this.clubMultiplierId === club.id ? '<div class="selected-badge">1.5x</div>' : ''}
+                            <div class="club-info">
+                                <div class="club-name">${club.name || club.club_name || 'Unknown Club'}</div>
+                                <div class="club-short">${club.short_name || club.club_short_name || ''}</div>
+                            </div>
+                            ${this.clubMultiplierId === club.id ? '<div class="selected-badge">1.5x Selected</div>' : '<div class="select-prompt">Tap to select</div>'}
                         </div>
                     `).join('')}
                 </div>
+                ${this.myClubs.length === 1 ? '<p class="text-xs text-gray-500 mt-2">You own 1 club. Acquire another club in auction for more options.</p>' : ''}
             </div>
         `;
     }

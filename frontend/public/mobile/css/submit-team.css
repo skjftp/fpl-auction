@@ -463,6 +463,148 @@
     color: white;
 }
 
+/* More Tab Styles */
+.more-container {
+    padding: 12px;
+    background: #f8f9fa;
+    min-height: calc(100vh - 120px);
+}
+
+.more-menu {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.more-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: white;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.more-item:last-child {
+    border-bottom: none;
+}
+
+.more-item:active {
+    background: #f3f4f6;
+}
+
+.more-icon {
+    font-size: 24px;
+    margin-right: 12px;
+}
+
+.more-item span:nth-child(2) {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.more-arrow {
+    color: #9ca3af;
+    font-size: 20px;
+}
+
+/* Club selector improvements */
+.selector-subtitle {
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.club-info {
+    flex: 1;
+}
+
+.club-short {
+    font-size: 10px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.select-prompt {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    font-size: 9px;
+    color: #9ca3af;
+}
+
+.no-clubs-message {
+    text-align: center;
+    padding: 20px;
+    color: #6b7280;
+}
+
+.no-clubs-message p {
+    margin-bottom: 8px;
+}
+
+/* Modal Styles */
+.clubs-list {
+    padding: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.club-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.club-card.sold {
+    opacity: 0.7;
+    background: #f9fafb;
+}
+
+.club-card .club-icon {
+    font-size: 32px;
+    margin-right: 12px;
+}
+
+.club-card .club-details {
+    flex: 1;
+}
+
+.club-card .club-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.club-card .sold-info {
+    font-size: 11px;
+    color: #ef4444;
+    margin-top: 4px;
+}
+
+.start-club-auction {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 /* Responsive adjustments */
 @media (max-width: 375px) {
     .pitch-player {

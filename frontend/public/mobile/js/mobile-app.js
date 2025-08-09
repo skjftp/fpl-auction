@@ -609,12 +609,14 @@ class MobileApp {
                     window.mobileSubmitTeam.initialized = true;
                 }
                 break;
-            case 'clubs':
-                // Load clubs
-                await this.loadClubsList();
-                break;
             case 'more':
-                // No data to load for More tab
+                // More tab stays on current content, just shows menu
+                break;
+            case 'players':
+                // Load players if needed
+                if (window.mobileAuction && window.mobileAuction.players.length === 0) {
+                    await window.mobileAuction.loadPlayers();
+                }
                 break;
         }
     }
@@ -1579,6 +1581,163 @@ class MobileApp {
     }
 }
 
+// Add modal and utility functions
+MobileApp.prototype.showLeaderboard = async function() {
+    const modal = document.getElementById('leaderboardModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        await this.loadLeaderboard();
+    }
+};
+
+MobileApp.prototype.showPointsBreakdown = async function() {
+    const modal = document.getElementById('pointsBreakdownModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        await this.loadPointsBreakdown();
+    }
+};
+
+MobileApp.prototype.showAllClubs = async function() {
+    const modal = document.getElementById('allClubsModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        await this.loadAllClubs();
+    }
+};
+
+MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
+    try {
+        const data = await window.mobileAPI.getLeaderboard(gameweek);
+        const content = document.getElementById('leaderboardContent');
+        const currentUser = window.mobileAPI.getCurrentUser();
+        
+        if (content) {
+            content.innerHTML = data.leaderboard.map((team, index) => `
+                <div class="leaderboard-item ${team.id === currentUser.id ? 'current-team' : ''}">
+                    <div class="rank">
+                        <span class="rank-number">${team.rank}</span>
+                        ${team.movement > 0 ? '<span class="movement up">↑' + team.movement + '</span>' : ''}
+                        ${team.movement < 0 ? '<span class="movement down">↓' + Math.abs(team.movement) + '</span>' : ''}
+                    </div>
+                    <div class="team-info">
+                        <div class="team-name">${team.name}</div>
+                        <div class="team-stats">
+                            ${gameweek === 'overall' ? 
+                                `<span>${team.total_points} pts</span> • <span>${team.gameweeks_played} GWs</span>` :
+                                `<span>${team.gameweek_points} pts</span>${team.chip_used ? ' • <span class="chip">' + team.chip_used + '</span>' : ''}`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        this.showToast('Failed to load leaderboard', 'error');
+    }
+};
+
+MobileApp.prototype.loadPointsBreakdown = async function(teamId = null, gameweek = null) {
+    try {
+        const currentUser = window.mobileAPI.getCurrentUser();
+        teamId = teamId || currentUser.id;
+        
+        if (!gameweek) {
+            const gwData = await window.mobileAPI.getCurrentGameweek();
+            gameweek = gwData.gameweek;
+        }
+        
+        const data = await window.mobileAPI.getPointsBreakdown(teamId, gameweek);
+        const content = document.getElementById('pointsBreakdownContent');
+        
+        if (content) {
+            content.innerHTML = `
+                <div class="points-summary">
+                    <div class="summary-item">
+                        <span>Base Points:</span>
+                        <span>${data.summary.base_total}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Bonus Points:</span>
+                        <span>+${data.summary.bonus_total}</span>
+                    </div>
+                    ${data.summary.chip_used ? `
+                        <div class="summary-item chip">
+                            <span>Chip Used:</span>
+                            <span>${data.summary.chip_used}</span>
+                        </div>
+                    ` : ''}
+                    <div class="summary-item total">
+                        <span>Total Points:</span>
+                        <span>${data.summary.final_total}</span>
+                    </div>
+                </div>
+                <div class="players-breakdown">
+                    ${data.players.map(player => `
+                        <div class="player-points">
+                            <div class="player-info">
+                                <span class="player-name">${player.player_name}</span>
+                                <span class="player-position">${player.position}</span>
+                            </div>
+                            <div class="points-info">
+                                <span class="base-points">${player.base_points}</span>
+                                ${player.multiplier > 1 ? `<span class="multiplier">×${player.multiplier}</span>` : ''}
+                                <span class="final-points">${player.final_points}</span>
+                            </div>
+                            ${player.bonuses.length > 0 ? `
+                                <div class="bonuses">${player.bonuses.join(', ')}</div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading points breakdown:', error);
+        this.showToast('Failed to load points breakdown', 'error');
+    }
+};
+
+MobileApp.prototype.loadAllClubs = async function() {
+    try {
+        const clubs = await window.mobileAPI.getClubs();
+        const soldItems = await window.mobileAPI.getSoldItems();
+        const soldClubIds = new Set(soldItems.filter(item => item.club_id).map(item => item.club_id));
+        
+        const content = document.getElementById('allClubsList');
+        if (content) {
+            content.innerHTML = clubs.map(club => {
+                const isSold = soldClubIds.has(club.id);
+                const soldItem = soldItems.find(item => item.club_id === club.id);
+                
+                return `
+                    <div class="club-card ${isSold ? 'sold' : ''}">
+                        <div class="club-icon">🏟️</div>
+                        <div class="club-details">
+                            <h4 class="club-name">${club.name}</h4>
+                            <p class="club-short">${club.short_name || ''}</p>
+                            ${isSold && soldItem ? `
+                                <p class="sold-info">
+                                    Sold to ${soldItem.team_name} for <span class="currency-j">J</span>${soldItem.price_paid}m
+                                </p>
+                            ` : ''}
+                        </div>
+                        ${!isSold && window.mobileAuction && window.mobileAuction.canStartAuction ? `
+                            <button class="start-club-auction" onclick="mobileAuction.startClubAuction(${club.id})">
+                                Start
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Error loading clubs:', error);
+        this.showToast('Failed to load clubs', 'error');
+    }
+};
+
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     // Create global app instance
@@ -1596,6 +1755,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('offline', () => {
         window.mobileApp.handleOffline();
+    });
+    
+    // Setup modal close buttons
+    document.getElementById('closeLeaderboardBtn')?.addEventListener('click', () => {
+        document.getElementById('leaderboardModal')?.classList.add('hidden');
+    });
+    
+    document.getElementById('closePointsBreakdownBtn')?.addEventListener('click', () => {
+        document.getElementById('pointsBreakdownModal')?.classList.add('hidden');
+    });
+    
+    document.getElementById('closeAllClubsBtn')?.addEventListener('click', () => {
+        document.getElementById('allClubsModal')?.classList.add('hidden');
     });
 });
 
