@@ -147,6 +147,7 @@ class MobileSubmitTeamManagerV2 {
         // Load existing submission for this gameweek
         window.mobileAPI.getTeamSubmission(this.currentGameweek || 1).then(submission => {
             if (submission) {
+                console.log('Found existing submission:', submission);
                 this.existingSubmission = submission;
                 // Apply the submission to current state
                 if (submission.starting_11) this.starting11 = submission.starting_11;
@@ -159,8 +160,9 @@ class MobileSubmitTeamManagerV2 {
                 this.renderHeader();
                 this.renderView();
             }
-        }).catch(() => {
-            // No existing submission - that's ok
+        }).catch((error) => {
+            // No existing submission - that's ok, user hasn't submitted yet
+            console.log('No existing submission for gameweek', this.currentGameweek || 1);
         });
         
         // Load chip status

@@ -538,7 +538,15 @@ class MobileAPI {
     }
 
     async getTeamSubmission(gameweek) {
-        return this.makeRequest(`/gameweek-teams/submission/${gameweek}`);
+        try {
+            return await this.makeRequest(`/gameweek-teams/submission/${gameweek}`);
+        } catch (error) {
+            // 404 is expected when no submission exists yet
+            if (error.message && error.message.includes('No submission found')) {
+                return null;
+            }
+            throw error;
+        }
     }
 
     async getChipStatus() {
