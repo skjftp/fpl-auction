@@ -193,12 +193,13 @@ class MobileSocketManager {
     updateConnectionStatus(connected) {
         const statusEl = document.getElementById('connectionStatus');
         if (statusEl) {
+            const spanEl = statusEl.querySelector('span');
             if (connected) {
                 statusEl.classList.add('connected');
-                statusEl.querySelector('span').textContent = 'Connected';
+                if (spanEl) spanEl.textContent = 'Connected';
             } else {
                 statusEl.classList.remove('connected');
-                statusEl.querySelector('span').textContent = 'Disconnected';
+                if (spanEl) spanEl.textContent = 'Disconnected';
             }
         }
     }

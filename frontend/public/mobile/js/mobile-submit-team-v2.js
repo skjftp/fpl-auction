@@ -1,6 +1,7 @@
 // Mobile Submit Team Manager V2 - FPL Style
 class MobileSubmitTeamManagerV2 {
     constructor() {
+        this.initialized = false; // Track initialization
         this.mySquad = [];
         this.starting11 = [];
         this.bench = [];
@@ -78,14 +79,17 @@ class MobileSubmitTeamManagerV2 {
 
     async initialize() {
         try {
+            console.log('Initializing Submit Team V2...');
             await this.loadMySquad();
             await this.loadCurrentGameweek();
             await this.loadExistingSubmission();
             await this.loadChipStatus();
-            this.setupEventListeners();
             this.startDeadlineTimer();
             this.renderHeader();
             this.renderView();
+            this.setupEventListeners(); // Setup after rendering
+            this.initialized = true;
+            console.log('Submit Team V2 initialized successfully');
         } catch (error) {
             console.error('Failed to initialize submit team:', error);
             window.mobileApp.showToast('Failed to load team data', 'error');
@@ -109,8 +113,14 @@ class MobileSubmitTeamManagerV2 {
             const saveBtn = document.getElementById('saveEditBtn');
             const cancelEditBtn = document.getElementById('cancelEditBtn');
             
-            if (saveBtn && !saveBtn.classList.contains('disabled')) {
-                saveBtn.addEventListener('click', () => this.saveEdit());
+            console.log('Setting up edit mode buttons:', { saveBtn, cancelEditBtn });
+            
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => {
+                    if (!saveBtn.classList.contains('disabled')) {
+                        this.saveEdit();
+                    }
+                });
             }
             if (cancelEditBtn) {
                 cancelEditBtn.addEventListener('click', () => this.cancelEdit());
@@ -121,8 +131,13 @@ class MobileSubmitTeamManagerV2 {
             const cancelBtn = document.getElementById('cancelTeamBtn');
             const confirmBtn = document.getElementById('confirmTeamBtn');
             
+            console.log('Setting up normal mode buttons:', { editBtn, cancelBtn, confirmBtn });
+            
             if (editBtn) {
-                editBtn.addEventListener('click', () => this.toggleEditMode());
+                editBtn.addEventListener('click', () => {
+                    console.log('Edit button clicked');
+                    this.toggleEditMode();
+                });
             }
             if (cancelBtn) {
                 cancelBtn.addEventListener('click', () => {
