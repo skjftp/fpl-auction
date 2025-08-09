@@ -33,6 +33,12 @@ class MobileSubmitTeamManagerV2 {
 
         // Chips configuration (FPL Auction custom chips)
         this.chips = {
+            'brahmasthra': {
+                name: 'Brahmasthra',
+                short: 'BRM',
+                description: 'Auto-picks best 11',
+                icon: '🔱'
+            },
             'triple_captain': {
                 name: 'Triple Captain',
                 short: 'TC',
@@ -68,12 +74,6 @@ class MobileSubmitTeamManagerV2 {
                 short: 'PB',
                 description: '2x for GKP & DEF',
                 icon: '🚌'
-            },
-            'brahmasthra': {
-                name: 'Brahmasthra',
-                short: 'BRM',
-                description: 'Auto-picks best 11',
-                icon: '🔱'
             }
         };
     }
@@ -276,12 +276,17 @@ class MobileSubmitTeamManagerV2 {
                 ` : ''}
                 
                 <div class="submit-section">
-                    <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.clubMultiplierId ? 'disabled' : ''}>
+                    <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.viceCaptainId || !this.clubMultiplierId ? 'disabled' : ''}>
                         ${this.existingSubmission ? 'Update Team' : 'Submit Team'}
                     </button>
-                    ${this.existingSubmission && this.existingSubmission.chip_used ? `
+                    ${this.existingSubmission ? `
                         <div class="submission-info">
-                            <small>Chip used: ${this.chips[this.existingSubmission.chip_used]?.name || this.existingSubmission.chip_used}</small>
+                            ${this.existingSubmission.chip_used ? `
+                                <small>Chip: ${this.chips[this.existingSubmission.chip_used]?.name || this.existingSubmission.chip_used}</small>
+                            ` : ''}
+                            ${this.existingSubmission.club_multiplier_id ? `
+                                <small>Club: ${this.getClubName(this.existingSubmission.club_multiplier_id)}</small>
+                            ` : ''}
                         </div>
                     ` : ''}
                 </div>
@@ -322,6 +327,11 @@ class MobileSubmitTeamManagerV2 {
                 ${this.clubMultiplierId === club.id ? '<span class="club-badge">1.5x</span>' : ''}
             </button>
         `).join('');
+    }
+    
+    getClubName(clubId) {
+        const club = this.myClubs?.find(c => c.id === clubId);
+        return club ? (club.name || club.club_name || 'Unknown') : 'Unknown';
     }
     
     selectClubMultiplier(clubId) {
@@ -497,19 +507,19 @@ class MobileSubmitTeamManagerV2 {
                 <div class="player-shirt">
                     <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
                          onerror="this.style.display='none'" alt="">
-                    ${!this.editMode && isCaptain ? '<div class="captain-badge">C</div>' : ''}
-                    ${!this.editMode && isViceCaptain ? '<div class="vice-badge">V</div>' : ''}
+                    ${isCaptain ? '<div class="captain-badge">C</div>' : ''}
+                    ${isViceCaptain ? '<div class="vice-badge">V</div>' : ''}
                 </div>
                 <div class="player-info">
                     <div class="player-name">${player.web_name || player.name}</div>
                     <div class="player-team">${player.team_short_name || ''}</div>
                 </div>
-                ${!this.editMode && isStarting ? `
+                ${isStarting ? `
                     <div class="player-actions">
-                        <button class="captain-toggle" onclick="mobileSubmitTeam.toggleCaptain(${player.id})">
+                        <button class="captain-toggle ${isCaptain ? 'active' : ''}" onclick="mobileSubmitTeam.toggleCaptain(${player.id})">
                             ${isCaptain ? '©' : 'C'}
                         </button>
-                        <button class="vice-toggle" onclick="mobileSubmitTeam.toggleViceCaptain(${player.id})">
+                        <button class="vice-toggle ${isViceCaptain ? 'active' : ''}" onclick="mobileSubmitTeam.toggleViceCaptain(${player.id})">
                             ${isViceCaptain ? 'Ⓥ' : 'V'}
                         </button>
                     </div>
@@ -743,12 +753,15 @@ class MobileSubmitTeamManagerV2 {
 
     toggleCaptain(playerId) {
         if (this.captainId === playerId) {
-            this.captainId = null;
+            // Can't remove captain, just ignore
+            window.mobileApp.showToast('Captain is required', 'warning');
         } else {
             this.captainId = playerId;
             // Remove vice captain if same
             if (this.viceCaptainId === playerId) {
-                this.viceCaptainId = null;
+                // Find another player to be vice captain
+                const otherPlayer = this.starting11.find(id => id !== playerId);
+                this.viceCaptainId = otherPlayer || null;
             }
         }
         this.renderView();
@@ -756,13 +769,15 @@ class MobileSubmitTeamManagerV2 {
     
     toggleViceCaptain(playerId) {
         if (this.viceCaptainId === playerId) {
-            this.viceCaptainId = null;
+            // Can't remove vice-captain, just ignore
+            window.mobileApp.showToast('Vice-captain is required', 'warning');
         } else {
-            this.viceCaptainId = playerId;
-            // Remove captain if same
+            // Can't be same as captain
             if (this.captainId === playerId) {
-                this.captainId = null;
+                window.mobileApp.showToast('Vice-captain must be different from captain', 'warning');
+                return;
             }
+            this.viceCaptainId = playerId;
         }
         this.renderView();
     }
@@ -1096,6 +1111,11 @@ class MobileSubmitTeamManagerV2 {
 
             if (!this.captainId) {
                 window.mobileApp.showToast('Please select a captain', 'error');
+                return;
+            }
+            
+            if (!this.viceCaptainId) {
+                window.mobileApp.showToast('Please select a vice-captain', 'error');
                 return;
             }
 

@@ -640,6 +640,17 @@
     font-weight: bold;
     cursor: pointer;
     pointer-events: auto !important;
+    transition: all 0.2s;
+}
+
+.captain-toggle.active {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.vice-toggle.active {
+    background: #6366f1;
+    border-color: #6366f1;
 }
 
 /* Bench Section */
