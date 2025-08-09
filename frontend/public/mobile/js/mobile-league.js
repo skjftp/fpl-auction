@@ -163,7 +163,7 @@ class MobileLeague {
                 </div>
                 <div class="action-col">
                     <button class="view-btn" onclick="event.stopPropagation(); mobileLeague.viewTeam('${team.team_id}')">
-                        👁
+                        👀
                     </button>
                 </div>
             </div>
