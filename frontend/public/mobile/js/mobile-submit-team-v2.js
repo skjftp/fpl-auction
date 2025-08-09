@@ -297,6 +297,11 @@ class MobileSubmitTeamManagerV2 {
         
         // Re-setup event listeners after rendering new buttons
         this.setupHeaderEventListeners();
+        
+        // Start the deadline timer if not already running
+        if (!this.deadlineTimer) {
+            this.startDeadlineTimer();
+        }
     }
     
     setupHeaderEventListeners() {
@@ -968,8 +973,9 @@ class MobileSubmitTeamManagerV2 {
                 if (cacheAge < 60 * 60 * 1000) {
                     this.currentGameweek = data.gameweek;
                     this.deadline = new Date(data.deadline_time);
-                    this.gameweekType = data.type || 'Normal';
+                    this.gameweekType = data.gameweek_type || data.type || 'Normal';
                     this.matchCount = data.match_count || 10;
+                    console.log('Loaded from cache - GW type:', this.gameweekType);
                     return;
                 }
             }
@@ -986,8 +992,9 @@ class MobileSubmitTeamManagerV2 {
             
             this.currentGameweek = response.gameweek;
             this.deadline = new Date(response.deadline_time);
-            this.gameweekType = response.type || 'Normal';
+            this.gameweekType = response.gameweek_type || response.type || 'Normal';
             this.matchCount = response.match_count || 10;
+            console.log('Loaded from API - GW type:', this.gameweekType, 'Full response:', response);
             
             // Cache the response
             localStorage.setItem(cacheKey, JSON.stringify({
