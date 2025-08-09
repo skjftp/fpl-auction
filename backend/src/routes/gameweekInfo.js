@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { db, admin } = require('../config/firebase');
-const authMiddleware = require('../middleware/auth');
 const axios = require('axios');
 
 // FPL API endpoints

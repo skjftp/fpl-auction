@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { db, admin } = require('../config/firebase');
-const authMiddleware = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 
 // Save team submission for a gameweek
-router.post('/submit', authMiddleware, async (req, res) => {
+router.post('/submit', authenticateToken, async (req, res) => {
     try {
         const {
             gameweek,
@@ -67,7 +67,7 @@ router.post('/submit', authMiddleware, async (req, res) => {
 });
 
 // Get team submission for a specific gameweek
-router.get('/submission/:gameweek', authMiddleware, async (req, res) => {
+router.get('/submission/:gameweek', authenticateToken, async (req, res) => {
     try {
         const gameweek = parseInt(req.params.gameweek);
         const teamId = req.user.teamId || req.user.id;
@@ -89,7 +89,7 @@ router.get('/submission/:gameweek', authMiddleware, async (req, res) => {
 });
 
 // Get all teams for a specific gameweek (admin only)
-router.get('/all/:gameweek', authMiddleware, async (req, res) => {
+router.get('/all/:gameweek', authenticateToken, async (req, res) => {
     try {
         const gameweek = parseInt(req.params.gameweek);
         
@@ -113,7 +113,7 @@ router.get('/all/:gameweek', authMiddleware, async (req, res) => {
 });
 
 // Get chip usage status for a team
-router.get('/chips/status', authMiddleware, async (req, res) => {
+router.get('/chips/status', authenticateToken, async (req, res) => {
     try {
         const teamId = req.user.teamId || req.user.id;
         
