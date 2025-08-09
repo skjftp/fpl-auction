@@ -8,6 +8,11 @@ class MobileSocketManager {
     }
 
     connect() {
+        // DISABLED FOR PLAYING PHASE - Auction is complete
+        console.log('Socket connection disabled - auction complete, in playing phase');
+        return;
+        
+        /* COMMENTED OUT FOR PLAYING PHASE
         // Production Socket URL
         const PRODUCTION_SOCKET_URL = 'https://fpl-auction-backend-945963649649.us-central1.run.app';
         
@@ -130,6 +135,7 @@ class MobileSocketManager {
             }
         });
     }
+    */ // END OF PLAYING PHASE COMMENT
 
     disconnect() {
         if (this.rejoinInterval) {

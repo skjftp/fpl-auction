@@ -857,8 +857,16 @@ class MobileSubmitTeamManagerV2 {
                 }
             }
             
-            // Fetch fresh data
-            const response = await window.mobileAPI.getCurrentGameweek();
+            // Fetch fresh data with timeout
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Gameweek load timeout')), 5000)
+            );
+            
+            const response = await Promise.race([
+                window.mobileAPI.getCurrentGameweek(),
+                timeoutPromise
+            ]);
+            
             this.currentGameweek = response.gameweek;
             this.deadline = new Date(response.deadline_time);
             this.gameweekType = response.type || 'Normal';
@@ -871,7 +879,10 @@ class MobileSubmitTeamManagerV2 {
             }));
         } catch (error) {
             console.error('Error loading gameweek:', error);
-            throw error;
+            // Set defaults on error
+            this.currentGameweek = 1;
+            this.deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+            this.gameweekType = 'Normal';
         }
     }
 
@@ -880,7 +891,15 @@ class MobileSubmitTeamManagerV2 {
             // Skip if no gameweek yet
             if (!this.currentGameweek) return;
             
-            const submission = await window.mobileAPI.getTeamSubmission(this.currentGameweek);
+            // Add timeout for submission loading
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Submission load timeout')), 3000)
+            );
+            
+            const submission = await Promise.race([
+                window.mobileAPI.getTeamSubmission(this.currentGameweek),
+                timeoutPromise
+            ]);
             
             if (submission) {
                 this.starting11 = submission.starting_11 || [];
@@ -890,24 +909,27 @@ class MobileSubmitTeamManagerV2 {
                 this.clubMultiplierId = submission.club_multiplier_id;
             }
         } catch (error) {
-            console.log('No existing submission found');
+            console.log('No existing submission found or timeout:', error.message);
+            // Continue with default team selection
         }
     }
 
     async loadChipStatus() {
-        try {
-            // Defer chip loading - not critical for initial display
-            setTimeout(async () => {
+        // Defer chip loading - not critical for initial display
+        setTimeout(async () => {
+            try {
                 const chipStatus = await window.mobileAPI.getChipStatus();
                 this.chipStatus = chipStatus;
                 // Re-render header to update chips
                 if (this.initialized && !this.editMode) {
                     this.renderHeader();
                 }
-            }, 100);
-        } catch (error) {
-            console.error('Error loading chip status:', error);
-        }
+            } catch (error) {
+                console.error('Error loading chip status:', error);
+                // Set empty chip status on error
+                this.chipStatus = [];
+            }
+        }, 100);
     }
 
     autoSelectTeam() {

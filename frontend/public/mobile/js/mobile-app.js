@@ -183,8 +183,8 @@ class MobileApp {
             // Load initial data
             await this.loadInitialData();
             
-            // Connect to socket
-            window.mobileSocket.connect();
+            // Connect to socket - DISABLED FOR PLAYING PHASE
+            // window.mobileSocket.connect();
             
             // Show auction tab active state
             const mainApp = document.getElementById('mainApp');
