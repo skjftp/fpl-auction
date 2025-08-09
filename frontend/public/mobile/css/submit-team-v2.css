@@ -113,7 +113,9 @@
 
 #deadlineTime {
     font-weight: 600;
-    color: #ef4444;
+    color: #374151;
+    margin-left: 4px;
+}
 }
 
 /* Club Selector Row */

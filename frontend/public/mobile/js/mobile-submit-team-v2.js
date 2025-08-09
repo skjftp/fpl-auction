@@ -226,7 +226,7 @@ class MobileSubmitTeamManagerV2 {
                 
                 <div class="gameweek-info">
                     <span class="gw-label">Gameweek ${this.currentGameweek || 1} ${this.gameweekType ? `(${this.gameweekType})` : ''}</span>
-                    <span class="deadline-label">Deadline: <span id="deadlineTime"></span></span>
+                    <span class="deadline-label">Deadline: <span id="deadlineTime">${this.getDeadlineDisplay()}</span></span>
                 </div>
                 
                 ${!this.editMode ? `
@@ -820,30 +820,39 @@ class MobileSubmitTeamManagerV2 {
         }
     }
 
+    getDeadlineDisplay() {
+        if (!this.deadline) return 'Loading...';
+        
+        const now = new Date();
+        const diff = this.deadline - now;
+        
+        if (diff <= 0) {
+            return 'DEADLINE PASSED';
+        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        let timeStr = '';
+        if (days > 0) timeStr += `${days}d `;
+        timeStr += `${hours}h ${minutes}m`;
+
+        return timeStr;
+    }
+
     startDeadlineTimer() {
         const updateTimer = () => {
-            const now = new Date();
-            const diff = this.deadline - now;
-            
             const timerEl = document.getElementById('deadlineTime');
             if (!timerEl) return;
-
-            if (diff <= 0) {
-                timerEl.textContent = 'DEADLINE PASSED';
+            
+            timerEl.textContent = this.getDeadlineDisplay();
+            
+            // Check if deadline passed
+            if (this.deadline && new Date() > this.deadline) {
                 clearInterval(this.deadlineTimer);
                 this.disableSubmission();
-                return;
             }
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-            let timeStr = '';
-            if (days > 0) timeStr += `${days}d `;
-            timeStr += `${hours}h ${minutes}m`;
-
-            timerEl.textContent = timeStr;
         };
 
         updateTimer();
