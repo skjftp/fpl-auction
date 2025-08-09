@@ -583,6 +583,18 @@ class MobileAPI {
     async getPointsBreakdown(teamId, gameweek) {
         return this.makeRequest(`/points/breakdown/${teamId}/${gameweek}`);
     }
+
+    async calculateGameweekPoints(gameweek) {
+        return this.makeRequest(`/calculate-points/calculate/${gameweek}`, {
+            method: 'POST'
+        });
+    }
+
+    async calculateCurrentGameweekPoints() {
+        return this.makeRequest('/calculate-points/calculate-current', {
+            method: 'POST'
+        });
+    }
 }
 
 // Global API instance

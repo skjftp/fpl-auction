@@ -1693,7 +1693,7 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
         const currentUser = window.mobileAPI.getCurrentUser();
         
         if (content) {
-            content.innerHTML = data.leaderboard.map((team, index) => `
+            content.innerHTML = data.map((team, index) => `
                 <div class="leaderboard-item ${team.id === currentUser.id ? 'current-team' : ''}">
                     <div class="rank">
                         <span class="rank-number">${team.rank}</span>

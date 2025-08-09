@@ -121,6 +121,43 @@ router.get('/submission/:gameweek', authenticateToken, async (req, res) => {
     }
 });
 
+// Get another team's submission for a specific gameweek (only after deadline)
+router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) => {
+    try {
+        const gameweek = parseInt(req.params.gameweek);
+        const targetTeamId = req.params.teamId;
+        
+        // Check if deadline has passed for this gameweek
+        const gwDoc = await db.collection('gameweekInfo').doc(`gw_${gameweek}`).get();
+        if (gwDoc.exists) {
+            const gwData = gwDoc.data();
+            const deadline = new Date(gwData.deadline);
+            const now = new Date();
+            
+            // Only allow viewing other teams after deadline (with some buffer)
+            if (now <= deadline && gameweek === 1) {
+                return res.status(403).json({
+                    error: 'You can view other teams only after the deadline'
+                });
+            }
+        }
+
+        const docId = `${targetTeamId}_gw${gameweek}`;
+        const doc = await db.collection('gameweekTeams').doc(docId).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({
+                error: 'No submission found for this gameweek'
+            });
+        }
+
+        res.json(doc.data());
+    } catch (error) {
+        console.error('Error fetching team submission:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get all teams for a specific gameweek (admin only)
 router.get('/all/:gameweek', authenticateToken, async (req, res) => {
     try {

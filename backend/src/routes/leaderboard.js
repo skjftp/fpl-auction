@@ -40,10 +40,15 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 });
                 
                 leaderboard.push({
-                    ...team,
+                    team_id: team.id,
+                    team_name: team.name,
+                    username: team.username,
                     total_points: totalPoints,
                     gameweeks_played: gameweeksPlayed,
-                    average_points: gameweeksPlayed > 0 ? Math.round(totalPoints / gameweeksPlayed) : 0
+                    gameweek_points: 0, // For overall view
+                    average_points: gameweeksPlayed > 0 ? Math.round(totalPoints / gameweeksPlayed) : 0,
+                    chip_used: null,
+                    hit_points: 0
                 });
             }
             
@@ -56,10 +61,7 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 team.movement = 0; // No movement for overall
             });
             
-            res.json({
-                gameweek: 'overall',
-                leaderboard: leaderboard
-            });
+            res.json(leaderboard);
         } else {
             // Get specific gameweek points
             const gwNumber = parseInt(gameweek);
@@ -93,7 +95,10 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 }
                 
                 leaderboard.push({
-                    ...team,
+                    team_id: team.id,
+                    team_name: team.name,
+                    username: team.username,
+                    total_points: 0, // Will calculate below
                     gameweek_points: gwPoints,
                     chip_used: chipUsed,
                     previous_rank: previousRank
@@ -109,10 +114,7 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 team.movement = team.previous_rank ? team.previous_rank - team.rank : 0;
             });
             
-            res.json({
-                gameweek: gwNumber,
-                leaderboard: leaderboard
-            });
+            res.json(leaderboard);
         }
     } catch (error) {
         console.error('Error getting leaderboard:', error);

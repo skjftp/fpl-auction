@@ -111,6 +111,7 @@ app.use('/api/gameweek-teams', authenticateToken, require('./routes/gameweekTeam
 app.use('/api/gameweek-info', require('./routes/gameweekInfo'));
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/points', authenticateToken, require('./routes/points'));
+app.use('/api/calculate-points', authenticateToken, require('./routes/calculatePoints'));
 
 // Preflight requests are handled by cors() middleware above
 
