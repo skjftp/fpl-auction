@@ -207,15 +207,15 @@ class MobileSubmitTeamManagerV2 {
                 <div class="header-actions">
                     ${this.editMode ? `
                         <button id="cancelEditBtn" class="cancel-btn">
-                            <span class="cancel-icon">✕</span> Cancel
+                            ✕ Cancel
                         </button>
                         <h2 class="header-title">Edit Team</h2>
                         <button id="saveEditBtn" class="save-btn ${!this.hasChanges ? 'disabled' : ''}">
-                            <span class="save-icon">✓</span> Save
+                            ✓ Save
                         </button>
                     ` : `
                         <button id="cancelTeamBtn" class="cancel-btn">
-                            <span class="cancel-icon">✕</span> Back
+                            ✕ Back
                         </button>
                         <h2 class="header-title">Pick Team</h2>
                         <button id="editTeamBtn" class="edit-btn">

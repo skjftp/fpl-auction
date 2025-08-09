@@ -14,7 +14,20 @@
     border-bottom: 1px solid #e5e7eb;
 }
 
-.cancel-btn, .confirm-btn, .edit-btn, .done-btn {
+.cancel-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.edit-btn {
     background: none;
     border: none;
     color: #3b82f6;
@@ -27,22 +40,26 @@
     gap: 4px;
 }
 
-.cancel-btn {
-    color: #ef4444;
-}
-
-.edit-btn {
-    color: #3b82f6;
-}
-
 .save-btn {
-    color: #10b981;
+    background: #10b981;
+    color: white !important;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .save-btn.disabled {
-    color: #9ca3af;
+    background: #9ca3af;
+    color: white !important;
     cursor: not-allowed;
     pointer-events: none;
+    opacity: 0.6;
 }
 
 .confirm-btn {
