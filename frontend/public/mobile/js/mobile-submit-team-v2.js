@@ -100,24 +100,19 @@ class MobileSubmitTeamManagerV2 {
             this.loading = true;
             this.showLoader();
             
-            // Absolute timeout safety net - force render after 5 seconds no matter what
+            // Instant timeout - force render quickly
             setTimeout(() => {
                 if (this.loading && !this.initialized) {
-                    console.error('Force timeout - rendering with empty data');
+                    console.error('Taking too long - forcing render');
                     this.forceRenderEmpty();
                 }
-            }, 5000);
+            }, 500); // 500ms max - should be instant
             
             try {
-                // Load only critical data first with timeout
-                console.time('Loading critical data');
-                const squadPromise = this.loadMySquad();
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Loading timeout')), 4000)
-                );
-                
-                await Promise.race([squadPromise, timeoutPromise]);
-                console.timeEnd('Loading critical data');
+                // Load squad data - should be instant from cache or fast from API
+                console.time('Loading squad');
+                await this.loadMySquad();
+                console.timeEnd('Loading squad');
             } catch (error) {
                 console.error('Error loading squad:', error);
                 // Continue with empty squad
@@ -839,33 +834,46 @@ class MobileSubmitTeamManagerV2 {
     }
 
     async loadMySquad() {
+        const startTime = performance.now();
         try {
             const currentUser = window.mobileAPI.getCurrentUser();
+            if (!currentUser || !currentUser.id) {
+                console.error('No user found');
+                return;
+            }
+            
             const cacheKey = `fpl_squad_cache_${currentUser.id}`;
             const cached = localStorage.getItem(cacheKey);
             
-            // Use cache if available and less than 10 minutes old
+            // Always use cache first if available (instant load)
             if (cached) {
                 const data = JSON.parse(cached);
-                const cacheAge = Date.now() - data.timestamp;
+                this.mySquad = data.players || [];
+                this.myClubs = data.clubs || [];
                 
-                if (cacheAge < 10 * 60 * 1000) {
-                    this.mySquad = data.players || [];
-                    this.myClubs = data.clubs || [];
-                    
-                    // Initialize with default formation if no existing submission
-                    if (this.starting11.length === 0 && this.mySquad.length >= 15) {
-                        this.autoSelectTeam();
-                    }
-                    return;
+                console.log(`Loaded squad from cache in ${performance.now() - startTime}ms`);
+                
+                // Initialize with default formation if no existing submission
+                if (this.starting11.length === 0 && this.mySquad.length >= 15) {
+                    this.autoSelectTeam();
                 }
+                
+                // Refresh cache in background if old (non-blocking)
+                const cacheAge = Date.now() - data.timestamp;
+                if (cacheAge > 10 * 60 * 1000) {
+                    this.refreshSquadInBackground(currentUser.id, cacheKey);
+                }
+                return;
             }
             
-            // Fetch fresh data
+            // No cache - fetch from API (should still be fast)
+            console.log('No cache, fetching from API...');
             const squadData = await window.mobileAPI.getTeamSquad(currentUser.id);
             
             this.mySquad = squadData.players || [];
             this.myClubs = squadData.clubs || [];
+            
+            console.log(`Loaded squad from API in ${performance.now() - startTime}ms`);
             
             // Cache the squad data
             localStorage.setItem(cacheKey, JSON.stringify({
@@ -879,8 +887,25 @@ class MobileSubmitTeamManagerV2 {
                 this.autoSelectTeam();
             }
         } catch (error) {
-            console.error('Error loading squad:', error);
-            throw error;
+            console.error(`Squad load failed after ${performance.now() - startTime}ms:`, error);
+            // Don't throw - continue with empty data
+            this.mySquad = [];
+            this.myClubs = [];
+        }
+    }
+    
+    // Refresh squad data in background without blocking UI
+    async refreshSquadInBackground(userId, cacheKey) {
+        try {
+            const squadData = await window.mobileAPI.getTeamSquad(userId);
+            localStorage.setItem(cacheKey, JSON.stringify({
+                players: squadData.players || [],
+                clubs: squadData.clubs || [],
+                timestamp: Date.now()
+            }));
+            console.log('Squad cache refreshed in background');
+        } catch (error) {
+            console.error('Background refresh failed:', error);
         }
     }
 
