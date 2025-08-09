@@ -11,6 +11,7 @@
     <!-- Mobile-optimized CSS -->
     <link rel="stylesheet" href="mobile/css/mobile.css">
     <link rel="stylesheet" href="mobile/css/submit-team.css">
+    <link rel="stylesheet" href="mobile/css/submit-team-v2.css">
     
     <!-- Touch-friendly icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -238,30 +239,11 @@
             <!-- Submit Team Tab -->
             <div id="submitTeamTab" class="tab-pane">
                 <div class="submit-team-container">
-                    <!-- Gameweek Header -->
-                    <div id="gameweekHeader"></div>
+                    <!-- Header will be rendered by V2 -->
+                    <div id="submitTeamHeader"></div>
                     
-                    <!-- Formation Validation -->
-                    <div id="formationValidation" class="formation-validation"></div>
-                    
-                    <!-- Team Actions -->
-                    <div class="team-actions">
-                        <button id="editTeamBtn" class="edit-team-btn">Edit Team</button>
-                        <button id="resetTeamBtn" class="reset-team-btn">Reset</button>
-                        <button id="submitTeamBtn" class="submit-team-btn">Submit Team</button>
-                    </div>
-                    
-                    <!-- Pitch -->
-                    <div id="teamPitch"></div>
-                    
-                    <!-- Bench -->
-                    <div id="teamBench"></div>
-                    
-                    <!-- Club Multiplier -->
-                    <div id="clubMultiplier"></div>
-                    
-                    <!-- Chips -->
-                    <div id="chipsSelector"></div>
+                    <!-- Main content area -->
+                    <div id="submitTeamContent"></div>
                 </div>
             </div>
 
@@ -581,6 +563,7 @@
     <script src="mobile/js/mobile-autobid.js"></script>
     <script src="mobile/js/mobile-viewport.js"></script>
     <script src="mobile/js/mobile-submit-team.js"></script>
+    <script src="mobile/js/mobile-submit-team-v2.js"></script>
     <script src="mobile/js/mobile-app.js"></script>
     
     <!-- Break Screen Modal -->

@@ -603,7 +603,7 @@ class MobileApp {
                 }
                 break;
             case 'submitTeam':
-                // Initialize submit team
+                // Initialize submit team V2 (FPL-style)
                 if (!window.mobileSubmitTeam.initialized) {
                     await window.mobileSubmitTeam.initialize();
                     window.mobileSubmitTeam.initialized = true;
