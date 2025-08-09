@@ -549,8 +549,9 @@ class MobileAPI {
         }
     }
 
-    async getChipStatus() {
-        return this.makeRequest('/gameweek-teams/chips/status');
+    async getChipStatus(gameweek = null) {
+        const query = gameweek ? `?gameweek=${gameweek}` : '';
+        return this.makeRequest(`/gameweek-teams/chips/status${query}`);
     }
     
     async getGameweekInfo(gameweek) {

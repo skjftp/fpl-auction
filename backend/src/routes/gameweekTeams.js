@@ -45,15 +45,9 @@ router.post('/submit', authenticateToken, async (req, res) => {
         const docId = `${teamId}_gw${gameweek}`;
         await db.collection('gameweekTeams').doc(docId).set(submission);
 
-        // Update chip usage if a chip was used
-        if (chip_used) {
-            await db.collection('chipUsage').doc(`${teamId}_${chip_used}`).set({
-                team_id: teamId,
-                chip_id: chip_used,
-                gameweek_used: gameweek,
-                used_at: admin.firestore.FieldValue.serverTimestamp()
-            });
-        }
+        // Don't mark chip as used yet - it's only "planned" until deadline passes
+        // Chips will be marked as used by a separate process after deadline
+        // This allows users to change their mind before deadline
 
         res.json({
             success: true,
@@ -117,23 +111,93 @@ router.get('/chips/status', authenticateToken, async (req, res) => {
     try {
         const teamId = req.user.teamId;
         
-        const snapshot = await db.collection('chipUsage')
+        // Get actually used chips (after deadline)
+        const usedSnapshot = await db.collection('chipUsage')
             .where('team_id', '==', teamId)
             .get();
 
         const chipStatus = [];
-        snapshot.forEach(doc => {
+        
+        // Mark chips that are permanently used (after deadline)
+        usedSnapshot.forEach(doc => {
             const data = doc.data();
             chipStatus.push({
                 id: data.chip_id,
                 used: true,
+                permanent: true,
                 gameweek_used: data.gameweek_used
             });
         });
+        
+        // Get current gameweek submissions to see planned chips
+        const currentGW = req.query.gameweek;
+        if (currentGW) {
+            const docId = `${teamId}_gw${currentGW}`;
+            const submission = await db.collection('gameweekTeams').doc(docId).get();
+            
+            if (submission.exists && submission.data().chip_used) {
+                const plannedChip = submission.data().chip_used;
+                // Only add if not already in the permanently used list
+                if (!chipStatus.find(cs => cs.id === plannedChip)) {
+                    chipStatus.push({
+                        id: plannedChip,
+                        used: false,
+                        planned: true,
+                        gameweek_planned: currentGW
+                    });
+                }
+            }
+        }
 
         res.json(chipStatus);
     } catch (error) {
         console.error('Error fetching chip status:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Process chips after deadline (admin only)
+router.post('/process-chips/:gameweek', authenticateToken, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (!req.user.is_admin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+        
+        const gameweek = parseInt(req.params.gameweek);
+        
+        // Get all submissions for this gameweek
+        const snapshot = await db.collection('gameweekTeams')
+            .where('gameweek', '==', gameweek)
+            .get();
+        
+        const batch = db.batch();
+        let processedCount = 0;
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.chip_used) {
+                // Mark chip as permanently used
+                const chipUsageRef = db.collection('chipUsage').doc(`${data.team_id}_${data.chip_used}`);
+                batch.set(chipUsageRef, {
+                    team_id: data.team_id,
+                    chip_id: data.chip_used,
+                    gameweek_used: gameweek,
+                    used_at: admin.firestore.FieldValue.serverTimestamp(),
+                    processed: true
+                });
+                processedCount++;
+            }
+        });
+        
+        await batch.commit();
+        
+        res.json({
+            success: true,
+            message: `Processed ${processedCount} chips for gameweek ${gameweek}`
+        });
+    } catch (error) {
+        console.error('Error processing chips:', error);
         res.status(500).json({ error: error.message });
     }
 });

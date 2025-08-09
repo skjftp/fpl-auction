@@ -305,6 +305,11 @@
     cursor: not-allowed;
 }
 
+.chip-button.planned {
+    background: #fef3c7;
+    border-color: #f59e0b;
+}
+
 .chip-icon {
     font-size: 16px;
 }

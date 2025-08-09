@@ -165,8 +165,8 @@ class MobileSubmitTeamManagerV2 {
             console.log('No existing submission for gameweek', this.currentGameweek || 1);
         });
         
-        // Load chip status
-        window.mobileAPI.getChipStatus().then(chipStatus => {
+        // Load chip status with current gameweek
+        window.mobileAPI.getChipStatus(this.currentGameweek || 1).then(chipStatus => {
             this.chipStatus = chipStatus;
             this.renderHeader();
         }).catch(() => {
@@ -344,17 +344,21 @@ class MobileSubmitTeamManagerV2 {
         return Object.entries(this.chips).map(([chipId, chip]) => {
             const isSelected = this.selectedChip === chipId;
             const chipStatus = this.chipStatus?.find(cs => cs.id === chipId);
-            const isUsed = chipStatus?.used;
+            const isPermanentlyUsed = chipStatus?.permanent; // Chip used after deadline passed
+            const isPlanned = chipStatus?.planned && !isPermanentlyUsed; // Chip selected but deadline not passed
+            
+            // Check if this chip is the one from existing submission (allows unselecting before deadline)
+            const isFromSubmission = this.existingSubmission?.chip_used === chipId && !isPermanentlyUsed;
             
             return `
-                <div class="chip-button ${isSelected ? 'selected' : ''} ${isUsed ? 'used' : ''}">
+                <div class="chip-button ${isSelected ? 'selected' : ''} ${isPermanentlyUsed ? 'used' : ''} ${isPlanned && !isSelected ? 'planned' : ''}">
                     <div class="chip-icon">${chip.icon}</div>
                     <div class="chip-name">${chip.short}</div>
-                    ${!isUsed ? 
+                    ${!isPermanentlyUsed ? 
                         `<button onclick="mobileSubmitTeam.toggleChip('${chipId}')" class="chip-play-btn">
-                            ${isSelected ? '✕' : '+'}
+                            ${isSelected ? '✕' : isFromSubmission ? '✕' : '+'}
                         </button>` : 
-                        `<div class="chip-status">Used</div>`
+                        `<div class="chip-status">Used GW${chipStatus.gameweek_used}</div>`
                     }
                 </div>
             `;
@@ -945,6 +949,12 @@ class MobileSubmitTeamManagerV2 {
                 this.captainId = submission.captain_id;
                 this.viceCaptainId = submission.vice_captain_id;
                 this.clubMultiplierId = submission.club_multiplier_id;
+                
+                // Set the selected chip from submission (can be changed before deadline)
+                this.selectedChip = submission.chip_used || null;
+                
+                // Store the existing submission for reference
+                this.existingSubmission = submission;
             }
         } catch (error) {
             console.log('No existing submission found or timeout:', error.message);
@@ -956,7 +966,8 @@ class MobileSubmitTeamManagerV2 {
         // Defer chip loading - not critical for initial display
         setTimeout(async () => {
             try {
-                const chipStatus = await window.mobileAPI.getChipStatus();
+                // Pass current gameweek to get planned chips too
+                const chipStatus = await window.mobileAPI.getChipStatus(this.currentGameweek);
                 this.chipStatus = chipStatus;
                 // Re-render header to update chips
                 if (this.initialized && !this.editMode) {
