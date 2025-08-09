@@ -206,57 +206,8 @@ class MobileSubmitTeamManagerV2 {
     }
 
     setupEventListeners() {
-        // View toggle
-        const pitchBtn = document.getElementById('pitchViewBtn');
-        const listBtn = document.getElementById('listViewBtn');
-        
-        if (pitchBtn) {
-            pitchBtn.addEventListener('click', () => this.switchView('pitch'));
-        }
-        if (listBtn) {
-            listBtn.addEventListener('click', () => this.switchView('list'));
-        }
-
-        if (this.editMode) {
-            // Edit mode buttons
-            const saveBtn = document.getElementById('saveEditBtn');
-            const cancelEditBtn = document.getElementById('cancelEditBtn');
-            
-            console.log('Setting up edit mode buttons:', { saveBtn, cancelEditBtn });
-            
-            if (saveBtn) {
-                saveBtn.addEventListener('click', () => {
-                    if (!saveBtn.classList.contains('disabled')) {
-                        this.saveEdit();
-                    }
-                });
-            }
-            if (cancelEditBtn) {
-                cancelEditBtn.addEventListener('click', () => this.cancelEdit());
-            }
-        } else {
-            // Normal mode buttons
-            const editBtn = document.getElementById('editTeamBtn');
-            const cancelBtn = document.getElementById('cancelTeamBtn');
-            const confirmBtn = document.getElementById('confirmTeamBtn');
-            
-            console.log('Setting up normal mode buttons:', { editBtn, cancelBtn, confirmBtn });
-            
-            if (editBtn) {
-                editBtn.addEventListener('click', () => {
-                    console.log('Edit button clicked');
-                    this.toggleEditMode();
-                });
-            }
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', () => {
-                    window.mobileApp.switchTab('team');
-                });
-            }
-            if (confirmBtn) {
-                confirmBtn.addEventListener('click', () => this.submitTeam());
-            }
-        }
+        // This is now handled by setupHeaderEventListeners
+        // Keep empty for compatibility
     }
 
     toggleEditMode() {
@@ -1148,7 +1099,10 @@ class MobileSubmitTeamManagerV2 {
                 return;
             }
 
+            const currentUser = window.mobileAPI.getCurrentUser();
+            
             const submission = {
+                user_id: currentUser.id,
                 gameweek: this.currentGameweek,
                 starting_11: this.starting11,
                 bench: this.bench,
