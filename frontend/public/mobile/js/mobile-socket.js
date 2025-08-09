@@ -136,6 +136,7 @@ class MobileSocketManager {
         });
     }
     */ // END OF PLAYING PHASE COMMENT
+    }
 
     disconnect() {
         // DISABLED FOR PLAYING PHASE

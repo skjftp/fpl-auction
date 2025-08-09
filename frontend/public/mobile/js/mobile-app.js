@@ -349,15 +349,25 @@ class MobileApp {
     }
 
     async initializeManagers() {
-        // Initialize auction manager
-        if (window.mobileAuction) {
-            await window.mobileAuction.initialize();
-        }
+        // COMPLETELY DISABLED FOR PLAYING PHASE
+        // No auction or auto-bid functionality needed during playing phase
+        console.log('Auction/auto-bid managers disabled for playing phase');
+        return;
         
-        // Initialize auto-bid manager
-        if (window.mobileAutoBid) {
-            await window.mobileAutoBid.initialize();
+        /* COMMENTED OUT FOR PLAYING PHASE
+        // SKIP auction manager initialization during app startup
+        // It will be initialized lazily when auction tab is accessed
+        // This saves 5-7 seconds on app startup
+        console.log('Skipping auction/autobid initialization for faster startup');
+        
+        // Mark managers as not initialized
+        if (window.mobileAuction) {
+            window.mobileAuction.initialized = false;
         }
+        if (window.mobileAutoBid) {
+            window.mobileAutoBid.initialized = false;
+        }
+        */
     }
 
     async loadInitialData() {
@@ -365,12 +375,13 @@ class MobileApp {
             // CHAT DISABLED FOR PLAYING PHASE
             // this.showChatLoadingState();
             
-            // Load only critical data - no chat needed in playing phase
-            await Promise.all([
-                this.loadDraftState(),
-                this.loadTeamSquad()
-                // this.loadChatMessages() - DISABLED FOR PLAYING PHASE
-            ]);
+            // Only load draft state on startup - other data loaded lazily per tab
+            // This saves loading time on app startup
+            await this.loadDraftState();
+            
+            // Team squad will be loaded by Submit Team tab or Team tab when accessed
+            // await this.loadTeamSquad() - SKIP for faster startup
+            // this.loadChatMessages() - DISABLED FOR PLAYING PHASE
         } catch (error) {
             console.error('Error loading initial data:', error);
         }
@@ -598,12 +609,31 @@ class MobileApp {
                 await this.loadHistory();
                 break;
             case 'auction':
+                // AUCTION TAB DISABLED FOR PLAYING PHASE
+                console.log('Auction tab - no initialization needed during playing phase');
+                
+                /* COMMENTED OUT FOR PLAYING PHASE
+                // Initialize auction manager lazily if not already initialized
+                if (window.mobileAuction && !window.mobileAuction.initialized) {
+                    console.log('Initializing auction manager on first access...');
+                    await window.mobileAuction.initialize();
+                    window.mobileAuction.initialized = true;
+                }
+                
+                // Initialize auto-bid manager lazily if not already initialized
+                if (window.mobileAutoBid && !window.mobileAutoBid.initialized) {
+                    console.log('Initializing auto-bid manager on first access...');
+                    await window.mobileAutoBid.initialize();
+                    window.mobileAutoBid.initialized = true;
+                }
+                
                 // CHAT DISABLED FOR PLAYING PHASE
                 // if (this.chatMessages.length === 0) {
                 //     await this.loadChatMessages();
                 // } else {
                 //     this.renderChatMessagesMini();
                 // }
+                */
                 break;
             case 'submitTeam':
                 // Initialize submit team V2 (FPL-style)
@@ -615,7 +645,8 @@ class MobileApp {
                 }
                 
                 if (!window.mobileSubmitTeam.initialized) {
-                    await window.mobileSubmitTeam.initialize();
+                    // Initialize is no longer async - it renders immediately
+                    window.mobileSubmitTeam.initialize();
                 } else {
                     // Re-render if already initialized
                     window.mobileSubmitTeam.renderHeader();

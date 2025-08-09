@@ -78,7 +78,9 @@ class MobileSubmitTeamManagerV2 {
         };
     }
 
-    async initialize() {
+    initialize() {
+        console.log('Submit Team initialize called');
+        
         // If already initialized, just re-render
         if (this.initialized) {
             this.renderHeader();
@@ -86,28 +88,34 @@ class MobileSubmitTeamManagerV2 {
             return;
         }
         
-        // Get cached squad - this is instant
-        const currentUser = window.mobileAPI.getCurrentUser();
-        const cacheKey = `fpl_squad_cache_${currentUser.id}`;
-        const cached = localStorage.getItem(cacheKey);
+        // IMMEDIATELY mark as initialized and render
+        this.initialized = true;
         
-        if (cached) {
-            const data = JSON.parse(cached);
-            this.mySquad = data.players || [];
-            this.myClubs = data.clubs || [];
+        // Get cached squad if available
+        try {
+            const currentUser = window.mobileAPI.getCurrentUser();
+            const cacheKey = `fpl_squad_cache_${currentUser.id}`;
+            const cached = localStorage.getItem(cacheKey);
+            
+            if (cached) {
+                const data = JSON.parse(cached);
+                this.mySquad = data.players || [];
+                this.myClubs = data.clubs || [];
+            }
+        } catch (e) {
+            console.log('Cache read failed:', e);
         }
         
-        // Set some defaults
+        // Set defaults
         this.currentGameweek = 1;
         this.deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         
-        // Auto-select team if needed
+        // Auto-select if needed
         if (this.starting11.length === 0 && this.mySquad.length >= 15) {
             this.autoSelectTeam();
         }
         
-        // Render immediately
-        this.initialized = true;
+        // Render NOW
         this.renderHeader();
         this.renderView();
         this.setupEventListeners();
