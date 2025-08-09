@@ -16,6 +16,11 @@ class MobileSubmitTeamManagerV2 {
         this.viewMode = 'pitch'; // 'pitch' or 'list'
         this.editMode = false; // Track edit mode
         
+        // Store original state for cancel
+        this.originalStarting11 = [];
+        this.originalBench = [];
+        this.hasChanges = false;
+        
         // Position requirements
         this.positionLimits = {
             1: { min: 1, max: 1, name: 'GKP' },
@@ -24,35 +29,49 @@ class MobileSubmitTeamManagerV2 {
             4: { min: 1, max: 3, name: 'FWD' }
         };
 
-        // Chips configuration
+        // Chips configuration (FPL Auction custom chips)
         this.chips = {
             'triple_captain': {
                 name: 'Triple Captain',
                 short: 'TC',
                 description: '3x points for Captain',
-                icon: '👑',
-                available: true
+                icon: '👑'
+            },
+            'attack_chip': {
+                name: 'Attack Chip',
+                short: 'ATK',
+                description: '2x for MID & FWD in playing 11',
+                icon: '⚔️'
+            },
+            'negative_chip': {
+                name: 'Negative Chip',
+                short: 'NC',
+                description: 'Points divided by 2',
+                icon: '➗'
+            },
+            'double_up': {
+                name: 'Double Up',
+                short: 'DU',
+                description: 'Points multiplied by 2',
+                icon: '✖️'
             },
             'bench_boost': {
                 name: 'Bench Boost',
                 short: 'BB',
                 description: 'All 15 players count',
-                icon: '💪',
-                available: true
+                icon: '💪'
             },
-            'free_hit': {
-                name: 'Free Hit',
-                short: 'FH',
-                description: 'Unlimited transfers for 1 GW',
-                icon: '🎯',
-                available: false
+            'park_the_bus': {
+                name: 'Park the Bus',
+                short: 'PB',
+                description: '2x for GKP & DEF',
+                icon: '🚌'
             },
-            'wildcard': {
-                name: 'Wildcard',
-                short: 'WC',
-                description: 'Unlimited transfers',
-                icon: '🃏',
-                available: false
+            'brahmasthra': {
+                name: 'Brahmasthra',
+                short: 'BRM',
+                description: 'Auto-picks best 11',
+                icon: '🔱'
             }
         };
     }
@@ -85,42 +104,83 @@ class MobileSubmitTeamManagerV2 {
             listBtn.addEventListener('click', () => this.switchView('list'));
         }
 
-        // Edit/Done button
-        const editBtn = document.getElementById('editTeamBtn');
-        const doneBtn = document.getElementById('doneEditBtn');
-        
-        if (editBtn) {
-            editBtn.addEventListener('click', () => this.toggleEditMode());
-        }
-        if (doneBtn) {
-            doneBtn.addEventListener('click', () => this.toggleEditMode());
-        }
-
-        // Cancel button
-        const cancelBtn = document.getElementById('cancelTeamBtn');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
-                // Go back to main tab
-                window.mobileApp.switchTab('team');
-            });
-        }
-        
-        // Confirm Team button
-        const confirmBtn = document.getElementById('confirmTeamBtn');
-        if (confirmBtn) {
-            confirmBtn.addEventListener('click', () => this.submitTeam());
+        if (this.editMode) {
+            // Edit mode buttons
+            const saveBtn = document.getElementById('saveEditBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            
+            if (saveBtn && !saveBtn.classList.contains('disabled')) {
+                saveBtn.addEventListener('click', () => this.saveEdit());
+            }
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', () => this.cancelEdit());
+            }
+        } else {
+            // Normal mode buttons
+            const editBtn = document.getElementById('editTeamBtn');
+            const cancelBtn = document.getElementById('cancelTeamBtn');
+            const confirmBtn = document.getElementById('confirmTeamBtn');
+            
+            if (editBtn) {
+                editBtn.addEventListener('click', () => this.toggleEditMode());
+            }
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    window.mobileApp.switchTab('team');
+                });
+            }
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => this.submitTeam());
+            }
         }
     }
 
     toggleEditMode() {
         this.editMode = !this.editMode;
-        this.renderHeader();
-        this.renderView();
-        this.setupEventListeners(); // Re-setup event listeners for new buttons
         
         if (this.editMode) {
-            window.mobileApp.showToast('Edit mode: Use X to remove players, + to add from bench', 'info');
+            // Entering edit mode - store current state
+            this.originalStarting11 = [...this.starting11];
+            this.originalBench = [...this.bench];
+            this.hasChanges = false;
+            window.mobileApp.showToast('Edit mode: Click X on any player to substitute', 'info');
+        } else {
+            // Exiting edit mode
+            if (this.hasChanges) {
+                // Ask for confirmation if there are unsaved changes
+                if (!confirm('You have unsaved changes. Do you want to discard them?')) {
+                    this.editMode = true;
+                    return;
+                }
+                this.cancelEdit();
+            }
         }
+        
+        this.renderHeader();
+        this.renderView();
+        this.setupEventListeners();
+    }
+    
+    saveEdit() {
+        // Save the current state
+        this.hasChanges = false;
+        this.editMode = false;
+        this.renderHeader();
+        this.renderView();
+        this.setupEventListeners();
+        window.mobileApp.showToast('Team changes saved', 'success');
+    }
+    
+    cancelEdit() {
+        // Restore original state
+        this.starting11 = [...this.originalStarting11];
+        this.bench = [...this.originalBench];
+        this.hasChanges = false;
+        this.editMode = false;
+        this.renderHeader();
+        this.renderView();
+        this.setupEventListeners();
+        window.mobileApp.showToast('Changes cancelled', 'info');
     }
 
     renderHeader() {
@@ -130,13 +190,23 @@ class MobileSubmitTeamManagerV2 {
         headerContainer.innerHTML = `
             <div class="submit-header">
                 <div class="header-actions">
-                    <button id="cancelTeamBtn" class="cancel-btn">
-                        <span class="cancel-icon">✕</span> Cancel
-                    </button>
-                    <h2 class="header-title">Pick Team</h2>
-                    <button id="${this.editMode ? 'doneEditBtn' : 'editTeamBtn'}" class="${this.editMode ? 'done-btn' : 'edit-btn'}">
-                        ${this.editMode ? '✓ Done' : '✏️ Edit'}
-                    </button>
+                    ${this.editMode ? `
+                        <button id="cancelEditBtn" class="cancel-btn">
+                            <span class="cancel-icon">✕</span> Cancel
+                        </button>
+                        <h2 class="header-title">Edit Team</h2>
+                        <button id="saveEditBtn" class="save-btn ${!this.hasChanges ? 'disabled' : ''}">
+                            <span class="save-icon">✓</span> Save
+                        </button>
+                    ` : `
+                        <button id="cancelTeamBtn" class="cancel-btn">
+                            <span class="cancel-icon">✕</span> Back
+                        </button>
+                        <h2 class="header-title">Pick Team</h2>
+                        <button id="editTeamBtn" class="edit-btn">
+                            ✏️ Edit
+                        </button>
+                    `}
                 </div>
                 
                 <div class="gameweek-info">
@@ -145,6 +215,10 @@ class MobileSubmitTeamManagerV2 {
                 </div>
                 
                 ${!this.editMode ? `
+                    <div class="club-selector-row">
+                        ${this.renderClubSelector()}
+                    </div>
+                    
                     <div class="chips-row">
                         ${this.renderChipsButtons()}
                     </div>
@@ -161,7 +235,7 @@ class MobileSubmitTeamManagerV2 {
                 
                 ${!this.editMode ? `
                     <div class="submit-section">
-                        <button id="confirmTeamBtn" class="confirm-team-btn">
+                        <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.clubMultiplierId ? 'disabled' : ''}>
                             Submit Team
                         </button>
                     </div>
@@ -170,6 +244,27 @@ class MobileSubmitTeamManagerV2 {
         `;
     }
 
+    renderClubSelector() {
+        if (!this.myClubs || this.myClubs.length === 0) {
+            return '<div class="no-clubs">No clubs owned</div>';
+        }
+        
+        return this.myClubs.map(club => `
+            <button class="club-select-btn ${this.clubMultiplierId === club.id ? 'selected' : ''}" 
+                    onclick="mobileSubmitTeam.selectClubMultiplier(${club.id})">
+                <span class="club-icon">🏟️</span>
+                <span class="club-name">${club.name || club.club_name || 'Unknown'}</span>
+                ${this.clubMultiplierId === club.id ? '<span class="club-badge">1.5x</span>' : ''}
+            </button>
+        `).join('');
+    }
+    
+    selectClubMultiplier(clubId) {
+        this.clubMultiplierId = this.clubMultiplierId === clubId ? null : clubId;
+        this.renderHeader();
+        this.validateFormation();
+    }
+    
     renderChipsButtons() {
         return Object.entries(this.chips).map(([chipId, chip]) => {
             const isSelected = this.selectedChip === chipId;
@@ -177,14 +272,14 @@ class MobileSubmitTeamManagerV2 {
             const isUsed = chipStatus?.used;
             
             return `
-                <div class="chip-button ${!chip.available ? 'unavailable' : ''} ${isSelected ? 'selected' : ''} ${isUsed ? 'used' : ''}">
+                <div class="chip-button ${isSelected ? 'selected' : ''} ${isUsed ? 'used' : ''}">
                     <div class="chip-icon">${chip.icon}</div>
-                    <div class="chip-name">${chip.name}</div>
-                    ${chip.available && !isUsed ? 
+                    <div class="chip-name">${chip.short}</div>
+                    ${!isUsed ? 
                         `<button onclick="mobileSubmitTeam.toggleChip('${chipId}')" class="chip-play-btn">
-                            ${isSelected ? 'Cancel' : 'Play'}
+                            ${isSelected ? '✕' : '+'}
                         </button>` : 
-                        `<div class="chip-status">${isUsed ? 'Used' : 'Unavailable'}</div>`
+                        `<div class="chip-status">Used</div>`
                     }
                 </div>
             `;
@@ -337,11 +432,6 @@ class MobileSubmitTeamManagerV2 {
                         ✕
                     </button>
                 ` : ''}
-                ${this.editMode && !isStarting ? `
-                    <button class="add-player-btn" onclick="mobileSubmitTeam.addPlayer(${player.id})">
-                        +
-                    </button>
-                ` : ''}
                 <div class="player-shirt">
                     <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
                          onerror="this.style.display='none'" alt="">
@@ -390,16 +480,8 @@ class MobileSubmitTeamManagerV2 {
         const player = this.mySquad.find(p => p.id === playerId);
         if (!player) return;
         
-        // Show available bench players to swap with
+        // Only show bench players that can replace without breaking formation
         this.showSubstitutionOptions(player, 'remove');
-    }
-    
-    addPlayer(playerId) {
-        const player = this.mySquad.find(p => p.id === playerId);
-        if (!player) return;
-        
-        // Show starting 11 players that can be swapped
-        this.showSubstitutionOptions(player, 'add');
     }
 
     showSubstitutionOptions(player, mode) {
@@ -483,6 +565,7 @@ class MobileSubmitTeamManagerV2 {
             if (index1 !== -1 && index2 !== -1) {
                 this.starting11[index1] = player2Id;
                 this.bench[index2] = player1Id;
+                this.hasChanges = true;
             }
         } else if (!player1InStarting && player2InStarting) {
             // Swap bench with starting
@@ -492,6 +575,7 @@ class MobileSubmitTeamManagerV2 {
             if (index1 !== -1 && index2 !== -1) {
                 this.bench[index1] = player2Id;
                 this.starting11[index2] = player1Id;
+                this.hasChanges = true;
             }
         } else if (player1InStarting && player2InStarting) {
             // Swap within starting 11
@@ -500,14 +584,17 @@ class MobileSubmitTeamManagerV2 {
             
             if (index1 !== -1 && index2 !== -1) {
                 [this.starting11[index1], this.starting11[index2]] = [this.starting11[index2], this.starting11[index1]];
+                this.hasChanges = true;
             }
         }
         
         // Clear selection
         this.cancelSubstitution();
         
-        // Re-render view with animation
+        // Re-render to update Save button state
+        this.renderHeader();
         this.renderViewWithAnimation();
+        this.setupEventListeners();
         
         // Validate formation
         this.validateFormation();

@@ -35,8 +35,14 @@
     color: #3b82f6;
 }
 
-.done-btn {
+.save-btn {
     color: #10b981;
+}
+
+.save-btn.disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .confirm-btn {
@@ -78,6 +84,58 @@
 #deadlineTime {
     font-weight: 600;
     color: #ef4444;
+}
+
+/* Club Selector Row */
+.club-selector-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.club-select-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    background: #f3f4f6;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.club-select-btn.selected {
+    background: #dbeafe;
+    border-color: #3b82f6;
+}
+
+.club-icon {
+    font-size: 18px;
+}
+
+.club-badge {
+    background: #3b82f6;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.no-clubs {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    color: #6b7280;
+    font-size: 14px;
 }
 
 /* Chips Row */
