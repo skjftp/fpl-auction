@@ -339,9 +339,6 @@ class MobileSubmitTeamManagerV2 {
         
         // Re-setup event listeners after rendering new buttons
         this.setupHeaderEventListeners();
-        
-        // Restore scroll position
-        window.scrollTo(0, scrollTop);
     }
     
     setupHeaderEventListeners() {
