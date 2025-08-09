@@ -1099,10 +1099,7 @@ class MobileSubmitTeamManagerV2 {
                 return;
             }
 
-            const currentUser = window.mobileAPI.getCurrentUser();
-            
             const submission = {
-                user_id: currentUser.id,
                 gameweek: this.currentGameweek,
                 starting_11: this.starting11,
                 bench: this.bench,

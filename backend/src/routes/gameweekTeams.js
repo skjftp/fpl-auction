@@ -16,8 +16,8 @@ router.post('/submit', authenticateToken, async (req, res) => {
             chip_used
         } = req.body;
 
-        const userId = req.user.id;
-        const teamId = req.user.teamId || req.user.id;
+        const teamId = req.user.teamId;
+        const userId = teamId; // Use teamId as userId since they're the same in this system
 
         // Validate required fields
         if (!gameweek || !starting_11 || !bench || !captain_id) {
@@ -70,7 +70,7 @@ router.post('/submit', authenticateToken, async (req, res) => {
 router.get('/submission/:gameweek', authenticateToken, async (req, res) => {
     try {
         const gameweek = parseInt(req.params.gameweek);
-        const teamId = req.user.teamId || req.user.id;
+        const teamId = req.user.teamId;
 
         const docId = `${teamId}_gw${gameweek}`;
         const doc = await db.collection('gameweekTeams').doc(docId).get();
@@ -115,7 +115,7 @@ router.get('/all/:gameweek', authenticateToken, async (req, res) => {
 // Get chip usage status for a team
 router.get('/chips/status', authenticateToken, async (req, res) => {
     try {
-        const teamId = req.user.teamId || req.user.id;
+        const teamId = req.user.teamId;
         
         const snapshot = await db.collection('chipUsage')
             .where('team_id', '==', teamId)
