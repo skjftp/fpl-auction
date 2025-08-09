@@ -514,12 +514,16 @@ class MobileSubmitTeamManagerV2 {
             ? `Replace ${player.web_name || player.name} with:`
             : `Add ${player.web_name || player.name} for:`;
         
+        const playerPosition = player.position || player.element_type;
+        const positionName = this.positionLimits[playerPosition]?.name || 'Unknown';
+        
         modal.innerHTML = `
             <div class="modal-overlay" onclick="mobileSubmitTeam.cancelSubstitution()"></div>
             <div class="modal-content">
                 <h3>${title}</h3>
+                <div class="player-position-info">Position: ${positionName}</div>
                 <div id="substituteOptions" class="substitute-list">
-                    ${validSubs.map(sub => `
+                    ${validSubs.length > 0 ? validSubs.map(sub => `
                         <div class="substitute-option" onclick="mobileSubmitTeam.performSwap(${player.id}, ${sub.id})">
                             <div class="sub-player-info">
                                 <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${sub.photo?.replace('.jpg', '') || '0'}.png" 
@@ -531,7 +535,12 @@ class MobileSubmitTeamManagerV2 {
                             </div>
                             <div class="swap-icon">⇄</div>
                         </div>
-                    `).join('')}
+                    `).join('') : `
+                        <div class="no-substitutes-message">
+                            <p>No valid substitutes available.</p>
+                            <p class="text-sm">Formation rules: 1 GKP, 3-5 DEF, 2-5 MID, 1-3 FWD</p>
+                        </div>
+                    `}
                 </div>
                 <button onclick="mobileSubmitTeam.cancelSubstitution()" class="cancel-sub-btn">Cancel</button>
             </div>
@@ -543,8 +552,19 @@ class MobileSubmitTeamManagerV2 {
     getBenchSubstitutes(player) {
         const playerPosition = player.position || player.element_type;
         // Get bench players that can replace this starting player
-        return this.bench.map(id => this.mySquad.find(p => p.id === id))
-            .filter(p => p && this.canSwapPositions(playerPosition, p.position || p.element_type));
+        const validSubs = this.bench.map(id => this.mySquad.find(p => p.id === id))
+            .filter(p => {
+                if (!p) return false;
+                const benchPos = p.position || p.element_type;
+                return this.canSwapPositions(playerPosition, benchPos);
+            });
+            
+        // If no valid substitutes, show message
+        if (validSubs.length === 0) {
+            console.log(`No valid substitutes for ${player.web_name || player.name} (${this.positionLimits[playerPosition]?.name})`);
+        }
+        
+        return validSubs;
     }
     
     getStartingSubstitutes(player) {
@@ -558,14 +578,44 @@ class MobileSubmitTeamManagerV2 {
         // Same position always valid
         if (pos1 === pos2) return true;
         
+        // Goalkeepers can only swap with goalkeepers
+        if (pos1 === 1 || pos2 === 1) {
+            return pos1 === pos2;
+        }
+        
         // Check if swap maintains valid formation
-        // This would need more complex logic based on current formation
         return this.isValidFormationAfterSwap(pos1, pos2);
     }
 
     isValidFormationAfterSwap(pos1, pos2) {
-        // Simplified check - would need full formation validation
-        return true; // For now, allow any swap
+        // Simulate the swap and check if formation is valid
+        const tempStarting11 = [...this.starting11];
+        const tempBench = [...this.bench];
+        
+        // Count current positions in starting 11
+        const positionCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+        
+        tempStarting11.forEach(playerId => {
+            const player = this.mySquad.find(p => p.id === playerId);
+            if (player) {
+                const pos = player.position || player.element_type;
+                positionCounts[pos]++;
+            }
+        });
+        
+        // Adjust counts for the swap
+        positionCounts[pos1]--;
+        positionCounts[pos2]++;
+        
+        // Check FPL formation rules
+        const validFormation = 
+            positionCounts[1] === 1 && // Exactly 1 GKP
+            positionCounts[2] >= 3 && positionCounts[2] <= 5 && // 3-5 DEF
+            positionCounts[3] >= 2 && positionCounts[3] <= 5 && // 2-5 MID
+            positionCounts[4] >= 1 && positionCounts[4] <= 3 && // 1-3 FWD
+            (positionCounts[1] + positionCounts[2] + positionCounts[3] + positionCounts[4]) === 11;
+            
+        return validFormation;
     }
 
     performSwap(player1Id, player2Id) {

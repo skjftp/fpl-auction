@@ -220,24 +220,29 @@
 
 .confirm-team-btn {
     width: 100%;
-    padding: 12px;
+    padding: 12px 16px;
     background: #10b981;
-    color: white;
+    color: white !important;
     border: none;
     border-radius: 8px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
-.confirm-team-btn:hover {
+.confirm-team-btn:hover:not(:disabled) {
     background: #059669;
 }
 
 .confirm-team-btn:disabled {
     background: #9ca3af;
     cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .view-btn {
@@ -658,6 +663,28 @@
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
+}
+
+.player-position-info {
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 12px;
+}
+
+.no-substitutes-message {
+    text-align: center;
+    padding: 20px;
+    color: #6b7280;
+}
+
+.no-substitutes-message p {
+    margin-bottom: 8px;
+}
+
+.no-substitutes-message .text-sm {
+    font-size: 12px;
+    color: #9ca3af;
 }
 
 /* Swap Animation */
