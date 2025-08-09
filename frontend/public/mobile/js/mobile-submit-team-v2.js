@@ -2,7 +2,7 @@
 class MobileSubmitTeamManagerV2 {
     constructor() {
         this.initialized = false; // Track initialization
-        this.loading = true; // Track loading state
+        this.loading = false; // Track loading state - start as false
         this.mySquad = [];
         this.starting11 = [];
         this.bench = [];
@@ -100,12 +100,20 @@ class MobileSubmitTeamManagerV2 {
             this.loading = true;
             this.showLoader();
             
+            // Absolute timeout safety net - force render after 5 seconds no matter what
+            setTimeout(() => {
+                if (this.loading && !this.initialized) {
+                    console.error('Force timeout - rendering with empty data');
+                    this.forceRenderEmpty();
+                }
+            }, 5000);
+            
             try {
                 // Load only critical data first with timeout
                 console.time('Loading critical data');
                 const squadPromise = this.loadMySquad();
                 const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Loading timeout')), 10000)
+                    setTimeout(() => reject(new Error('Loading timeout')), 4000)
                 );
                 
                 await Promise.race([squadPromise, timeoutPromise]);
@@ -185,11 +193,25 @@ class MobileSubmitTeamManagerV2 {
             container.innerHTML = `
                 <div class="error-container">
                     <p class="error-text">${message}</p>
-                    <button onclick="mobileSubmitTeam.initialize()" class="retry-btn">Retry</button>
+                    <button onclick="mobileSubmitTeam.forceRenderEmpty()" class="retry-btn">Show Empty Team</button>
                 </div>
             `;
         }
         window.mobileApp.showToast(message, 'error');
+    }
+    
+    // Force render with empty data to get out of stuck state
+    forceRenderEmpty() {
+        console.log('Force rendering with empty data...');
+        this.loading = false;
+        this.initialized = true;
+        this.mySquad = [];
+        this.myClubs = [];
+        this.starting11 = [];
+        this.bench = [];
+        this.renderHeader();
+        this.renderView();
+        this.setupEventListeners();
     }
 
     setupEventListeners() {

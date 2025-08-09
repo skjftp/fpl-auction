@@ -607,6 +607,13 @@ class MobileApp {
                 break;
             case 'submitTeam':
                 // Initialize submit team V2 (FPL-style)
+                // Force reset if stuck loading
+                if (window.mobileSubmitTeam.loading && !window.mobileSubmitTeam.initialized) {
+                    console.log('Forcing reset of stuck loader...');
+                    window.mobileSubmitTeam.loading = false;
+                    window.mobileSubmitTeam.initialized = false;
+                }
+                
                 if (!window.mobileSubmitTeam.initialized) {
                     await window.mobileSubmitTeam.initialize();
                 } else {
