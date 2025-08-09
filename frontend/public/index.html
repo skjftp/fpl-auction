@@ -421,7 +421,8 @@
             <!-- Draft Tab -->
             <div id="draftTab" class="tab-content hidden fade-in" style="height: 100%; overflow-y: auto;">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Draft Status and Controls -->
+                    <!-- Draft Status and Controls - Commented out as auction phase is over -->
+                    <!--
                     <div>
                         <div class="card p-6 mb-6">
                             <h2 class="text-xl font-bold mb-4 text-gray-900">🎲 Snake Draft Status</h2>
@@ -431,10 +432,8 @@
                                 </div>
                             </div>
                             
-                            <!-- Turn Indicator -->
                             <div id="turnIndicator" class="mb-4"></div>
                             
-                            <!-- Admin Controls -->
                             <div class="flex gap-3 flex-wrap">
                                 <button id="initializeDraftBtn" class="btn-secondary">
                                     🎲 Initialize Draft Order
@@ -442,6 +441,20 @@
                                 <button id="startDraftBtn" class="btn-primary">
                                     🚀 Start Draft
                                 </button>
+                                <button id="clearChatBtn" class="btn-secondary">
+                                    🗑️ Clear All Chats
+                                </button>
+                                <button id="toggleBreakBtn" class="btn-secondary">
+                                    ☕ Toggle Break
+                                </button>
+                            </div>
+                        </div>
+                    -->
+                    <!-- Admin buttons that still work during season -->
+                    <div>
+                        <div class="card p-6 mb-6">
+                            <h2 class="text-xl font-bold mb-4 text-gray-900">🔧 Admin Controls</h2>
+                            <div class="flex gap-3 flex-wrap">
                                 <button id="clearChatBtn" class="btn-secondary">
                                     🗑️ Clear All Chats
                                 </button>
