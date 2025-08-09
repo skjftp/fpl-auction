@@ -263,26 +263,15 @@ class MobileSubmitTeamManagerV2 {
         this.editMode = !this.editMode;
         
         if (this.editMode) {
-            // Entering edit mode - store current state
-            this.originalStarting11 = [...this.starting11];
-            this.originalBench = [...this.bench];
-            this.hasChanges = false;
-            window.mobileApp.showToast('Edit mode: Click X on any player to substitute', 'info');
+            // Entering edit mode
+            window.mobileApp.showToast('Edit mode: Make changes and click Submit to save', 'info');
         } else {
             // Exiting edit mode
-            if (this.hasChanges) {
-                // Ask for confirmation if there are unsaved changes
-                if (!confirm('You have unsaved changes. Do you want to discard them?')) {
-                    this.editMode = true;
-                    return;
-                }
-                this.cancelEdit();
-            }
+            window.mobileApp.showToast('Edit mode closed', 'info');
         }
         
         this.renderHeader();
         this.renderView();
-        this.setupEventListeners();
     }
     
     saveEdit() {
@@ -310,68 +299,41 @@ class MobileSubmitTeamManagerV2 {
     renderHeader() {
         const headerContainer = document.getElementById('submitTeamHeader');
         if (!headerContainer) return;
-        
-        // Store current scroll position to restore after render
-        const scrollTop = window.scrollY;
 
         headerContainer.innerHTML = `
-            <div class="submit-header">
-                <div class="header-actions">
-                    ${this.editMode ? `
-                        <button id="cancelEditBtn" class="cancel-btn">
-                            ✕ Cancel
-                        </button>
-                        <h2 class="header-title">Edit Team</h2>
-                        <button id="saveEditBtn" class="save-btn ${!this.hasChanges ? 'disabled' : ''}">
-                            ✓ Save
-                        </button>
-                    ` : `
-                        <button id="cancelTeamBtn" class="cancel-btn">
-                            ✕ Back
-                        </button>
-                        <h2 class="header-title">Pick Team</h2>
-                        <button id="editTeamBtn" class="edit-btn">
-                            ✏️ Edit
-                        </button>
-                    `}
-                </div>
-                
-                <div class="gameweek-info">
-                    <span class="gw-label">Gameweek ${this.currentGameweek || 1} ${this.gameweekType ? `(${this.gameweekType})` : ''}</span>
-                    <span class="deadline-label">Deadline: <span id="deadlineTime">${this.getDeadlineDisplay()}</span></span>
-                </div>
-                
-                ${!this.editMode ? `
-                    <div class="club-selector-row">
-                        ${this.renderClubSelector()}
+            <div class="submit-header-compact">
+                <div class="gameweek-row">
+                    <div class="gameweek-info">
+                        <span class="gw-label">Gameweek ${this.currentGameweek || 1}</span>
+                        <span class="deadline-label">Deadline: <span id="deadlineTime">${this.getDeadlineDisplay()}</span></span>
                     </div>
-                    
-                    <div class="chips-row">
-                        ${this.renderChipsButtons()}
-                    </div>
-                ` : ''}
-                
-                <div class="view-toggle">
-                    <button id="pitchViewBtn" class="view-btn ${this.viewMode === 'pitch' ? 'active' : ''}">
-                        Pitch
-                    </button>
-                    <button id="listViewBtn" class="view-btn ${this.viewMode === 'list' ? 'active' : ''}">
-                        List
+                    <button id="editModeBtn" class="edit-mode-btn ${this.editMode ? 'active' : ''}" title="Edit Team">
+                        ${this.editMode ? '✕' : '✏️'}
                     </button>
                 </div>
                 
-                ${!this.editMode ? `
-                    <div class="submit-section">
-                        <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.clubMultiplierId ? 'disabled' : ''}>
-                            ${this.existingSubmission ? 'Update Team' : 'Submit Team'}
-                        </button>
-                        ${this.existingSubmission && this.existingSubmission.chip_used ? `
-                            <div class="submission-info">
-                                <small>Chip used: ${this.chips[this.existingSubmission.chip_used]?.name || this.existingSubmission.chip_used}</small>
-                            </div>
-                        ` : ''}
+                ${this.editMode ? `
+                    <div class="edit-controls">
+                        <div class="club-selector-row">
+                            ${this.renderClubSelector()}
+                        </div>
+                        
+                        <div class="chips-row">
+                            ${this.renderChipsButtons()}
+                        </div>
                     </div>
                 ` : ''}
+                
+                <div class="submit-section">
+                    <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.clubMultiplierId ? 'disabled' : ''}>
+                        ${this.existingSubmission ? 'Update Team' : 'Submit Team'}
+                    </button>
+                    ${this.existingSubmission && this.existingSubmission.chip_used ? `
+                        <div class="submission-info">
+                            <small>Chip used: ${this.chips[this.existingSubmission.chip_used]?.name || this.existingSubmission.chip_used}</small>
+                        </div>
+                    ` : ''}
+                </div>
             </div>
         `;
         
@@ -383,51 +345,19 @@ class MobileSubmitTeamManagerV2 {
     }
     
     setupHeaderEventListeners() {
-        // Setup event listeners for header buttons only
-        if (this.editMode) {
-            const saveBtn = document.getElementById('saveEditBtn');
-            const cancelEditBtn = document.getElementById('cancelEditBtn');
-            
-            if (saveBtn) {
-                saveBtn.onclick = () => {
-                    if (!saveBtn.classList.contains('disabled')) {
-                        this.saveEdit();
-                    }
-                };
-            }
-            if (cancelEditBtn) {
-                cancelEditBtn.onclick = () => this.cancelEdit();
-            }
-        } else {
-            const editBtn = document.getElementById('editTeamBtn');
-            const cancelBtn = document.getElementById('cancelTeamBtn');
-            const confirmBtn = document.getElementById('confirmTeamBtn');
-            
-            if (editBtn) {
-                editBtn.onclick = () => {
-                    console.log('Edit button clicked');
-                    this.toggleEditMode();
-                };
-            }
-            if (cancelBtn) {
-                cancelBtn.onclick = () => {
-                    window.mobileApp.switchTab('team');
-                };
-            }
-            if (confirmBtn) {
-                confirmBtn.onclick = () => this.submitTeam();
-            }
+        // Edit mode toggle button
+        const editModeBtn = document.getElementById('editModeBtn');
+        if (editModeBtn) {
+            editModeBtn.onclick = () => {
+                console.log('Edit mode button clicked');
+                this.toggleEditMode();
+            };
         }
         
-        // View toggle buttons
-        const pitchBtn = document.getElementById('pitchViewBtn');
-        const listBtn = document.getElementById('listViewBtn');
-        
-        if (pitchBtn) {
-            pitchBtn.onclick = () => this.switchView('pitch');
-        }
-        if (listBtn) {
-            listBtn.onclick = () => this.switchView('list');
+        // Submit button
+        const confirmBtn = document.getElementById('confirmTeamBtn');
+        if (confirmBtn) {
+            confirmBtn.onclick = () => this.submitTeam();
         }
     }
 
@@ -483,11 +413,8 @@ class MobileSubmitTeamManagerV2 {
         const container = document.getElementById('submitTeamContent');
         if (!container) return;
 
-        if (this.viewMode === 'pitch') {
-            this.renderPitchView(container);
-        } else {
-            this.renderListView(container);
-        }
+        // Always render pitch view
+        this.renderPitchView(container);
     }
 
     renderPitchView(container) {
