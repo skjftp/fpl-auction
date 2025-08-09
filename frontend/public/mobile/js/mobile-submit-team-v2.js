@@ -91,7 +91,7 @@ class MobileSubmitTeamManagerV2 {
                 return;
             }
             
-            // Check if already loading
+            // Prevent multiple simultaneous initializations
             if (this.loading) {
                 console.log('Already loading, skipping...');
                 return;
@@ -100,37 +100,54 @@ class MobileSubmitTeamManagerV2 {
             this.loading = true;
             this.showLoader();
             
-            // Load only critical data first
-            console.time('Loading critical data');
-            await this.loadMySquad();
-            console.timeEnd('Loading critical data');
+            try {
+                // Load only critical data first with timeout
+                console.time('Loading critical data');
+                const squadPromise = this.loadMySquad();
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Loading timeout')), 10000)
+                );
+                
+                await Promise.race([squadPromise, timeoutPromise]);
+                console.timeEnd('Loading critical data');
+            } catch (error) {
+                console.error('Error loading squad:', error);
+                // Continue with empty squad
+                this.mySquad = [];
+                this.myClubs = [];
+            }
             
-            // Quick render with available data
+            // Always render something to avoid infinite loader
             this.loading = false;
+            this.initialized = true;
             this.renderHeader();
             this.renderView();
             this.setupEventListeners();
-            this.initialized = true;
             
-            // Load non-critical data in background
-            console.time('Loading background data');
-            Promise.all([
-                this.loadCurrentGameweek(),
-                this.loadExistingSubmission(),
-                this.loadChipStatus()
-            ]).then(() => {
-                console.timeEnd('Loading background data');
-                // Update UI with new data
-                this.startDeadlineTimer();
-                this.renderHeader();
-                this.validateFormation();
-            });
+            // Load non-critical data in background without blocking
+            setTimeout(() => {
+                console.time('Loading background data');
+                Promise.all([
+                    this.loadCurrentGameweek().catch(e => console.error('Gameweek load failed:', e)),
+                    this.loadExistingSubmission().catch(e => console.error('Submission load failed:', e)),
+                    this.loadChipStatus().catch(e => console.error('Chip load failed:', e))
+                ]).then(() => {
+                    console.timeEnd('Loading background data');
+                    // Update UI with new data if available
+                    if (this.deadline) {
+                        this.startDeadlineTimer();
+                    }
+                    this.renderHeader();
+                    this.validateFormation();
+                });
+            }, 100);
             
             const loadTime = Date.now() - startTime;
             console.log(`Submit Team V2 initial render in ${loadTime}ms`);
         } catch (error) {
             console.error('Failed to initialize submit team:', error);
             this.loading = false;
+            this.initialized = true; // Mark as initialized to prevent retry loop
             this.showError('Failed to load team data');
         }
     }

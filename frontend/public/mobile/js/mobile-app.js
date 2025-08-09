@@ -362,14 +362,14 @@ class MobileApp {
 
     async loadInitialData() {
         try {
-            // Show loading state for chat immediately
-            this.showChatLoadingState();
+            // CHAT DISABLED FOR PLAYING PHASE
+            // this.showChatLoadingState();
             
-            // Load all critical data including chat in parallel for instant loading
+            // Load only critical data - no chat needed in playing phase
             await Promise.all([
                 this.loadDraftState(),
-                this.loadTeamSquad(),
-                this.loadChatMessages()  // Load chat synchronously with other data
+                this.loadTeamSquad()
+                // this.loadChatMessages() - DISABLED FOR PLAYING PHASE
             ]);
         } catch (error) {
             console.error('Error loading initial data:', error);
@@ -598,12 +598,12 @@ class MobileApp {
                 await this.loadHistory();
                 break;
             case 'auction':
-                // Ensure chat messages are loaded if not already
-                if (this.chatMessages.length === 0) {
-                    await this.loadChatMessages();
-                } else {
-                    this.renderChatMessagesMini();
-                }
+                // CHAT DISABLED FOR PLAYING PHASE
+                // if (this.chatMessages.length === 0) {
+                //     await this.loadChatMessages();
+                // } else {
+                //     this.renderChatMessagesMini();
+                // }
                 break;
             case 'submitTeam':
                 // Initialize submit team V2 (FPL-style)

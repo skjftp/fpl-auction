@@ -218,6 +218,9 @@ class MobileSocketManager {
     }
 
     handleAuctionStarted(data) {
+        // DISABLED FOR PLAYING PHASE
+        return;
+        /* COMMENTED OUT FOR PLAYING PHASE
         console.log('🔨 Mobile: Received auction-started event:', data);
         if (window.mobileAuction) {
             window.mobileAuction.displayCurrentAuction(data);
