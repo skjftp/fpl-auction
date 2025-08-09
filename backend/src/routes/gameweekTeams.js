@@ -13,7 +13,8 @@ router.post('/submit', authenticateToken, async (req, res) => {
             captain_id,
             vice_captain_id,
             club_multiplier_id,
-            chip_used
+            chip_used,
+            is_late_submission
         } = req.body;
 
         const teamId = req.user.teamId;
@@ -26,11 +27,37 @@ router.post('/submit', authenticateToken, async (req, res) => {
             });
         }
 
+        // Get gameweek info to check deadline
+        const gwDoc = await db.collection('gameweekInfo').doc(`gw_${gameweek}`).get();
+        let actualGameweek = gameweek;
+        let deadlineStatus = 'on_time';
+        
+        if (gwDoc.exists) {
+            const gwData = gwDoc.data();
+            const deadline = new Date(gwData.deadline);
+            const now = new Date();
+            const oneHourAfterDeadline = new Date(deadline.getTime() + (60 * 60 * 1000));
+            
+            // Check if deadline has passed
+            if (now > deadline) {
+                // If within grace period (1 hour), accept but mark as late
+                if (now <= oneHourAfterDeadline) {
+                    deadlineStatus = 'grace_period';
+                    // Don't automatically change gameweek here - frontend handles this
+                } else {
+                    deadlineStatus = 'late';
+                    // Don't automatically change gameweek here - frontend handles this
+                }
+                
+                console.log(`Late submission for team ${teamId}: deadline was ${deadline}, submitted at ${now}, status: ${deadlineStatus}`);
+            }
+        }
+
         // Create submission document
         const submission = {
             team_id: teamId,
             user_id: userId,
-            gameweek: gameweek,
+            gameweek: actualGameweek,
             starting_11: starting_11,
             bench: bench,
             captain_id: captain_id,
@@ -38,7 +65,9 @@ router.post('/submit', authenticateToken, async (req, res) => {
             club_multiplier_id: club_multiplier_id,
             chip_used: chip_used || null,
             submitted_at: admin.firestore.FieldValue.serverTimestamp(),
-            updated_at: admin.firestore.FieldValue.serverTimestamp()
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            deadline_status: deadlineStatus,
+            is_late_submission: is_late_submission || false
         };
 
         // Save to Firestore
@@ -49,10 +78,20 @@ router.post('/submit', authenticateToken, async (req, res) => {
         // Chips will be marked as used by a separate process after deadline
         // This allows users to change their mind before deadline
 
+        // Prepare response message based on deadline status
+        let message = 'Team submitted successfully';
+        if (deadlineStatus === 'grace_period') {
+            message = `Team submitted for Gameweek ${actualGameweek} (deadline passed - within grace period)`;
+        } else if (deadlineStatus === 'late') {
+            message = `Team submitted for Gameweek ${actualGameweek} (deadline passed)`;
+        }
+        
         res.json({
             success: true,
-            message: 'Team submitted successfully',
-            submission_id: docId
+            message: message,
+            submission_id: docId,
+            deadline_status: deadlineStatus,
+            gameweek: actualGameweek
         });
     } catch (error) {
         console.error('Error submitting team:', error);

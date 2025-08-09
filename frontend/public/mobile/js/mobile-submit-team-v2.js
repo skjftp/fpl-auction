@@ -1216,10 +1216,18 @@ class MobileSubmitTeamManagerV2 {
         try {
             console.log('Submitting team...');
             
-            // Check deadline
-            if (new Date() > this.deadline) {
-                window.mobileApp.showToast('Deadline has passed!', 'error');
-                return;
+            // Check deadline with 1 hour grace period for warning
+            const now = new Date();
+            const deadlinePassed = now > this.deadline;
+            const oneHourAfterDeadline = new Date(this.deadline.getTime() + (60 * 60 * 1000));
+            const inGracePeriod = deadlinePassed && now <= oneHourAfterDeadline;
+            
+            // Show warning for submissions within 1 hour after deadline
+            if (inGracePeriod) {
+                const confirmed = await this.showDeadlineWarning();
+                if (!confirmed) {
+                    return;
+                }
             }
 
             // Validate
@@ -1239,13 +1247,14 @@ class MobileSubmitTeamManagerV2 {
             }
 
             const submission = {
-                gameweek: this.currentGameweek,
+                gameweek: deadlinePassed ? this.currentGameweek + 1 : this.currentGameweek,
                 starting_11: this.starting11,
                 bench: this.bench,
                 captain_id: this.captainId,
                 vice_captain_id: this.viceCaptainId,
                 club_multiplier_id: this.clubMultiplierId,
-                chip_used: this.selectedChip
+                chip_used: this.selectedChip,
+                is_late_submission: deadlinePassed
             };
 
             console.log('Submission data:', submission);
@@ -1281,6 +1290,46 @@ class MobileSubmitTeamManagerV2 {
         this.selectedChip = null;
         this.renderView();
         window.mobileApp.showToast('Team reset', 'info');
+    }
+
+    async showDeadlineWarning() {
+        return new Promise((resolve) => {
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'deadline-warning-modal';
+            modal.innerHTML = `
+                <div class="modal-overlay"></div>
+                <div class="modal-content deadline-warning">
+                    <div class="warning-icon">⚠️</div>
+                    <h3>Deadline Passed!</h3>
+                    <p>The deadline for Gameweek ${this.currentGameweek} has passed.</p>
+                    <p class="warning-message">This submission will only be effective for <strong>Gameweek ${this.currentGameweek + 1}</strong>.</p>
+                    <div class="modal-buttons">
+                        <button class="cancel-btn" id="cancelLateSubmit">Cancel</button>
+                        <button class="confirm-btn" id="confirmLateSubmit">Submit for GW${this.currentGameweek + 1}</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add event listeners
+            document.getElementById('cancelLateSubmit').onclick = () => {
+                document.body.removeChild(modal);
+                resolve(false);
+            };
+            
+            document.getElementById('confirmLateSubmit').onclick = () => {
+                document.body.removeChild(modal);
+                resolve(true);
+            };
+            
+            // Close on overlay click
+            modal.querySelector('.modal-overlay').onclick = () => {
+                document.body.removeChild(modal);
+                resolve(false);
+            };
+        });
     }
 
     disableSubmission() {
