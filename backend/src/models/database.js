@@ -16,7 +16,10 @@ const collections = {
   draftState: db.collection('draft_state'),
   chatMessages: db.collection('chat_messages'),
   autoBidConfigs: db.collection('auto_bid_configs'),
-  drafts: db.collection('drafts')  // New collection for managing multiple drafts
+  drafts: db.collection('drafts'),  // New collection for managing multiple drafts
+  gameweekTeams: db.collection('gameweekTeams'),  // Team submissions for each gameweek
+  gameweekPoints: db.collection('gameweekPoints'),  // Points calculation for each gameweek
+  gameweekInfo: db.collection('gameweekInfo')  // Gameweek information and deadlines
 };
 
 async function initializeDatabase() {
