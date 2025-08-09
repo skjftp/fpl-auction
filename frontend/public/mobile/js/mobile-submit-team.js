@@ -14,6 +14,7 @@ class MobileSubmitTeamManager {
         this.formationValid = false;
         this.draggedPlayer = null;
         this.myClubs = [];
+        this.editMode = false; // Track edit mode state
         
         // Position requirements
         this.positionLimits = {
@@ -82,6 +83,11 @@ class MobileSubmitTeamManager {
             this.renderBench();
             this.renderClubSelector();
             this.renderChips();
+            
+            // Setup drag and drop if in edit mode
+            if (this.editMode) {
+                this.setupDragAndDrop();
+            }
         } catch (error) {
             console.error('Failed to initialize submit team:', error);
             window.mobileApp.showToast('Failed to load team data', 'error');
@@ -222,15 +228,10 @@ class MobileSubmitTeamManager {
             submitBtn.addEventListener('click', () => this.submitTeam());
         }
 
-        // Auto-pick button
-        const autoPickBtn = document.getElementById('autoPickBtn');
-        if (autoPickBtn) {
-            autoPickBtn.addEventListener('click', () => {
-                this.autoSelectTeam();
-                this.renderPitch();
-                this.renderBench();
-                window.mobileApp.showToast('Team auto-selected', 'success');
-            });
+        // Edit team button
+        const editBtn = document.getElementById('editTeamBtn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => this.toggleEditMode());
         }
 
         // Reset button
@@ -341,7 +342,7 @@ class MobileSubmitTeamManager {
                 const isViceCaptain = player.id === this.viceCaptainId;
                 
                 html += `
-                    <div class="pitch-player" data-player-id="${player.id}" draggable="true">
+                    <div class="pitch-player" data-player-id="${player.id}" draggable="${this.editMode}">
                         <div class="player-shirt ${isCaptain ? 'captain' : ''} ${isViceCaptain ? 'vice-captain' : ''}">
                             <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
                                  onerror="this.style.display='none'" alt="">
@@ -351,10 +352,10 @@ class MobileSubmitTeamManager {
                         <div class="player-name">${player.web_name || player.name}</div>
                         <div class="player-team">${player.team_short_name || ''}</div>
                         <div class="player-actions">
-                            <button onclick="mobileSubmitTeam.toggleCaptain(${player.id})" class="captain-btn">
+                            <button onclick="mobileSubmitTeam.toggleCaptain(${player.id})" class="captain-btn" ${this.editMode ? 'style="pointer-events: none; opacity: 0.5;"' : ''}>
                                 ${isCaptain ? '©' : 'C'}
                             </button>
-                            <button onclick="mobileSubmitTeam.toggleViceCaptain(${player.id})" class="vice-btn">
+                            <button onclick="mobileSubmitTeam.toggleViceCaptain(${player.id})" class="vice-btn" ${this.editMode ? 'style="pointer-events: none; opacity: 0.5;"' : ''}>
                                 ${isViceCaptain ? 'Ⓥ' : 'V'}
                             </button>
                         </div>
@@ -385,7 +386,7 @@ class MobileSubmitTeamManager {
                 <h4 class="bench-title">Bench</h4>
                 <div class="bench-players">
                     ${benchPlayers.map((player, index) => `
-                        <div class="bench-player" data-player-id="${player.id}" draggable="true">
+                        <div class="bench-player" data-player-id="${player.id}" draggable="${this.editMode}">
                             <span class="bench-number">${index + 1}</span>
                             <div class="player-info">
                                 <div class="player-name">${player.web_name || player.name}</div>
@@ -478,7 +479,31 @@ class MobileSubmitTeamManager {
         `;
     }
 
+    toggleEditMode() {
+        this.editMode = !this.editMode;
+        const editBtn = document.getElementById('editTeamBtn');
+        
+        if (this.editMode) {
+            editBtn.textContent = 'Done Editing';
+            editBtn.classList.add('editing');
+            window.mobileApp.showToast('Edit mode enabled - drag players to swap', 'info');
+            this.enableDragAndDrop();
+        } else {
+            editBtn.textContent = 'Edit Team';
+            editBtn.classList.remove('editing');
+            window.mobileApp.showToast('Edit mode disabled', 'info');
+            this.disableDragAndDrop();
+        }
+        
+        // Re-render to update draggable states
+        this.renderPitch();
+        this.renderBench();
+    }
+
     setupDragAndDrop() {
+        // Only setup if in edit mode
+        if (!this.editMode) return;
+        
         const draggables = document.querySelectorAll('[draggable="true"]');
         const dropZones = document.querySelectorAll('.pitch-player, .bench-player');
 
@@ -513,6 +538,29 @@ class MobileSubmitTeamManager {
                     this.swapPlayers(this.draggedPlayer, targetPlayerId);
                 }
             });
+        });
+    }
+
+    enableDragAndDrop() {
+        // Add visual indicator that edit mode is active
+        const pitch = document.querySelector('.pitch');
+        if (pitch) {
+            pitch.classList.add('edit-mode');
+        }
+        this.setupDragAndDrop();
+    }
+    
+    disableDragAndDrop() {
+        // Remove visual indicator
+        const pitch = document.querySelector('.pitch');
+        if (pitch) {
+            pitch.classList.remove('edit-mode');
+        }
+        
+        // Remove all drag event listeners
+        const draggables = document.querySelectorAll('[draggable]');
+        draggables.forEach(element => {
+            element.setAttribute('draggable', 'false');
         });
     }
 

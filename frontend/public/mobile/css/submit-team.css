@@ -46,6 +46,12 @@
     padding: 20px 10px;
     position: relative;
     min-height: 400px;
+    transition: all 0.3s;
+}
+
+.pitch.edit-mode {
+    border: 2px dashed #fbbf24;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
 }
 
 .pitch::before {
@@ -86,8 +92,16 @@
 .pitch-player {
     width: 60px;
     text-align: center;
-    cursor: move;
+    cursor: default;
     transition: transform 0.2s;
+}
+
+.pitch-player[draggable="true"] {
+    cursor: move;
+}
+
+.pitch-player[draggable="true"]:hover {
+    transform: scale(1.05);
 }
 
 .pitch-player.dragging {
@@ -228,8 +242,18 @@
     border-radius: 8px;
     padding: 8px;
     min-width: 80px;
-    cursor: move;
+    cursor: default;
     transition: all 0.2s;
+}
+
+.bench-player[draggable="true"] {
+    cursor: move;
+    border: 1px solid transparent;
+}
+
+.bench-player[draggable="true"]:hover {
+    border-color: #3b82f6;
+    background: #e5e7eb;
 }
 
 .bench-player.dragging {
@@ -454,9 +478,13 @@
     cursor: not-allowed;
 }
 
-.auto-pick-btn {
+.edit-team-btn {
     background: #3b82f6;
     color: white;
+}
+
+.edit-team-btn.editing {
+    background: #ef4444;
 }
 
 .reset-team-btn {
