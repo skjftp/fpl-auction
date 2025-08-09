@@ -192,6 +192,9 @@ class MobileApp {
                 mainApp.classList.add('auction-active');
             }
             
+            // Load the initial tab data (Submit Team is first tab)
+            await this.loadTabData(this.currentTab);
+            
             console.log('Main app initialized successfully');
         } catch (error) {
             console.error('Error initializing main app:', error);
@@ -606,7 +609,11 @@ class MobileApp {
                 // Initialize submit team V2 (FPL-style)
                 if (!window.mobileSubmitTeam.initialized) {
                     await window.mobileSubmitTeam.initialize();
-                    window.mobileSubmitTeam.initialized = true;
+                } else {
+                    // Re-render if already initialized
+                    window.mobileSubmitTeam.renderHeader();
+                    window.mobileSubmitTeam.renderView();
+                    window.mobileSubmitTeam.setupEventListeners();
                 }
                 break;
             case 'leaderboard':

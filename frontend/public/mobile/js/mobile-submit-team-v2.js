@@ -110,8 +110,23 @@ class MobileSubmitTeamManagerV2 {
     }
     
     showLoader() {
-        const container = document.getElementById('submitTeamContent');
-        if (container) {
+        // First ensure the container exists
+        let container = document.getElementById('submitTeamContent');
+        
+        // If container doesn't exist, wait a bit and try again
+        if (!container) {
+            setTimeout(() => {
+                container = document.getElementById('submitTeamContent');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="loader-container">
+                            <div class="spinner"></div>
+                            <p class="loading-text">Loading your team...</p>
+                        </div>
+                    `;
+                }
+            }, 100);
+        } else {
             container.innerHTML = `
                 <div class="loader-container">
                     <div class="spinner"></div>
