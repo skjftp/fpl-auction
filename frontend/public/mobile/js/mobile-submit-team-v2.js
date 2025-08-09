@@ -996,6 +996,9 @@ class MobileSubmitTeamManagerV2 {
             this.matchCount = response.match_count || 10;
             console.log('Loaded from API - GW type:', this.gameweekType, 'Full response:', response);
             
+            // TEMPORARY: Force Double for testing - REMOVE THIS LATER
+            // this.gameweekType = 'Double';
+            
             // Cache the response
             localStorage.setItem(cacheKey, JSON.stringify({
                 ...response,
