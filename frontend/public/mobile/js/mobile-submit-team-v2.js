@@ -83,6 +83,14 @@ class MobileSubmitTeamManagerV2 {
             const startTime = Date.now();
             console.log('Initializing Submit Team V2...');
             
+            // Check if already initialized
+            if (this.initialized) {
+                console.log('Already initialized, re-rendering...');
+                this.renderHeader();
+                this.renderView();
+                return;
+            }
+            
             // Check if already loading
             if (this.loading) {
                 console.log('Already loading, skipping...');

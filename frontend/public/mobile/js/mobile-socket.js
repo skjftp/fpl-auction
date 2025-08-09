@@ -138,6 +138,10 @@ class MobileSocketManager {
     */ // END OF PLAYING PHASE COMMENT
 
     disconnect() {
+        // DISABLED FOR PLAYING PHASE
+        return;
+        
+        /* COMMENTED OUT FOR PLAYING PHASE
         if (this.rejoinInterval) {
             clearInterval(this.rejoinInterval);
             this.rejoinInterval = null;
@@ -147,22 +151,19 @@ class MobileSocketManager {
             this.socket = null;
             this.connected = false;
         }
+        */
     }
 
     handleReconnect() {
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-            setTimeout(() => {
-                this.connect();
-            }, 2000 * this.reconnectAttempts);
-        } else {
-            console.error('Max reconnection attempts reached');
-            window.mobileApp.showToast('Connection lost', 'error');
-        }
+        // DISABLED FOR PLAYING PHASE
+        return;
     }
 
     joinAuction() {
+        // DISABLED FOR PLAYING PHASE
+        return;
+        
+        /* COMMENTED OUT FOR PLAYING PHASE
         const team = window.mobileAPI.getCurrentUser();
         console.log('🔍 Mobile: Attempting to join auction room, team:', team);
         if (team && team.id && this.socket) {
@@ -179,9 +180,14 @@ class MobileSocketManager {
                 setTimeout(() => this.joinAuction(), 1000);
             }
         }
+        */
     }
 
     setupPeriodicRejoin() {
+        // DISABLED FOR PLAYING PHASE
+        return;
+        
+        /* COMMENTED OUT FOR PLAYING PHASE
         // Clear any existing interval
         if (this.rejoinInterval) {
             clearInterval(this.rejoinInterval);
@@ -194,6 +200,7 @@ class MobileSocketManager {
                 this.joinAuction();
             }
         }, 30000);
+        */
     }
 
     updateConnectionStatus(connected) {

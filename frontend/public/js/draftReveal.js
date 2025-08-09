@@ -283,9 +283,9 @@ class DraftRevealAnimation {
                 });
                 console.log('Draft reveal socket listener set up');
             } else {
-                console.log('Socket not available for draft reveal');
-                // Retry after a moment
-                setTimeout(() => this.setupSocketListeners(), 1000);
+                // DISABLED FOR PLAYING PHASE - No socket during gameplay
+                // console.log('Socket not available for draft reveal');
+                // setTimeout(() => this.setupSocketListeners(), 1000);
             }
         }, 500);
     }
