@@ -310,6 +310,9 @@ class MobileSubmitTeamManagerV2 {
     renderHeader() {
         const headerContainer = document.getElementById('submitTeamHeader');
         if (!headerContainer) return;
+        
+        // Store current scroll position to restore after render
+        const scrollTop = window.scrollY;
 
         headerContainer.innerHTML = `
             <div class="submit-header">
@@ -371,6 +374,61 @@ class MobileSubmitTeamManagerV2 {
                 ` : ''}
             </div>
         `;
+        
+        // Re-setup event listeners after rendering new buttons
+        this.setupHeaderEventListeners();
+        
+        // Restore scroll position
+        window.scrollTo(0, scrollTop);
+    }
+    
+    setupHeaderEventListeners() {
+        // Setup event listeners for header buttons only
+        if (this.editMode) {
+            const saveBtn = document.getElementById('saveEditBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            
+            if (saveBtn) {
+                saveBtn.onclick = () => {
+                    if (!saveBtn.classList.contains('disabled')) {
+                        this.saveEdit();
+                    }
+                };
+            }
+            if (cancelEditBtn) {
+                cancelEditBtn.onclick = () => this.cancelEdit();
+            }
+        } else {
+            const editBtn = document.getElementById('editTeamBtn');
+            const cancelBtn = document.getElementById('cancelTeamBtn');
+            const confirmBtn = document.getElementById('confirmTeamBtn');
+            
+            if (editBtn) {
+                editBtn.onclick = () => {
+                    console.log('Edit button clicked');
+                    this.toggleEditMode();
+                };
+            }
+            if (cancelBtn) {
+                cancelBtn.onclick = () => {
+                    window.mobileApp.switchTab('team');
+                };
+            }
+            if (confirmBtn) {
+                confirmBtn.onclick = () => this.submitTeam();
+            }
+        }
+        
+        // View toggle buttons
+        const pitchBtn = document.getElementById('pitchViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
+        
+        if (pitchBtn) {
+            pitchBtn.onclick = () => this.switchView('pitch');
+        }
+        if (listBtn) {
+            listBtn.onclick = () => this.switchView('list');
+        }
     }
 
     renderClubSelector() {
