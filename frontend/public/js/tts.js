@@ -8,6 +8,12 @@ class TTSManager {
     }
 
     init() {
+        // DISABLED FOR PLAYING PHASE - No auction announcements needed
+        this.enabled = false;
+        console.log('TTS disabled for playing phase');
+        return;
+        
+        /* COMMENTED OUT FOR PLAYING PHASE
         // Load settings from localStorage FIRST
         this.loadSettings();
         
@@ -27,6 +33,7 @@ class TTSManager {
         }
         
         console.log('TTS Manager initialized, enabled:', this.enabled);
+        */
     }
 
     loadVoices() {

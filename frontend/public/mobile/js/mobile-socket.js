@@ -242,9 +242,12 @@ class MobileSocketManager {
                 window.ttsManager.announceClubAuction(itemName);
             }
         }
+        */
     }
 
     handleNewBid(data) {
+        // DISABLED FOR PLAYING PHASE
+        return;
         if (window.mobileAuction) {
             window.mobileAuction.updateCurrentBid(data);
         }

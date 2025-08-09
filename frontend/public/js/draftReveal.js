@@ -524,6 +524,10 @@ class DraftRevealAnimation {
     }
 }
 
+// DISABLED FOR PLAYING PHASE - Draft is complete
+console.log('Draft reveal animation disabled for playing phase');
+
+/* COMMENTED OUT FOR PLAYING PHASE
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -535,3 +539,4 @@ if (document.readyState === 'loading') {
     window.draftRevealAnimation = new DraftRevealAnimation();
     console.log('Draft reveal animation initialized immediately');
 }
+*/
