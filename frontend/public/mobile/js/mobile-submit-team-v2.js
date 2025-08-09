@@ -753,6 +753,7 @@ class MobileSubmitTeamManagerV2 {
             this.selectedChip = chipId;
         }
         this.renderHeader();
+        this.validateFormation();
     }
 
     toggleCaptain(playerId) {
