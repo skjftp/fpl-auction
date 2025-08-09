@@ -127,22 +127,33 @@ class MobileSubmitTeamManagerV2 {
             this.renderView();
             this.setupEventListeners();
             
-            // Load non-critical data in background without blocking
+            // Load non-critical data in background - don't wait or log time
+            // These are fire-and-forget, they update UI when ready
             setTimeout(() => {
-                console.time('Loading background data');
-                Promise.all([
-                    this.loadCurrentGameweek().catch(e => console.error('Gameweek load failed:', e)),
-                    this.loadExistingSubmission().catch(e => console.error('Submission load failed:', e)),
-                    this.loadChipStatus().catch(e => console.error('Chip load failed:', e))
-                ]).then(() => {
-                    console.timeEnd('Loading background data');
-                    // Update UI with new data if available
+                // Load gameweek data
+                this.loadCurrentGameweek().then(() => {
                     if (this.deadline) {
                         this.startDeadlineTimer();
                     }
                     this.renderHeader();
-                    this.validateFormation();
-                });
+                }).catch(e => console.log('Gameweek not loaded:', e.message));
+                
+                // Load submission if gameweek exists  
+                setTimeout(() => {
+                    if (this.currentGameweek) {
+                        this.loadExistingSubmission().catch(e => {
+                            // 404 is expected if no submission yet
+                            if (!e.message.includes('No submission found')) {
+                                console.error('Submission error:', e);
+                            }
+                        });
+                    }
+                }, 500);
+                
+                // Load chips last - least important
+                setTimeout(() => {
+                    this.loadChipStatus().catch(e => console.log('Chips not loaded'));
+                }, 1000);
             }, 100);
             
             const loadTime = Date.now() - startTime;
@@ -847,27 +858,33 @@ class MobileSubmitTeamManagerV2 {
             
             // Always use cache first if available (instant load)
             if (cached) {
-                const data = JSON.parse(cached);
-                this.mySquad = data.players || [];
-                this.myClubs = data.clubs || [];
-                
-                console.log(`Loaded squad from cache in ${performance.now() - startTime}ms`);
-                
-                // Initialize with default formation if no existing submission
-                if (this.starting11.length === 0 && this.mySquad.length >= 15) {
-                    this.autoSelectTeam();
+                try {
+                    const data = JSON.parse(cached);
+                    this.mySquad = data.players || [];
+                    this.myClubs = data.clubs || [];
+                    
+                    // Squad loaded from cache instantly
+                    
+                    // Initialize with default formation if no existing submission
+                    if (this.starting11.length === 0 && this.mySquad.length >= 15) {
+                        this.autoSelectTeam();
+                    }
+                    
+                    // Refresh cache in background if old (non-blocking)
+                    const cacheAge = Date.now() - data.timestamp;
+                    if (cacheAge > 10 * 60 * 1000) {
+                        console.log('Cache is old, refreshing in background...');
+                        setTimeout(() => this.refreshSquadInBackground(currentUser.id, cacheKey), 1000);
+                    }
+                    return;
+                } catch (e) {
+                    console.error('Cache parse error:', e);
+                    localStorage.removeItem(cacheKey);
                 }
-                
-                // Refresh cache in background if old (non-blocking)
-                const cacheAge = Date.now() - data.timestamp;
-                if (cacheAge > 10 * 60 * 1000) {
-                    this.refreshSquadInBackground(currentUser.id, cacheKey);
-                }
-                return;
             }
             
             // No cache - fetch from API (should still be fast)
-            console.log('No cache, fetching from API...');
+            console.log('❌ No cache, fetching from API...');
             const squadData = await window.mobileAPI.getTeamSquad(currentUser.id);
             
             this.mySquad = squadData.players || [];
