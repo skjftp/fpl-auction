@@ -581,6 +581,11 @@ class MobileApp {
                 this.renderChatMessagesMini();
                 this.fixChatScroll();
             }, 100);
+        } else if (tabName === 'league') {
+            // Initialize league tab if not already done
+            if (!window.mobileLeague.initialized) {
+                window.mobileLeague.initialize();
+            }
         } else {
             mainApp.classList.remove('auction-active');
         }

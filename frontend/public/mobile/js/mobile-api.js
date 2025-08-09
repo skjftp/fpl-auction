@@ -537,9 +537,12 @@ class MobileAPI {
         });
     }
 
-    async getTeamSubmission(gameweek) {
+    async getTeamSubmission(gameweek, teamId = null) {
         try {
-            return await this.makeRequest(`/gameweek-teams/submission/${gameweek}`);
+            const endpoint = teamId ? 
+                `/gameweek-teams/submission/${gameweek}/${teamId}` : 
+                `/gameweek-teams/submission/${gameweek}`;
+            return await this.makeRequest(endpoint);
         } catch (error) {
             // 404 is expected when no submission exists yet
             if (error.message && error.message.includes('No submission found')) {
@@ -569,7 +572,12 @@ class MobileAPI {
     }
 
     async getLeaderboard(gameweek = 'overall') {
-        return this.makeRequest(`/leaderboard/${gameweek}`);
+        try {
+            return await this.makeRequest(`/leaderboard/${gameweek}`);
+        } catch (error) {
+            console.error('Error fetching leaderboard:', error);
+            return [];
+        }
     }
 
     async getPointsBreakdown(teamId, gameweek) {
