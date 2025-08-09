@@ -678,6 +678,61 @@
     gap: 12px;
     overflow-x: auto;
     padding-bottom: 4px;
+    align-items: flex-start;
+}
+
+.bench-gk {
+    flex: 0 0 auto;
+}
+
+.bench-spacer {
+    flex: 0 0 40px;
+}
+
+.bench-subs {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.bench-sub-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sub-order-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.sub-reorder-btns {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.reorder-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reorder-btn:hover {
+    background: #2563eb;
+    transform: scale(1.1);
 }
 
 .bench-player {

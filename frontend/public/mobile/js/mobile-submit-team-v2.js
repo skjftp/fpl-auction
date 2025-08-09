@@ -533,10 +533,42 @@ class MobileSubmitTeamManagerV2 {
     }
 
     renderBenchPlayers() {
-        return this.bench.map(playerId => {
+        // Separate goalkeeper from outfield subs
+        const benchGK = [];
+        const benchOutfield = [];
+        
+        this.bench.forEach((playerId, index) => {
             const player = this.mySquad.find(p => p.id === playerId);
-            return player ? this.renderPlayerCard(player, false) : '';
-        }).join('');
+            if (player) {
+                const pos = player.position || player.element_type;
+                if (pos === 1) {
+                    benchGK.push({ player, index });
+                } else {
+                    benchOutfield.push({ player, index });
+                }
+            }
+        });
+        
+        return `
+            <div class="bench-gk">
+                ${benchGK.map(({ player }) => this.renderPlayerCard(player, false)).join('')}
+            </div>
+            <div class="bench-spacer"></div>
+            <div class="bench-subs">
+                ${benchOutfield.map(({ player, index }, subIndex) => `
+                    <div class="bench-sub-wrapper">
+                        <div class="sub-order-label">SUB ${subIndex + 1}</div>
+                        ${this.renderPlayerCard(player, false)}
+                        ${this.editMode && benchOutfield.length > 1 ? `
+                            <div class="sub-reorder-btns">
+                                ${subIndex > 0 ? `<button class="reorder-btn" onclick="mobileSubmitTeam.reorderSub(${index}, 'up')">↑</button>` : ''}
+                                ${subIndex < benchOutfield.length - 1 ? `<button class="reorder-btn" onclick="mobileSubmitTeam.reorderSub(${index}, 'down')">↓</button>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
     }
 
     renderSubstitutionModal() {
@@ -744,6 +776,43 @@ class MobileSubmitTeamManagerV2 {
         if (modal) {
             modal.classList.add('hidden');
         }
+    }
+
+    reorderSub(benchIndex, direction) {
+        // Find all non-GK bench players
+        const benchOutfieldIndices = [];
+        this.bench.forEach((playerId, index) => {
+            const player = this.mySquad.find(p => p.id === playerId);
+            if (player) {
+                const pos = player.position || player.element_type;
+                if (pos !== 1) {
+                    benchOutfieldIndices.push(index);
+                }
+            }
+        });
+        
+        // Find current position in outfield subs
+        const currentPos = benchOutfieldIndices.indexOf(benchIndex);
+        if (currentPos === -1) return;
+        
+        // Calculate new position
+        const newPos = direction === 'up' ? currentPos - 1 : currentPos + 1;
+        
+        // Check bounds
+        if (newPos < 0 || newPos >= benchOutfieldIndices.length) return;
+        
+        // Get the indices to swap
+        const index1 = benchOutfieldIndices[currentPos];
+        const index2 = benchOutfieldIndices[newPos];
+        
+        // Swap the players in the bench array
+        const temp = this.bench[index1];
+        this.bench[index1] = this.bench[index2];
+        this.bench[index2] = temp;
+        
+        // Re-render
+        this.renderView();
+        this.validateFormation();
     }
 
     toggleChip(chipId) {
