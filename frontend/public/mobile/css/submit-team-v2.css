@@ -185,6 +185,11 @@
     text-transform: uppercase;
 }
 
+.gw-type-badge.normal {
+    background: #dcfce7;
+    color: #10b981;
+}
+
 .gw-type-badge.double {
     background: #fef3c7;
     color: #f59e0b;

@@ -256,8 +256,7 @@ class MobileSubmitTeamManagerV2 {
                 <div class="gameweek-row">
                     <div class="gameweek-info">
                         <span class="gw-label">Gameweek ${this.currentGameweek || 1}</span>
-                        ${this.gameweekType && this.gameweekType !== 'Normal' ? 
-                            `<span class="gw-type-badge ${this.gameweekType.toLowerCase()}">${this.gameweekType}</span>` : ''}
+                        <span class="gw-type-badge ${(this.gameweekType || 'Normal').toLowerCase()}">${this.gameweekType || 'Normal'}</span>
                         <span class="deadline-label">Deadline: <span id="deadlineTime">${this.getDeadlineDisplay()}</span></span>
                     </div>
                     <button id="editModeBtn" class="edit-mode-btn ${this.editMode ? 'active' : ''}" title="Edit Team">
@@ -995,9 +994,6 @@ class MobileSubmitTeamManagerV2 {
             this.gameweekType = response.gameweek_type || response.type || 'Normal';
             this.matchCount = response.match_count || 10;
             console.log('Loaded from API - GW type:', this.gameweekType, 'Full response:', response);
-            
-            // TEMPORARY: Force Double for testing - REMOVE THIS LATER
-            // this.gameweekType = 'Double';
             
             // Cache the response
             localStorage.setItem(cacheKey, JSON.stringify({
