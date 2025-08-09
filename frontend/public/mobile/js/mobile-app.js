@@ -372,14 +372,11 @@ class MobileApp {
 
     async loadInitialData() {
         try {
-            // CHAT DISABLED FOR PLAYING PHASE
-            // this.showChatLoadingState();
+            // ALL INITIAL DATA LOADING DISABLED FOR PLAYING PHASE
+            // No draft state, team squad, or chat needed on startup
+            console.log('Playing phase - skipping all initial data loading for instant startup');
             
-            // Only load draft state on startup - other data loaded lazily per tab
-            // This saves loading time on app startup
-            await this.loadDraftState();
-            
-            // Team squad will be loaded by Submit Team tab or Team tab when accessed
+            // await this.loadDraftState() - DISABLED FOR PLAYING PHASE
             // await this.loadTeamSquad() - SKIP for faster startup
             // this.loadChatMessages() - DISABLED FOR PLAYING PHASE
         } catch (error) {
@@ -416,15 +413,25 @@ class MobileApp {
     }
 
     async loadDraftState() {
+        // DISABLED FOR PLAYING PHASE - Draft is complete
+        console.log('Draft state loading disabled for playing phase');
+        return;
+        
+        /* COMMENTED OUT FOR PLAYING PHASE
         try {
             const draftState = await window.mobileAPI.getDraftState();
             this.updateDraftStatus(draftState);
         } catch (error) {
             console.error('Error loading draft state:', error);
         }
+        */
     }
 
     updateDraftStatus(draftState) {
+        // DISABLED FOR PLAYING PHASE
+        return;
+        
+        /* COMMENTED OUT FOR PLAYING PHASE
         console.log('📊 Mobile: Updating draft status with state:', draftState);
         
         const currentTurnEl = document.getElementById('currentTurn');
@@ -473,6 +480,7 @@ class MobileApp {
                 }
             }
         }
+        */
     }
 
     calculateNextTurn(draftState) {
