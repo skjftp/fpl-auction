@@ -2,6 +2,7 @@
 class MobileSubmitTeamManagerV2 {
     constructor() {
         this.initialized = false; // Track initialization
+        this.loading = true; // Track loading state
         this.mySquad = [];
         this.starting11 = [];
         this.bench = [];
@@ -80,10 +81,21 @@ class MobileSubmitTeamManagerV2 {
     async initialize() {
         try {
             console.log('Initializing Submit Team V2...');
-            await this.loadMySquad();
-            await this.loadCurrentGameweek();
-            await this.loadExistingSubmission();
-            await this.loadChipStatus();
+            this.showLoader();
+            
+            // Load data in parallel for faster performance
+            const [squadData, gameweekData] = await Promise.all([
+                this.loadMySquad(),
+                this.loadCurrentGameweek()
+            ]);
+            
+            // Load these after we have gameweek data
+            await Promise.all([
+                this.loadExistingSubmission(),
+                this.loadChipStatus()
+            ]);
+            
+            this.loading = false;
             this.startDeadlineTimer();
             this.renderHeader();
             this.renderView();
@@ -92,8 +104,34 @@ class MobileSubmitTeamManagerV2 {
             console.log('Submit Team V2 initialized successfully');
         } catch (error) {
             console.error('Failed to initialize submit team:', error);
-            window.mobileApp.showToast('Failed to load team data', 'error');
+            this.loading = false;
+            this.showError('Failed to load team data');
         }
+    }
+    
+    showLoader() {
+        const container = document.getElementById('submitTeamContent');
+        if (container) {
+            container.innerHTML = `
+                <div class="loader-container">
+                    <div class="spinner"></div>
+                    <p class="loading-text">Loading your team...</p>
+                </div>
+            `;
+        }
+    }
+    
+    showError(message) {
+        const container = document.getElementById('submitTeamContent');
+        if (container) {
+            container.innerHTML = `
+                <div class="error-container">
+                    <p class="error-text">${message}</p>
+                    <button onclick="mobileSubmitTeam.initialize()" class="retry-btn">Retry</button>
+                </div>
+            `;
+        }
+        window.mobileApp.showToast(message, 'error');
     }
 
     setupEventListeners() {
@@ -723,10 +761,38 @@ class MobileSubmitTeamManagerV2 {
     async loadMySquad() {
         try {
             const currentUser = window.mobileAPI.getCurrentUser();
+            const cacheKey = `fpl_squad_cache_${currentUser.id}`;
+            const cached = localStorage.getItem(cacheKey);
+            
+            // Use cache if available and less than 10 minutes old
+            if (cached) {
+                const data = JSON.parse(cached);
+                const cacheAge = Date.now() - data.timestamp;
+                
+                if (cacheAge < 10 * 60 * 1000) {
+                    this.mySquad = data.players || [];
+                    this.myClubs = data.clubs || [];
+                    
+                    // Initialize with default formation if no existing submission
+                    if (this.starting11.length === 0 && this.mySquad.length >= 15) {
+                        this.autoSelectTeam();
+                    }
+                    return;
+                }
+            }
+            
+            // Fetch fresh data
             const squadData = await window.mobileAPI.getTeamSquad(currentUser.id);
             
             this.mySquad = squadData.players || [];
             this.myClubs = squadData.clubs || [];
+            
+            // Cache the squad data
+            localStorage.setItem(cacheKey, JSON.stringify({
+                players: this.mySquad,
+                clubs: this.myClubs,
+                timestamp: Date.now()
+            }));
             
             // Initialize with default formation if no existing submission
             if (this.starting11.length === 0 && this.mySquad.length >= 15) {
@@ -740,11 +806,36 @@ class MobileSubmitTeamManagerV2 {
 
     async loadCurrentGameweek() {
         try {
+            // Check localStorage cache first
+            const cacheKey = 'fpl_gameweek_cache';
+            const cached = localStorage.getItem(cacheKey);
+            
+            if (cached) {
+                const data = JSON.parse(cached);
+                const cacheAge = Date.now() - data.timestamp;
+                
+                // Use cache if less than 1 hour old
+                if (cacheAge < 60 * 60 * 1000) {
+                    this.currentGameweek = data.gameweek;
+                    this.deadline = new Date(data.deadline_time);
+                    this.gameweekType = data.type || 'Normal';
+                    this.matchCount = data.match_count || 10;
+                    return;
+                }
+            }
+            
+            // Fetch fresh data
             const response = await window.mobileAPI.getCurrentGameweek();
             this.currentGameweek = response.gameweek;
             this.deadline = new Date(response.deadline_time);
             this.gameweekType = response.type || 'Normal';
             this.matchCount = response.match_count || 10;
+            
+            // Cache the response
+            localStorage.setItem(cacheKey, JSON.stringify({
+                ...response,
+                timestamp: Date.now()
+            }));
         } catch (error) {
             console.error('Error loading gameweek:', error);
             throw error;
@@ -833,10 +924,16 @@ class MobileSubmitTeamManagerV2 {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
         let timeStr = '';
-        if (days > 0) timeStr += `${days}d `;
-        timeStr += `${hours}h ${minutes}m`;
+        if (days > 0) {
+            timeStr += `${days}d ${hours}h ${minutes}m`;
+        } else if (hours > 0) {
+            timeStr += `${hours}h ${minutes}m ${seconds}s`;
+        } else {
+            timeStr += `${minutes}m ${seconds}s`;
+        }
 
         return timeStr;
     }
@@ -856,7 +953,7 @@ class MobileSubmitTeamManagerV2 {
         };
 
         updateTimer();
-        this.deadlineTimer = setInterval(updateTimer, 60000); // Update every minute
+        this.deadlineTimer = setInterval(updateTimer, 1000); // Update every second
     }
 
     validateFormation() {

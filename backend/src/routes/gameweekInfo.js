@@ -10,7 +10,11 @@ const FPL_FIXTURES_URL = 'https://fantasy.premierleague.com/api/fixtures/';
 // Cache for FPL data
 let fplDataCache = null;
 let cacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Cache for gameweek type data
+const gameweekTypeCache = new Map();
+const GAMEWEEK_TYPE_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 // Function to fetch and cache FPL data
 async function fetchFPLData() {
@@ -32,21 +36,38 @@ async function fetchFPLData() {
     }
 }
 
-// Function to determine gameweek type
+// Function to determine gameweek type with caching
 async function getGameweekType(gameweek) {
+    // Check cache first
+    const cacheKey = `gw_${gameweek}`;
+    const cached = gameweekTypeCache.get(cacheKey);
+    
+    if (cached && (Date.now() - cached.timestamp < GAMEWEEK_TYPE_CACHE_DURATION)) {
+        return cached.data;
+    }
+    
     try {
         const response = await axios.get(`${FPL_FIXTURES_URL}?event=${gameweek}`);
         const fixtures = response.data;
         
         const matchCount = fixtures.length;
         
+        let result;
         if (matchCount < 10) {
-            return { type: 'Blank', matchCount };
+            result = { type: 'Blank', matchCount };
         } else if (matchCount > 10) {
-            return { type: 'Double', matchCount };
+            result = { type: 'Double', matchCount };
         } else {
-            return { type: 'Normal', matchCount };
+            result = { type: 'Normal', matchCount };
         }
+        
+        // Cache the result
+        gameweekTypeCache.set(cacheKey, {
+            data: result,
+            timestamp: Date.now()
+        });
+        
+        return result;
     } catch (error) {
         console.error('Error fetching fixtures:', error);
         return { type: 'Normal', matchCount: 10 };
