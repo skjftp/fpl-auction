@@ -10,6 +10,7 @@
     
     <!-- Mobile-optimized CSS -->
     <link rel="stylesheet" href="mobile/css/mobile.css">
+    <link rel="stylesheet" href="mobile/css/submit-team.css">
     
     <!-- Touch-friendly icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -127,7 +128,7 @@
         <!-- Tab Content -->
         <div class="tab-content">
             <!-- Auction Tab -->
-            <div id="auctionTab" class="tab-pane active">
+            <div id="auctionTab" class="tab-pane">
                 <!-- Current Auction -->
                 <div id="currentAuction" class="auction-card hidden">
                     <div class="auction-header">
@@ -215,7 +216,7 @@
             </div>
 
             <!-- Team Tab -->
-            <div id="teamTab" class="tab-pane">
+            <div id="teamTab" class="tab-pane active">
                 <div class="team-header">
                     <select id="teamSelector" class="team-selector">
                         <option value="">My Squad</option>
@@ -226,6 +227,21 @@
                     </div>
                 </div>
                 <div id="teamSquad" class="team-squad"></div>
+            </div>
+
+            <!-- Clubs Tab -->
+            <div id="clubsTab" class="tab-pane">
+                <div class="clubs-container">
+                    <div class="clubs-header">
+                        <h3 class="clubs-title">All Clubs</h3>
+                        <div class="clubs-filter">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="available">Available</button>
+                            <button class="filter-btn" data-filter="sold">Sold</button>
+                        </div>
+                    </div>
+                    <div id="clubsList" class="clubs-list"></div>
+                </div>
             </div>
 
             <!-- History Tab -->
@@ -239,6 +255,69 @@
                         </div>
                     </div>
                     <div id="historyList" class="history-list"></div>
+                </div>
+            </div>
+
+            <!-- Submit Team Tab -->
+            <div id="submitTeamTab" class="tab-pane">
+                <div class="submit-team-container">
+                    <!-- Gameweek Header -->
+                    <div id="gameweekHeader"></div>
+                    
+                    <!-- Formation Validation -->
+                    <div id="formationValidation" class="formation-validation"></div>
+                    
+                    <!-- Team Actions -->
+                    <div class="team-actions">
+                        <button id="autoPickBtn" class="auto-pick-btn">Auto Pick</button>
+                        <button id="resetTeamBtn" class="reset-team-btn">Reset</button>
+                        <button id="submitTeamBtn" class="submit-team-btn">Submit Team</button>
+                    </div>
+                    
+                    <!-- Pitch -->
+                    <div id="teamPitch"></div>
+                    
+                    <!-- Bench -->
+                    <div id="teamBench"></div>
+                    
+                    <!-- Club Multiplier -->
+                    <div id="clubMultiplier"></div>
+                    
+                    <!-- Chips -->
+                    <div id="chipsSelector"></div>
+                </div>
+            </div>
+
+            <!-- More Tab -->
+            <div id="moreTab" class="tab-pane">
+                <div class="more-container">
+                    <div class="more-menu">
+                        <button class="more-item" onclick="mobileApp.switchToSubTab('auction')">
+                            <span class="more-icon">🔨</span>
+                            <span>Auction</span>
+                            <span class="more-arrow">›</span>
+                        </button>
+                        <button class="more-item" onclick="mobileApp.switchToSubTab('players')">
+                            <span class="more-icon">👥</span>
+                            <span>Players</span>
+                            <span class="more-arrow">›</span>
+                        </button>
+                        <button class="more-item" onclick="mobileApp.switchToSubTab('history')">
+                            <span class="more-icon">📊</span>
+                            <span>History</span>
+                            <span class="more-arrow">›</span>
+                        </button>
+                        <button class="more-item" onclick="mobileApp.showLeaderboard()">
+                            <span class="more-icon">🏆</span>
+                            <span>Leaderboard</span>
+                            <span class="more-arrow">›</span>
+                        </button>
+                        <button class="more-item" onclick="mobileApp.showPointsBreakdown()">
+                            <span class="more-icon">📈</span>
+                            <span>Points Breakdown</span>
+                            <span class="more-arrow">›</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -296,21 +375,21 @@
 
     <!-- Tab Navigation (Bottom Fixed) -->
     <div class="tab-nav">
-        <button class="tab-btn active" data-tab="auction">
-            <div class="tab-icon">🔨</div>
-            <span>Auction</span>
-        </button>
-        <button class="tab-btn" data-tab="players">
-            <div class="tab-icon">👥</div>
-            <span>Players</span>
-        </button>
-        <button class="tab-btn" data-tab="team">
+        <button class="tab-btn active" data-tab="team">
             <div class="tab-icon">⭐</div>
             <span>My Team</span>
         </button>
-        <button class="tab-btn" data-tab="history">
-            <div class="tab-icon">📊</div>
-            <span>History</span>
+        <button class="tab-btn" data-tab="submitTeam">
+            <div class="tab-icon">⚽</div>
+            <span>Submit</span>
+        </button>
+        <button class="tab-btn" data-tab="clubs">
+            <div class="tab-icon">🏟️</div>
+            <span>Clubs</span>
+        </button>
+        <button class="tab-btn" data-tab="more">
+            <div class="tab-icon">☰</div>
+            <span>More</span>
         </button>
     </div>
 
@@ -385,6 +464,53 @@
         </div>
     </div>
 
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>League Leaderboard</h3>
+                <button id="closeLeaderboardBtn" class="close-btn">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="leaderboard-gameweek">
+                    <select id="leaderboardGameweek" class="gameweek-select">
+                        <option value="overall">Overall</option>
+                        <!-- Gameweeks will be populated dynamically -->
+                    </select>
+                </div>
+                <div id="leaderboardContent" class="leaderboard-content">
+                    <!-- Leaderboard will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Points Breakdown Modal -->
+    <div id="pointsBreakdownModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Points Breakdown</h3>
+                <button id="closePointsBreakdownBtn" class="close-btn">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="points-filters">
+                    <select id="pointsGameweek" class="gameweek-select">
+                        <!-- Gameweeks will be populated dynamically -->
+                    </select>
+                    <select id="pointsTeam" class="team-select">
+                        <option value="">My Team</option>
+                        <!-- Teams will be populated dynamically -->
+                    </select>
+                </div>
+                <div id="pointsBreakdownContent" class="points-breakdown-content">
+                    <!-- Points breakdown will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Draft Reveal Modal -->
     <div id="draftRevealModal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-[70] flex items-center justify-center">
         <div class="bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 rounded-xl p-4 w-11/12 max-w-md max-h-[90vh] flex flex-col">
@@ -440,6 +566,7 @@
     <script src="mobile/js/mobile-auction.js"></script>
     <script src="mobile/js/mobile-autobid.js"></script>
     <script src="mobile/js/mobile-viewport.js"></script>
+    <script src="mobile/js/mobile-submit-team.js"></script>
     <script src="mobile/js/mobile-app.js"></script>
     
     <!-- Break Screen Modal -->

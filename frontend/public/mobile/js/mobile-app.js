@@ -602,6 +602,20 @@ class MobileApp {
                     this.renderChatMessagesMini();
                 }
                 break;
+            case 'submitTeam':
+                // Initialize submit team
+                if (!window.mobileSubmitTeam.initialized) {
+                    await window.mobileSubmitTeam.initialize();
+                    window.mobileSubmitTeam.initialized = true;
+                }
+                break;
+            case 'clubs':
+                // Load clubs
+                await this.loadClubsList();
+                break;
+            case 'more':
+                // No data to load for More tab
+                break;
         }
     }
 

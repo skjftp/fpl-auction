@@ -496,6 +496,42 @@ class MobileAPI {
             throw error;
         }
     }
+
+    // Gameweek endpoints
+    async getCurrentGameweek() {
+        return this.makeRequest('/gameweek/current');
+    }
+
+    async getAllGameweeks() {
+        return this.makeRequest('/gameweek/all');
+    }
+
+    async submitTeam(submission) {
+        return this.makeRequest('/gameweek/submit-team', {
+            method: 'POST',
+            body: JSON.stringify(submission)
+        });
+    }
+
+    async getTeamSubmission(gameweek) {
+        return this.makeRequest(`/gameweek/team-submission/${gameweek}`);
+    }
+
+    async getChipStatus() {
+        return this.makeRequest('/gameweek/chips-used');
+    }
+
+    async getGameweekPoints(gameweek) {
+        return this.makeRequest(`/gameweek/points/${gameweek}`);
+    }
+
+    async getLeaderboard(gameweek = 'overall') {
+        return this.makeRequest(`/leaderboard/${gameweek}`);
+    }
+
+    async getPointsBreakdown(teamId, gameweek) {
+        return this.makeRequest(`/points/breakdown/${teamId}/${gameweek}`);
+    }
 }
 
 // Global API instance

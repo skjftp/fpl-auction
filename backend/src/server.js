@@ -14,6 +14,8 @@ const draftRoutes = require('./routes/draft');
 const autobidRoutes = require('./routes/autobid');
 const draftManagementRoutes = require('./routes/draftManagement');
 const { router: breakRoutes, breakState } = require('./routes/break');
+const gameweekRoutes = require('./routes/gameweek');
+const leaderboardRoutes = require('./routes/leaderboard');
 
 const { initializeDatabase } = require('./models/database');
 const { authenticateToken } = require('./middleware/auth');
@@ -104,6 +106,9 @@ app.use('/api/draft', authenticateToken, draftRoutes);
 app.use('/api/autobid', authenticateToken, autobidRoutes);
 app.use('/api/draft-management', authenticateToken, draftManagementRoutes);
 app.use('/api/break', authenticateToken, breakRoutes);
+app.use('/api/gameweek', gameweekRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/points', authenticateToken, require('./routes/points'));
 
 // Preflight requests are handled by cors() middleware above
 
