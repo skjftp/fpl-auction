@@ -225,7 +225,7 @@ class MobileSubmitTeamManagerV2 {
                 </div>
                 
                 <div class="gameweek-info">
-                    <span class="gw-label">Gameweek ${this.currentGameweek || 1}</span>
+                    <span class="gw-label">Gameweek ${this.currentGameweek || 1} ${this.gameweekType ? `(${this.gameweekType})` : ''}</span>
                     <span class="deadline-label">Deadline: <span id="deadlineTime"></span></span>
                 </div>
                 
@@ -743,6 +743,8 @@ class MobileSubmitTeamManagerV2 {
             const response = await window.mobileAPI.getCurrentGameweek();
             this.currentGameweek = response.gameweek;
             this.deadline = new Date(response.deadline_time);
+            this.gameweekType = response.type || 'Normal';
+            this.matchCount = response.match_count || 10;
         } catch (error) {
             console.error('Error loading gameweek:', error);
             throw error;

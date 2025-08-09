@@ -208,7 +208,7 @@
             </div>
 
             <!-- Team Tab -->
-            <div id="teamTab" class="tab-pane active">
+            <div id="teamTab" class="tab-pane">
                 <div class="team-header">
                     <select id="teamSelector" class="team-selector">
                         <option value="">My Squad</option>
@@ -237,7 +237,7 @@
             </div>
 
             <!-- Submit Team Tab -->
-            <div id="submitTeamTab" class="tab-pane">
+            <div id="submitTeamTab" class="tab-pane active">
                 <div class="submit-team-container">
                     <!-- Header will be rendered by V2 -->
                     <div id="submitTeamHeader"></div>
@@ -350,13 +350,13 @@
 
     <!-- Tab Navigation (Bottom Fixed) -->
     <div class="tab-nav">
-        <button class="tab-btn active" data-tab="team">
+        <button class="tab-btn active" data-tab="submitTeam">
+            <div class="tab-icon">⚽</div>
+            <span>Submit Team</span>
+        </button>
+        <button class="tab-btn" data-tab="team">
             <div class="tab-icon">⭐</div>
             <span>My Team</span>
-        </button>
-        <button class="tab-btn" data-tab="submitTeam">
-            <div class="tab-icon">⚽</div>
-            <span>Submit</span>
         </button>
         <button class="tab-btn" data-tab="leaderboard">
             <div class="tab-icon">🏆</div>

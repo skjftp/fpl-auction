@@ -2,7 +2,7 @@
 class MobileApp {
     constructor() {
         this.currentUser = null;
-        this.currentTab = 'auction';
+        this.currentTab = 'submitTeam';  // Start with Submit Team tab
         this.currentView = 'formation'; // 'formation' or 'list'
         this.chatMessages = [];
         this.unreadChatCount = 0;

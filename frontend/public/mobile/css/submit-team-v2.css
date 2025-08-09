@@ -93,6 +93,19 @@
     color: #374151;
 }
 
+/* Gameweek type badges */
+.gw-label:contains("Normal") {
+    color: #10b981;
+}
+
+.gw-label:contains("Blank") {
+    color: #ef4444;
+}
+
+.gw-label:contains("Double") {
+    color: #f59e0b;
+}
+
 .deadline-label {
     font-size: 13px;
     color: #6b7280;

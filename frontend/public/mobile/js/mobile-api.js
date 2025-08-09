@@ -523,26 +523,36 @@ class MobileAPI {
 
     // Gameweek endpoints
     async getCurrentGameweek() {
-        return this.makeRequest('/gameweek/current');
+        return this.makeRequest('/gameweek-info/current');
     }
 
     async getAllGameweeks() {
-        return this.makeRequest('/gameweek/all');
+        return this.makeRequest('/gameweek-info');
     }
 
     async submitTeam(submission) {
-        return this.makeRequest('/gameweek/submit-team', {
+        return this.makeRequest('/gameweek-teams/submit', {
             method: 'POST',
             body: JSON.stringify(submission)
         });
     }
 
     async getTeamSubmission(gameweek) {
-        return this.makeRequest(`/gameweek/team-submission/${gameweek}`);
+        return this.makeRequest(`/gameweek-teams/submission/${gameweek}`);
     }
 
     async getChipStatus() {
-        return this.makeRequest('/gameweek/chips-used');
+        return this.makeRequest('/gameweek-teams/chips/status');
+    }
+    
+    async getGameweekInfo(gameweek) {
+        return this.makeRequest(`/gameweek-info/${gameweek}`);
+    }
+    
+    async updateGameweekDeadlines() {
+        return this.makeRequest('/gameweek-info/update-deadlines', {
+            method: 'POST'
+        });
     }
 
     async getGameweekPoints(gameweek) {

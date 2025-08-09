@@ -107,6 +107,8 @@ app.use('/api/autobid', authenticateToken, autobidRoutes);
 app.use('/api/draft-management', authenticateToken, draftManagementRoutes);
 app.use('/api/break', authenticateToken, breakRoutes);
 app.use('/api/gameweek', gameweekRoutes);
+app.use('/api/gameweek-teams', authenticateToken, require('./routes/gameweekTeams'));
+app.use('/api/gameweek-info', require('./routes/gameweekInfo'));
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/points', authenticateToken, require('./routes/points'));
 
