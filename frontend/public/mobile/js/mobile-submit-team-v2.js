@@ -840,6 +840,7 @@ class MobileSubmitTeamManagerV2 {
             }
         }
         this.renderView();
+        this.validateFormation();
     }
     
     toggleViceCaptain(playerId) {
@@ -855,6 +856,7 @@ class MobileSubmitTeamManagerV2 {
             this.viceCaptainId = playerId;
         }
         this.renderView();
+        this.validateFormation();
     }
 
     async loadMySquad() {
@@ -1168,10 +1170,31 @@ class MobileSubmitTeamManagerV2 {
             positions[4] >= 1 && positions[4] <= 3 && // 1-3 FWD
             (positions[1] + positions[2] + positions[3] + positions[4]) === 11;
 
-        // Update UI
+        // Check if there are any changes from existing submission
+        let hasChanges = false;
+        if (this.existingSubmission) {
+            // Check if any values have changed
+            hasChanges = 
+                JSON.stringify(this.starting11) !== JSON.stringify(this.existingSubmission.starting_11) ||
+                JSON.stringify(this.bench) !== JSON.stringify(this.existingSubmission.bench) ||
+                this.captainId !== this.existingSubmission.captain_id ||
+                this.viceCaptainId !== this.existingSubmission.vice_captain_id ||
+                this.clubMultiplierId !== this.existingSubmission.club_multiplier_id ||
+                this.selectedChip !== this.existingSubmission.chip_used;
+        } else {
+            // No existing submission, so any valid team is a change
+            hasChanges = true;
+        }
+
+        // Update UI - button enabled if formation valid, all required fields set, AND there are changes
         const confirmBtn = document.getElementById('confirmTeamBtn');
         if (confirmBtn) {
-            confirmBtn.disabled = !this.formationValid || !this.captainId;
+            const shouldEnable = this.formationValid && 
+                                this.captainId && 
+                                this.viceCaptainId && 
+                                this.clubMultiplierId &&
+                                hasChanges;
+            confirmBtn.disabled = !shouldEnable;
         }
     }
 
