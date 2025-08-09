@@ -678,22 +678,27 @@
     gap: 12px;
     overflow-x: auto;
     padding-bottom: 4px;
-    align-items: flex-start;
+    align-items: flex-end;
+    justify-content: space-between;
 }
 
 .bench-gk {
     flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .bench-spacer {
-    flex: 0 0 40px;
+    flex: 1 1 auto;
+    min-width: 20px;
 }
 
 .bench-subs {
     display: flex;
     gap: 12px;
-    flex: 1;
-    justify-content: flex-end;
+    flex: 0 0 auto;
+    align-items: flex-end;
 }
 
 .bench-sub-wrapper {

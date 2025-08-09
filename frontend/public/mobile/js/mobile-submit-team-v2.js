@@ -551,6 +551,7 @@ class MobileSubmitTeamManagerV2 {
         
         return `
             <div class="bench-gk">
+                <div class="sub-order-label">GK</div>
                 ${benchGK.map(({ player }) => this.renderPlayerCard(player, false)).join('')}
             </div>
             <div class="bench-spacer"></div>
@@ -1220,8 +1221,12 @@ class MobileSubmitTeamManagerV2 {
             // Mark existing submission
             this.existingSubmission = submission;
             
+            // Exit edit mode after successful submission
+            this.editMode = false;
+            
             // Update UI to show submission was saved
             this.renderHeader();
+            this.renderView();
             
             // If chip was used, reload chip status
             if (this.selectedChip) {
