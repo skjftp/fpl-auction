@@ -80,28 +80,46 @@ class MobileSubmitTeamManagerV2 {
 
     async initialize() {
         try {
+            const startTime = Date.now();
             console.log('Initializing Submit Team V2...');
+            
+            // Check if already loading
+            if (this.loading) {
+                console.log('Already loading, skipping...');
+                return;
+            }
+            
+            this.loading = true;
             this.showLoader();
             
-            // Load data in parallel for faster performance
-            const [squadData, gameweekData] = await Promise.all([
-                this.loadMySquad(),
-                this.loadCurrentGameweek()
-            ]);
+            // Load only critical data first
+            console.time('Loading critical data');
+            await this.loadMySquad();
+            console.timeEnd('Loading critical data');
             
-            // Load these after we have gameweek data
-            await Promise.all([
-                this.loadExistingSubmission(),
-                this.loadChipStatus()
-            ]);
-            
+            // Quick render with available data
             this.loading = false;
-            this.startDeadlineTimer();
             this.renderHeader();
             this.renderView();
-            this.setupEventListeners(); // Setup after rendering
+            this.setupEventListeners();
             this.initialized = true;
-            console.log('Submit Team V2 initialized successfully');
+            
+            // Load non-critical data in background
+            console.time('Loading background data');
+            Promise.all([
+                this.loadCurrentGameweek(),
+                this.loadExistingSubmission(),
+                this.loadChipStatus()
+            ]).then(() => {
+                console.timeEnd('Loading background data');
+                // Update UI with new data
+                this.startDeadlineTimer();
+                this.renderHeader();
+                this.validateFormation();
+            });
+            
+            const loadTime = Date.now() - startTime;
+            console.log(`Submit Team V2 initial render in ${loadTime}ms`);
         } catch (error) {
             console.error('Failed to initialize submit team:', error);
             this.loading = false;
@@ -859,6 +877,9 @@ class MobileSubmitTeamManagerV2 {
 
     async loadExistingSubmission() {
         try {
+            // Skip if no gameweek yet
+            if (!this.currentGameweek) return;
+            
             const submission = await window.mobileAPI.getTeamSubmission(this.currentGameweek);
             
             if (submission) {
@@ -875,8 +896,15 @@ class MobileSubmitTeamManagerV2 {
 
     async loadChipStatus() {
         try {
-            const chipStatus = await window.mobileAPI.getChipStatus();
-            this.chipStatus = chipStatus;
+            // Defer chip loading - not critical for initial display
+            setTimeout(async () => {
+                const chipStatus = await window.mobileAPI.getChipStatus();
+                this.chipStatus = chipStatus;
+                // Re-render header to update chips
+                if (this.initialized && !this.editMode) {
+                    this.renderHeader();
+                }
+            }, 100);
         } catch (error) {
             console.error('Error loading chip status:', error);
         }
@@ -954,6 +982,11 @@ class MobileSubmitTeamManagerV2 {
     }
 
     startDeadlineTimer() {
+        // Clear existing timer if any
+        if (this.deadlineTimer) {
+            clearInterval(this.deadlineTimer);
+        }
+        
         const updateTimer = () => {
             const timerEl = document.getElementById('deadlineTime');
             if (!timerEl) return;
@@ -967,7 +1000,10 @@ class MobileSubmitTeamManagerV2 {
             }
         };
 
+        // Initial update
         updateTimer();
+        
+        // Set interval for updates
         this.deadlineTimer = setInterval(updateTimer, 1000); // Update every second
     }
 
