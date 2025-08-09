@@ -51,6 +51,30 @@ class MobileAPI {
         }
     }
 
+    // Helper method for making authenticated requests
+    async makeRequest(endpoint, options = {}) {
+        try {
+            const response = await fetch(`${this.baseURL}${endpoint}`, {
+                ...options,
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Request failed');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Request error:', error);
+            throw error;
+        }
+    }
+
     // Teams
     async getTeam(teamId) {
         try {

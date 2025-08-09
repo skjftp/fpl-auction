@@ -609,6 +609,10 @@ class MobileApp {
                     window.mobileSubmitTeam.initialized = true;
                 }
                 break;
+            case 'leaderboard':
+                // Load leaderboard data
+                await this.loadLeaderboard();
+                break;
             case 'more':
                 // More tab stays on current content, just shows menu
                 break;
@@ -1146,7 +1150,7 @@ class MobileApp {
         try {
             // Refresh current auction immediately if on auction tab
             if (this.currentTab === 'auction' && window.mobileAuction) {
-                await window.mobileAuction.loadActiveAuction();
+                await window.mobileAuction.loadActiveAuctions();
                 await window.mobileAuction.loadSoldItems();
                 await window.mobileAuction.renderPlayers();
             }
@@ -1608,6 +1612,24 @@ MobileApp.prototype.showAllClubs = async function() {
 
 MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
     try {
+        // Populate gameweek selector if not already done
+        const gwSelector = document.getElementById('leaderboardGameweek');
+        if (gwSelector && gwSelector.options.length <= 1) {
+            try {
+                const gameweeks = await window.mobileAPI.getAllGameweeks();
+                gameweeks.forEach(gw => {
+                    if (gw.finished) {
+                        const option = document.createElement('option');
+                        option.value = gw.gameweek;
+                        option.textContent = `Gameweek ${gw.gameweek}`;
+                        gwSelector.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.log('Could not load gameweeks');
+            }
+        }
+        
         const data = await window.mobileAPI.getLeaderboard(gameweek);
         const content = document.getElementById('leaderboardContent');
         const currentUser = window.mobileAPI.getCurrentUser();
@@ -1755,6 +1777,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('offline', () => {
         window.mobileApp.handleOffline();
+    });
+    
+    // Setup leaderboard gameweek selector
+    document.getElementById('leaderboardGameweek')?.addEventListener('change', (e) => {
+        window.mobileApp.loadLeaderboard(e.target.value);
     });
     
     // Setup modal close buttons

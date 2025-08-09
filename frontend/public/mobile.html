@@ -68,6 +68,9 @@
                     <span id="teamName" class="team-name"></span>
                     <span id="teamBudget" class="team-budget"><span class="currency-j">J</span>0</span>
                 </div>
+                <div id="connectionStatus" class="connection-status connected">
+                    <div class="status-dot"></div>
+                </div>
                 <button id="ttsToggleBtn" class="sound-toggle-btn active" title="Toggle voice announcements">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.037 12 5v14c0 .963-1.077 1.337-1.707.707L5.586 15z"/>
@@ -90,24 +93,7 @@
                 </button>
             </div>
 
-            <!-- Status Bar -->
-            <div class="status-bar">
-                <!-- Draft/Turn status commented out - auction phase is over -->
-                <!--
-                <div id="draftStatus" class="draft-status">
-                    <span class="status-label">Turn:</span>
-                    <span id="currentTurn" class="current-turn">Loading...</span>
-                    <div class="next-turn-container">
-                        <span class="next-turn-label">Next:</span>
-                        <span id="nextTurn" class="next-turn">Loading...</span>
-                    </div>
-                </div>
-                -->
-                <div id="connectionStatus" class="connection-status connected" style="margin-left: auto;">
-                    <div class="status-dot"></div>
-                    <span>Connected</span>
-                </div>
-            </div>
+            <!-- Connection Status moved to top bar -->
 
             <!-- Auto-Bid Toggle - Commented out as auction phase is over -->
             <!--
@@ -279,10 +265,31 @@
                 </div>
             </div>
 
+            <!-- Leaderboard Tab -->
+            <div id="leaderboardTab" class="tab-pane">
+                <div class="leaderboard-container">
+                    <div class="leaderboard-header">
+                        <h3 class="leaderboard-title">League Table</h3>
+                        <select id="leaderboardGameweek" class="gameweek-select">
+                            <option value="overall">Overall</option>
+                            <!-- Gameweeks will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div id="leaderboardContent" class="leaderboard-content">
+                        <!-- Leaderboard will be populated here -->
+                    </div>
+                </div>
+            </div>
+
             <!-- More Tab -->
             <div id="moreTab" class="tab-pane">
                 <div class="more-container">
                     <div class="more-menu">
+                        <button class="more-item" onclick="mobileApp.switchTab('auction')">
+                            <span class="more-icon">🔨</span>
+                            <span>Auction</span>
+                            <span class="more-arrow">›</span>
+                        </button>
                         <button class="more-item" onclick="mobileApp.switchTab('players')">
                             <span class="more-icon">👥</span>
                             <span>All Players</span>
@@ -291,11 +298,6 @@
                         <button class="more-item" onclick="mobileApp.switchTab('history')">
                             <span class="more-icon">📊</span>
                             <span>Bid History</span>
-                            <span class="more-arrow">›</span>
-                        </button>
-                        <button class="more-item" onclick="mobileApp.showLeaderboard()">
-                            <span class="more-icon">🏆</span>
-                            <span>Leaderboard</span>
                             <span class="more-arrow">›</span>
                         </button>
                         <button class="more-item" onclick="mobileApp.showPointsBreakdown()">
@@ -374,9 +376,9 @@
             <div class="tab-icon">⚽</div>
             <span>Submit</span>
         </button>
-        <button class="tab-btn" data-tab="auction">
-            <div class="tab-icon">🔨</div>
-            <span>Auction</span>
+        <button class="tab-btn" data-tab="leaderboard">
+            <div class="tab-icon">🏆</div>
+            <span>League</span>
         </button>
         <button class="tab-btn" data-tab="more">
             <div class="tab-icon">☰</div>

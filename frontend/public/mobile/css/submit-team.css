@@ -463,6 +463,117 @@
     color: white;
 }
 
+/* Leaderboard Tab Styles */
+.leaderboard-container {
+    padding: 12px;
+    background: #f8f9fa;
+    min-height: calc(100vh - 120px);
+}
+
+.leaderboard-header {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.leaderboard-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.gameweek-select {
+    padding: 6px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+}
+
+.leaderboard-content {
+    background: white;
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.2s;
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-item.current-team {
+    background: #fef3c7;
+}
+
+.leaderboard-item .rank {
+    min-width: 50px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rank-number {
+    font-size: 18px;
+    font-weight: 700;
+    color: #374151;
+    min-width: 30px;
+}
+
+.movement {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.movement.up {
+    color: #10b981;
+    background: #d1fae5;
+}
+
+.movement.down {
+    color: #ef4444;
+    background: #fee2e2;
+}
+
+.team-info {
+    flex: 1;
+    margin-left: 12px;
+}
+
+.team-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.team-stats {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.team-stats .chip {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
 /* More Tab Styles */
 .more-container {
     padding: 12px;
