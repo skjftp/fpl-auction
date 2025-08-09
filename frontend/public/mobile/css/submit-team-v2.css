@@ -657,34 +657,119 @@
     opacity: 0.9;
 }
 
-/* Player Actions */
-.player-actions {
-    margin-top: 4px;
-    pointer-events: auto !important;
+/* Captain Menu Popup */
+.captain-menu-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    pointer-events: none;
 }
 
-.captain-toggle, .vice-toggle {
-    width: 24px;
-    height: 24px;
+.captain-menu-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+}
+
+.captain-menu-content {
+    position: absolute;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    padding: 16px;
+    width: 200px;
+    pointer-events: auto;
+    animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.captain-menu-player {
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.captain-menu-player img {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.5);
-    background: rgba(0,0,0,0.2);
-    color: white;
-    font-size: 11px;
-    font-weight: bold;
+    object-fit: cover;
+    margin-bottom: 8px;
+}
+
+.captain-menu-player-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.captain-menu-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.captain-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
     cursor: pointer;
-    pointer-events: auto !important;
     transition: all 0.2s;
 }
 
-.captain-toggle.active {
-    background: #10b981;
-    border-color: #10b981;
+.captain-menu-btn:hover {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
 }
 
-.vice-toggle.active {
-    background: #6366f1;
-    border-color: #6366f1;
+.captain-menu-btn.active {
+    background: #dbeafe;
+    border-color: #3b82f6;
+    color: #1e40af;
+}
+
+.captain-menu-btn .captain-icon {
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+.captain-menu-btn .vice-icon {
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+.captain-menu-btn .check-icon {
+    color: #10b981;
+    font-size: 16px;
+}
+
+.captain-menu-btn.remove-btn {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.captain-menu-btn.remove-btn:hover {
+    background: #fecaca;
+    border-color: #ef4444;
 }
 
 /* Bench Section */

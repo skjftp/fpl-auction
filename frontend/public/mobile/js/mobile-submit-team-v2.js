@@ -508,7 +508,8 @@ class MobileSubmitTeamManagerV2 {
         
         return `
             <div class="player-card ${isStarting ? 'pitch-player' : 'bench-player'}" 
-                 data-player-id="${player.id}">
+                 data-player-id="${player.id}"
+                 ${isStarting && !this.editMode ? `onclick="mobileSubmitTeam.showCaptainMenu(${player.id}, event)"` : ''}>
                 ${this.editMode && isStarting ? `
                     <button class="remove-player-btn" onclick="mobileSubmitTeam.removePlayer(${player.id})">
                         ✕
@@ -524,16 +525,6 @@ class MobileSubmitTeamManagerV2 {
                     <div class="player-name">${player.web_name || player.name}</div>
                     <div class="player-team">${player.team_short_name || ''}</div>
                 </div>
-                ${isStarting ? `
-                    <div class="player-actions">
-                        <button class="captain-toggle ${isCaptain ? 'active' : ''}" onclick="mobileSubmitTeam.toggleCaptain(${player.id})">
-                            ${isCaptain ? '©' : 'C'}
-                        </button>
-                        <button class="vice-toggle ${isViceCaptain ? 'active' : ''}" onclick="mobileSubmitTeam.toggleViceCaptain(${player.id})">
-                            ${isViceCaptain ? 'Ⓥ' : 'V'}
-                        </button>
-                    </div>
-                ` : ''}
             </div>
         `;
     }
@@ -837,12 +828,14 @@ class MobileSubmitTeamManagerV2 {
             // Can't remove captain, just ignore
             window.mobileApp.showToast('Captain is required', 'warning');
         } else {
-            this.captainId = playerId;
-            // Remove vice captain if same
+            // If selecting current vice-captain as captain, swap them
             if (this.viceCaptainId === playerId) {
-                // Find another player to be vice captain
-                const otherPlayer = this.starting11.find(id => id !== playerId);
-                this.viceCaptainId = otherPlayer || null;
+                // Swap: old captain becomes vice-captain
+                this.viceCaptainId = this.captainId;
+                this.captainId = playerId;
+            } else {
+                // Normal selection
+                this.captainId = playerId;
             }
         }
         this.renderView();
@@ -854,12 +847,15 @@ class MobileSubmitTeamManagerV2 {
             // Can't remove vice-captain, just ignore
             window.mobileApp.showToast('Vice-captain is required', 'warning');
         } else {
-            // Can't be same as captain
+            // If selecting current captain as vice-captain, swap them
             if (this.captainId === playerId) {
-                window.mobileApp.showToast('Vice-captain must be different from captain', 'warning');
-                return;
+                // Swap: old vice-captain becomes captain
+                this.captainId = this.viceCaptainId;
+                this.viceCaptainId = playerId;
+            } else {
+                // Normal selection
+                this.viceCaptainId = playerId;
             }
-            this.viceCaptainId = playerId;
         }
         this.renderView();
         this.validateFormation();
@@ -1326,6 +1322,64 @@ class MobileSubmitTeamManagerV2 {
                 resolve(false);
             };
         });
+    }
+
+    showCaptainMenu(playerId, event) {
+        event.stopPropagation();
+        
+        // Remove any existing captain menu
+        const existingMenu = document.querySelector('.captain-menu-popup');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+        
+        const player = this.mySquad.find(p => p.id === playerId);
+        if (!player || !this.starting11.includes(playerId)) return;
+        
+        const isCaptain = this.captainId === playerId;
+        const isViceCaptain = this.viceCaptainId === playerId;
+        
+        // Create popup menu
+        const menu = document.createElement('div');
+        menu.className = 'captain-menu-popup';
+        menu.innerHTML = `
+            <div class="captain-menu-overlay" onclick="this.parentElement.remove()"></div>
+            <div class="captain-menu-content">
+                <div class="captain-menu-player">
+                    <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
+                         onerror="this.style.display='none'" alt="">
+                    <div class="captain-menu-player-name">${player.web_name || player.name}</div>
+                </div>
+                <div class="captain-menu-options">
+                    <button class="captain-menu-btn ${isCaptain ? 'active' : ''}" 
+                            onclick="mobileSubmitTeam.toggleCaptain(${playerId}); this.closest('.captain-menu-popup').remove();">
+                        <span class="captain-icon">©</span>
+                        <span>Captain</span>
+                        ${isCaptain ? '<span class="check-icon">✓</span>' : ''}
+                    </button>
+                    <button class="captain-menu-btn ${isViceCaptain ? 'active' : ''}" 
+                            onclick="mobileSubmitTeam.toggleViceCaptain(${playerId}); this.closest('.captain-menu-popup').remove();">
+                        <span class="vice-icon">Ⓥ</span>
+                        <span>Vice Captain</span>
+                        ${isViceCaptain ? '<span class="check-icon">✓</span>' : ''}
+                    </button>
+                    ${!isCaptain && !isViceCaptain ? `
+                        <button class="captain-menu-btn remove-btn" 
+                                onclick="this.closest('.captain-menu-popup').remove();">
+                            <span>Cancel</span>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(menu);
+        
+        // Position the menu near the clicked player
+        const rect = event.target.closest('.player-card').getBoundingClientRect();
+        const menuContent = menu.querySelector('.captain-menu-content');
+        menuContent.style.top = `${rect.top - 20}px`;
+        menuContent.style.left = `${Math.min(rect.left, window.innerWidth - 220)}px`;
     }
 
     disableSubmission() {
