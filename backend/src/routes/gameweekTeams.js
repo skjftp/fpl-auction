@@ -74,6 +74,17 @@ router.post('/submit', authenticateToken, async (req, res) => {
         const docId = `${teamId}_gw${gameweek}`;
         await db.collection('gameweekTeams').doc(docId).set(submission);
 
+        // Also save to submission history for audit trail
+        const historyEntry = {
+            ...submission,
+            submission_version: Date.now(), // Unique version timestamp
+            submitted_by_ip: req.ip || 'unknown',
+            user_agent: req.headers['user-agent'] || 'unknown'
+        };
+        
+        await db.collection('submissionHistory').add(historyEntry);
+        console.log(`Saved submission history for team ${teamId}, gameweek ${gameweek}`);
+
         // Don't mark chip as used yet - it's only "planned" until deadline passes
         // Chips will be marked as used by a separate process after deadline
         // This allows users to change their mind before deadline
@@ -228,6 +239,75 @@ router.get('/chips/status', authenticateToken, async (req, res) => {
         res.json(chipStatus);
     } catch (error) {
         console.error('Error fetching chip status:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get submission history for a team
+router.get('/history/:teamId/:gameweek', authenticateToken, async (req, res) => {
+    try {
+        const targetTeamId = parseInt(req.params.teamId);
+        const gameweek = parseInt(req.params.gameweek);
+        const requestingTeamId = req.user.teamId;
+        
+        // Only allow viewing own history or admin can view all
+        if (targetTeamId !== requestingTeamId && !req.user.is_admin) {
+            return res.status(403).json({ error: 'You can only view your own submission history' });
+        }
+        
+        // Get all historical submissions for this team and gameweek
+        const historySnapshot = await db.collection('submissionHistory')
+            .where('team_id', '==', targetTeamId)
+            .where('gameweek', '==', gameweek)
+            .orderBy('submitted_at', 'desc')
+            .get();
+        
+        const history = [];
+        historySnapshot.forEach(doc => {
+            const data = doc.data();
+            history.push({
+                id: doc.id,
+                ...data,
+                submitted_at: data.submitted_at?.toDate?.() || data.submitted_at
+            });
+        });
+        
+        res.json({
+            team_id: targetTeamId,
+            gameweek: gameweek,
+            submission_count: history.length,
+            submissions: history
+        });
+    } catch (error) {
+        console.error('Error fetching submission history:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get all submission history for current user
+router.get('/history', authenticateToken, async (req, res) => {
+    try {
+        const teamId = req.user.teamId;
+        
+        const historySnapshot = await db.collection('submissionHistory')
+            .where('team_id', '==', teamId)
+            .orderBy('submitted_at', 'desc')
+            .limit(50) // Last 50 submissions
+            .get();
+        
+        const history = [];
+        historySnapshot.forEach(doc => {
+            const data = doc.data();
+            history.push({
+                id: doc.id,
+                ...data,
+                submitted_at: data.submitted_at?.toDate?.() || data.submitted_at
+            });
+        });
+        
+        res.json(history);
+    } catch (error) {
+        console.error('Error fetching submission history:', error);
         res.status(500).json({ error: error.message });
     }
 });

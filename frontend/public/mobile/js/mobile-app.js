@@ -1660,6 +1660,79 @@ MobileApp.prototype.showPointsBreakdown = async function() {
     }
 };
 
+MobileApp.prototype.showSubmissionHistory = async function() {
+    try {
+        // Show modal
+        const modal = document.getElementById('submissionHistoryModal');
+        modal.classList.remove('hidden');
+        
+        // Setup close button
+        document.getElementById('closeSubmissionHistoryBtn').onclick = () => {
+            modal.classList.add('hidden');
+        };
+        
+        // Show loading
+        const content = document.getElementById('submissionHistoryContent');
+        content.innerHTML = '<div class="loading">Loading submission history...</div>';
+        
+        // Fetch submission history
+        const history = await window.mobileAPI.getSubmissionHistory();
+        
+        if (!history || history.length === 0) {
+            content.innerHTML = '<div class="no-data">No submission history found</div>';
+            return;
+        }
+        
+        // Group by gameweek
+        const groupedHistory = {};
+        history.forEach(submission => {
+            const gw = submission.gameweek;
+            if (!groupedHistory[gw]) {
+                groupedHistory[gw] = [];
+            }
+            groupedHistory[gw].push(submission);
+        });
+        
+        // Render history
+        let html = '';
+        Object.keys(groupedHistory).sort((a, b) => b - a).forEach(gw => {
+            html += `
+                <div class="history-gameweek" style="margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; color: #1f2937; font-size: 16px;">Gameweek ${gw}</h4>
+                    <div class="history-submissions">
+            `;
+            
+            groupedHistory[gw].forEach(submission => {
+                const submitTime = new Date(submission.submitted_at);
+                const deadlineStatus = submission.deadline_status || 'on_time';
+                const statusClass = deadlineStatus === 'late' ? 'late' : deadlineStatus === 'grace_period' ? 'grace' : 'on-time';
+                const statusColor = deadlineStatus === 'late' ? '#ef4444' : deadlineStatus === 'grace_period' ? '#f59e0b' : '#10b981';
+                
+                html += `
+                    <div class="submission-entry" style="padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid ${statusColor};">
+                        <div class="submission-time" style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">${submitTime.toLocaleString()}</div>
+                        <div class="submission-details" style="display: flex; gap: 8px; align-items: center;">
+                            <span class="submission-status" style="font-size: 11px; padding: 2px 6px; background: ${statusColor}20; color: ${statusColor}; border-radius: 4px; font-weight: 600;">${deadlineStatus.replace('_', ' ').toUpperCase()}</span>
+                            ${submission.chip_used ? `<span class="chip-used" style="font-size: 11px; padding: 2px 6px; background: #3b82f620; color: #3b82f6; border-radius: 4px;">${submission.chip_used}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+        
+        content.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error loading submission history:', error);
+        this.showToast('Failed to load submission history', 'error');
+    }
+};
+
 MobileApp.prototype.showAllClubs = async function() {
     const modal = document.getElementById('allClubsModal');
     if (modal) {

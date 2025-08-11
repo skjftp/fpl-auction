@@ -17,17 +17,36 @@ router.post('/calculate/:gameweek', authenticateToken, async (req, res) => {
         const fplResponse = await axios.get(`${FPL_API_BASE}/event/${gameweek}/live/`);
         const elementStats = fplResponse.data.elements;
         
+        // Get gameweek deadline
+        const gwDoc = await collections.gameweekInfo.doc(`gw_${gameweek}`).get();
+        let deadline = null;
+        if (gwDoc.exists) {
+            deadline = new Date(gwDoc.data().deadline);
+            console.log(`Gameweek ${gameweek} deadline: ${deadline}`);
+        }
+        
         // Get all team submissions for this gameweek
         const submissionsSnapshot = await collections.gameweekTeams
             .where('gameweek', '==', gameweek)
             .get();
         
         let processedTeams = 0;
+        let skippedTeams = 0;
         const results = [];
         
         for (const doc of submissionsSnapshot.docs) {
             const submission = doc.data();
             const teamId = submission.team_id;
+            
+            // Check if submission was before deadline
+            if (deadline && submission.submitted_at) {
+                const submittedTime = submission.submitted_at.toDate();
+                if (submittedTime > deadline) {
+                    console.log(`Skipping team ${teamId} - submitted after deadline (${submittedTime} > ${deadline})`);
+                    skippedTeams++;
+                    continue;
+                }
+            }
             
             console.log(`Processing team ${teamId} for gameweek ${gameweek}...`);
             
@@ -72,6 +91,7 @@ router.post('/calculate/:gameweek', authenticateToken, async (req, res) => {
             success: true,
             gameweek: gameweek,
             processed_teams: processedTeams,
+            skipped_teams: skippedTeams,
             results: results
         });
         

@@ -658,6 +658,15 @@ class MobileAPI {
             method: 'POST'
         });
     }
+
+    // Submission history endpoints
+    async getSubmissionHistory() {
+        return this.makeRequest('/gameweek-teams/history');
+    }
+
+    async getSubmissionHistoryForGameweek(teamId, gameweek) {
+        return this.makeRequest(`/gameweek-teams/history/${teamId}/${gameweek}`);
+    }
 }
 
 // Global API instance
