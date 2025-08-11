@@ -564,6 +564,7 @@ body {
     display: none !important;
     height: 100%;
     overflow-y: auto;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom, 20px)); /* Space for tab nav */
 }
 
 .tab-pane.active {

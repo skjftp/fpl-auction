@@ -1,6 +1,7 @@
 /* Submit Team Styles */
 .submit-team-container {
     padding: 0; /* Removed padding to eliminate gap */
+    padding-bottom: 20px; /* Add bottom padding to prevent content being hidden */
     background: #f8f9fa;
     min-height: calc(100vh - 120px);
 }
