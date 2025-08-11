@@ -115,7 +115,7 @@ router.get('/:teamId/squad', async (req, res) => {
             const player = playerDoc.data();
             
             // Add fixture info for the player
-            const playerTeamId = player.team;
+            const playerTeamId = player.team_id || player.team;
             let opponent = null;
             let isHome = null;
             
