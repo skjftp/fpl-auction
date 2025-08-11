@@ -214,10 +214,12 @@ class MobileSubmitTeamManagerV2 {
         this.editMode = !this.editMode;
         
         if (this.editMode) {
-            // Entering edit mode
+            // Entering edit mode - reset hasChanges
+            this.hasChanges = false;
             window.mobileApp.showToast('Edit mode: Make changes and click Submit to save', 'info');
         } else {
-            // Exiting edit mode
+            // Exiting edit mode - reset hasChanges
+            this.hasChanges = false;
             window.mobileApp.showToast('Edit mode closed', 'info');
         }
         
@@ -586,6 +588,9 @@ class MobileSubmitTeamManagerV2 {
         const player = this.mySquad.find(p => p.id === playerId);
         if (!player) return;
         
+        // Mark as changed when removing a player
+        this.hasChanges = true;
+        
         // Only show bench players that can replace without breaking formation
         this.showSubstitutionOptions(player, 'remove');
     }
@@ -807,6 +812,9 @@ class MobileSubmitTeamManagerV2 {
         const temp = this.bench[index1];
         this.bench[index1] = this.bench[index2];
         this.bench[index2] = temp;
+        
+        // Mark as changed
+        this.hasChanges = true;
         
         // Re-render
         this.renderView();
@@ -1177,19 +1185,21 @@ class MobileSubmitTeamManagerV2 {
             (positions[1] + positions[2] + positions[3] + positions[4]) === 11;
 
         // Check if there are any changes from existing submission
-        let hasChanges = false;
-        if (this.existingSubmission) {
-            // Check if any values have changed
-            hasChanges = 
-                JSON.stringify(this.starting11) !== JSON.stringify(this.existingSubmission.starting_11) ||
-                JSON.stringify(this.bench) !== JSON.stringify(this.existingSubmission.bench) ||
-                this.captainId !== this.existingSubmission.captain_id ||
-                this.viceCaptainId !== this.existingSubmission.vice_captain_id ||
-                this.clubMultiplierId !== this.existingSubmission.club_multiplier_id ||
-                this.selectedChip !== this.existingSubmission.chip_used;
-        } else {
-            // No existing submission, so any valid team is a change
-            hasChanges = true;
+        // Use the class property hasChanges if it's been set by edit actions
+        if (!this.hasChanges) {
+            if (this.existingSubmission) {
+                // Check if any values have changed
+                this.hasChanges = 
+                    JSON.stringify(this.starting11) !== JSON.stringify(this.existingSubmission.starting_11) ||
+                    JSON.stringify(this.bench) !== JSON.stringify(this.existingSubmission.bench) ||
+                    this.captainId !== this.existingSubmission.captain_id ||
+                    this.viceCaptainId !== this.existingSubmission.vice_captain_id ||
+                    this.clubMultiplierId !== this.existingSubmission.club_multiplier_id ||
+                    this.selectedChip !== this.existingSubmission.chip_used;
+            } else {
+                // No existing submission, so any valid team is a change
+                this.hasChanges = true;
+            }
         }
 
         // Update UI - button enabled if formation valid, all required fields set, AND there are changes
@@ -1199,7 +1209,7 @@ class MobileSubmitTeamManagerV2 {
                                 this.captainId && 
                                 this.viceCaptainId && 
                                 this.clubMultiplierId &&
-                                hasChanges;
+                                this.hasChanges;
             confirmBtn.disabled = !shouldEnable;
         }
     }
@@ -1258,6 +1268,9 @@ class MobileSubmitTeamManagerV2 {
             
             // Mark existing submission
             this.existingSubmission = submission;
+            
+            // Reset hasChanges after successful submission
+            this.hasChanges = false;
             
             // Exit edit mode after successful submission
             this.editMode = false;
