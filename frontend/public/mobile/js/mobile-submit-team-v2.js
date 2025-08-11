@@ -558,9 +558,9 @@ class MobileSubmitTeamManagerV2 {
                     ${isCaptain ? '<div class="captain-badge">C</div>' : ''}
                     ${isViceCaptain ? '<div class="vice-badge">V</div>' : ''}
                 </div>
-                <div class="player-info">
+                <div class="player-info-box">
                     <div class="player-name">${player.web_name || player.name}</div>
-                    ${fixtureDisplay ? `<div class="player-fixture">${fixtureDisplay}</div>` : ''}
+                    <div class="player-fixture">${fixtureDisplay || ''}</div>
                 </div>
             </div>
         `;

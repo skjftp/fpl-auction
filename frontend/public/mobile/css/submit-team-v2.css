@@ -647,11 +647,26 @@
     text-align: center;
 }
 
-.player-name {
-    font-size: 12px;
-    font-weight: 700;
-    margin-bottom: 2px;
+.player-info-box {
+    background: white;
+    border-radius: 4px;
+    padding: 3px 4px;
+    margin-top: 3px;
     text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    min-height: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.player-info-box .player-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.2;
+    text-shadow: none;
+    margin: 0;
 }
 
 .player-team {
@@ -659,18 +674,15 @@
     opacity: 0.9;
 }
 
-.player-fixture {
-    font-size: 11px;
-    color: #1f2937;
-    font-weight: 700;
+.player-info-box .player-fixture {
+    font-size: 10px;
+    color: #374151;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 3px;
-    background-color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    display: inline-block;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+    margin-top: 1px;
+    text-shadow: none;
 }
 
 /* Captain Menu Popup */
@@ -892,10 +904,17 @@
     height: 30px;
 }
 
-.bench-player .player-name {
-    color: #374151;
-    font-size: 11px;
-    text-shadow: none;
+.bench-player .player-info-box {
+    background: white;
+    padding: 2px 3px;
+    margin-top: 2px;
+    min-height: 28px;
+}
+
+.bench-player .player-info-box .player-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: #1f2937;
 }
 
 .bench-player .player-team {
@@ -904,12 +923,11 @@
     text-shadow: none;
 }
 
-.bench-player .player-fixture {
-    font-size: 10px;
-    color: #374151;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 2px 4px;
-    font-weight: 600;
+.bench-player .player-info-box .player-fixture {
+    font-size: 9px;
+    color: #6b7280;
+    font-weight: 500;
+    margin-top: 0;
 }
 
 /* Substitution Modal */
