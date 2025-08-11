@@ -660,15 +660,17 @@
 }
 
 .player-fixture {
-    font-size: 10px;
-    color: #4b5563;
-    font-weight: 600;
+    font-size: 11px;
+    color: #1f2937;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-top: 2px;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 1px 4px;
-    border-radius: 3px;
+    letter-spacing: 0.5px;
+    margin-top: 3px;
+    background-color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 /* Captain Menu Popup */
@@ -903,10 +905,11 @@
 }
 
 .bench-player .player-fixture {
-    font-size: 9px;
-    color: #6b7280;
-    background-color: rgba(255, 255, 255, 0.7);
-    padding: 1px 3px;
+    font-size: 10px;
+    color: #374151;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 2px 4px;
+    font-weight: 600;
 }
 
 /* Substitution Modal */

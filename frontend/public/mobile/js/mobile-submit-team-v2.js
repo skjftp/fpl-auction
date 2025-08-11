@@ -348,7 +348,7 @@ class MobileSubmitTeamManagerV2 {
             <button class="club-select-btn ${this.clubMultiplierId === club.id ? 'selected' : ''}" 
                     onclick="mobileSubmitTeam.selectClubMultiplier(${club.id})">
                 <span class="club-icon">🏟️</span>
-                <span class="club-name">${club.name || club.club_name || 'Unknown'}</span>
+                <span class="club-name">${club.name || club.club_name || club.short_name || 'Loading...'}</span>
                 ${this.clubMultiplierId === club.id ? '<span class="club-badge">1.5x</span>' : ''}
             </button>
         `).join('');
@@ -356,7 +356,11 @@ class MobileSubmitTeamManagerV2 {
     
     getClubName(clubId) {
         const club = this.myClubs?.find(c => c.id === clubId);
-        return club ? (club.name || club.club_name || 'Unknown') : 'Unknown';
+        if (club) {
+            return club.name || club.club_name || club.short_name || 'Loading...';
+        }
+        // If clubs not loaded yet, return loading
+        return this.myClubs && this.myClubs.length === 0 ? 'No Club' : 'Loading...';
     }
     
     selectClubMultiplier(clubId) {
@@ -489,9 +493,9 @@ class MobileSubmitTeamManagerV2 {
         const isViceCaptain = player.id === this.viceCaptainId;
         const positionName = this.positionLimits[player.position || player.element_type]?.name || '';
         
-        // Format fixture display
+        // Format fixture display - FPL style
         let fixtureDisplay = '';
-        if (player.fixture) {
+        if (player.fixture && player.fixture.short_name) {
             const homeAway = player.fixture.is_home ? '(H)' : '(A)';
             fixtureDisplay = `${player.fixture.short_name} ${homeAway}`;
         }
@@ -532,9 +536,9 @@ class MobileSubmitTeamManagerV2 {
         const isCaptain = player.id === this.captainId;
         const isViceCaptain = player.id === this.viceCaptainId;
         
-        // Format fixture display
+        // Format fixture display - FPL style
         let fixtureDisplay = '';
-        if (player.fixture) {
+        if (player.fixture && player.fixture.short_name) {
             const homeAway = player.fixture.is_home ? '(H)' : '(A)';
             fixtureDisplay = `${player.fixture.short_name} ${homeAway}`;
         }
