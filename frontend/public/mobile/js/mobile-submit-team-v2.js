@@ -125,6 +125,12 @@ class MobileSubmitTeamManagerV2 {
         this.currentGameweek = 1;
         this.deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         
+        // Load gameweek info to get real deadline
+        this.loadGameweekInfo().then(() => {
+            // Re-render header with correct deadline
+            this.renderHeader();
+        });
+        
         // Auto-select if needed
         if (this.starting11.length === 0 && this.mySquad.length >= 15) {
             this.autoSelectTeam();
@@ -189,6 +195,27 @@ class MobileSubmitTeamManagerV2 {
         }).catch(() => {
             // Ignore errors
         });
+    }
+    
+    async loadGameweekInfo() {
+        try {
+            const response = await window.mobileAPI.getCurrentGameweek();
+            
+            if (response && response.gameweek) {
+                this.currentGameweek = response.gameweek;
+                this.deadline = new Date(response.deadline_time || response.deadline);
+                this.gameweekType = response.gameweek_type || response.type || 'Normal';
+                
+                console.log('Gameweek info loaded:', {
+                    gameweek: this.currentGameweek,
+                    deadline: this.deadline,
+                    type: this.gameweekType
+                });
+            }
+        } catch (error) {
+            console.error('Error loading gameweek info:', error);
+            // Keep defaults if API fails
+        }
     }
     
     showLoader() {
