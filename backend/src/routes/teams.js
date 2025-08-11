@@ -22,17 +22,20 @@ async function getCurrentGameweekFixtures() {
   }
 
   try {
-    // First get current gameweek
+    // First get current or next gameweek
     const bootstrapResponse = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
     const currentEvent = bootstrapResponse.data.events.find(event => event.is_current);
     const nextEvent = bootstrapResponse.data.events.find(event => event.is_next);
     const activeGameweek = currentEvent || nextEvent;
     
     if (!activeGameweek) {
+      console.log('No active gameweek found');
       return { fixtures: [], teams: {} };
     }
 
-    // Get fixtures for current gameweek
+    console.log(`Fetching fixtures for gameweek ${activeGameweek.id} (${currentEvent ? 'current' : 'next'})`);
+    
+    // Get fixtures for the active gameweek
     const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/fixtures/?event=${activeGameweek.id}`);
     
     // Create team names map
@@ -48,9 +51,11 @@ async function getCurrentGameweekFixtures() {
     teamNamesCache = teams;
     cacheTimestamp = now;
     
+    console.log(`Cached ${fixturesCache.length} fixtures for gameweek ${activeGameweek.id}`);
+    
     return { fixtures: fixturesCache, teams: teamNamesCache };
   } catch (error) {
-    console.error('Error fetching fixtures:', error);
+    console.error('Error fetching fixtures:', error.message);
     return { fixtures: [], teams: {} };
   }
 }
