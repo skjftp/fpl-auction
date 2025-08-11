@@ -103,9 +103,19 @@ class MobileSubmitTeamManagerV2 {
             
             if (cachedData) {
                 const data = JSON.parse(cachedData);
-                this.mySquad = data.players || [];
-                this.myClubs = data.clubs || [];
-                cached = true;
+                // Check if cache is older than 1 hour or doesn't have fixture data
+                const cacheAge = Date.now() - (data.timestamp || 0);
+                const hasFixtures = data.players && data.players.length > 0 && data.players[0].fixture !== undefined;
+                
+                if (cacheAge < 3600000 && hasFixtures) { // 1 hour cache with fixtures
+                    this.mySquad = data.players || [];
+                    this.myClubs = data.clubs || [];
+                    cached = true;
+                    console.log('Using cached squad with fixtures');
+                } else {
+                    console.log('Cache is stale or missing fixtures, will refetch');
+                    localStorage.removeItem(cacheKey); // Clear stale cache
+                }
             }
         } catch (e) {
             console.log('Cache read failed:', e);
@@ -130,6 +140,12 @@ class MobileSubmitTeamManagerV2 {
             window.mobileAPI.getTeamSquad(currentUser.id).then(squadData => {
                 this.mySquad = squadData.players || [];
                 this.myClubs = squadData.clubs || [];
+                
+                // Debug fixture data
+                console.log('Squad fetched with fixture data:');
+                console.log('First player:', this.mySquad[0]);
+                console.log('Has fixture:', this.mySquad[0]?.fixture);
+                
                 localStorage.setItem(cacheKey, JSON.stringify({
                     players: this.mySquad,
                     clubs: this.myClubs,
@@ -139,7 +155,8 @@ class MobileSubmitTeamManagerV2 {
                     this.autoSelectTeam();
                 }
                 this.renderView();
-            }).catch(() => {
+            }).catch((err) => {
+                console.error('Failed to fetch squad:', err);
                 // Ignore errors - just show empty
             });
         }
@@ -934,6 +951,8 @@ class MobileSubmitTeamManagerV2 {
                 this.mySquad = squadData.players || [];
                 this.myClubs = squadData.clubs || [];
                 console.log(`Background squad fetch completed in ${performance.now() - startTime}ms`);
+                console.log('First player fixture data:', this.mySquad[0]?.fixture);
+                console.log('Sample player:', this.mySquad[0]);
                 
                 // Cache it
                 localStorage.setItem(cacheKey, JSON.stringify({
