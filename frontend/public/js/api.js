@@ -42,12 +42,22 @@ class API {
             });
 
             if (!response.ok) {
-                // Handle token expiry - redirect to login
+                // Handle token expiry - redirect to login only if not already on login screen
                 if (response.status === 401) {
                     const errorData = await response.json().catch(() => ({ error: 'Unauthorized' }));
                     if (errorData.error && (errorData.error.includes('token') || errorData.error.includes('expired') || errorData.error.includes('invalid'))) {
                         this.clearToken();
-                        window.location.href = '/';
+                        // Only redirect if we're not already on the login screen
+                        const mainApp = document.getElementById('mainApp');
+                        const loginScreen = document.getElementById('loginScreen');
+                        if (mainApp && !mainApp.classList.contains('hidden')) {
+                            // We're on the main app, need to show login
+                            if (loginScreen) {
+                                mainApp.classList.add('hidden');
+                                loginScreen.classList.remove('hidden');
+                                document.getElementById('navbar')?.classList.add('hidden');
+                            }
+                        }
                         return;
                     }
                 }

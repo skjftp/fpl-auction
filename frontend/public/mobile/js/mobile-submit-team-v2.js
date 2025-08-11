@@ -539,7 +539,7 @@ class MobileSubmitTeamManagerV2 {
                 </div>
                 <div class="player-info">
                     <div class="player-name">${player.web_name || player.name}</div>
-                    <div class="player-fixture">${fixtureDisplay}</div>
+                    ${fixtureDisplay ? `<div class="player-fixture">${fixtureDisplay}</div>` : ''}
                 </div>
             </div>
         `;

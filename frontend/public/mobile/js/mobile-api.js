@@ -17,7 +17,15 @@ class MobileAPI {
                  errorData.error.includes('invalid') ||
                  errorData.error.includes('Unauthorized'))) {
                 this.logout();
-                window.location.href = '/mobile.html';
+                // Only redirect if not already on login screen
+                const mainApp = document.getElementById('mainApp');
+                const loginScreen = document.getElementById('loginScreen');
+                if (mainApp && !mainApp.classList.contains('hidden')) {
+                    if (loginScreen) {
+                        mainApp.classList.add('hidden');
+                        loginScreen.classList.remove('hidden');
+                    }
+                }
                 return true;
             }
         }
