@@ -520,6 +520,9 @@ class MobileSubmitTeamManagerV2 {
         if (player.fixture) {
             const homeAway = player.fixture.is_home ? '(H)' : '(A)';
             fixtureDisplay = `${player.fixture.short_name} ${homeAway}`;
+            console.log(`Player ${player.web_name} has fixture: ${fixtureDisplay}`);
+        } else {
+            console.log(`Player ${player.web_name} has NO fixture data`, player);
         }
         
         return `
