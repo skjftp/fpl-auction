@@ -27,7 +27,7 @@ router.post('/login', async (req, res) => {
           is_viewer: true 
         },
         process.env.JWT_SECRET || 'default_secret',
-        { expiresIn: '24h' }
+        { expiresIn: '60d' }
       );
       
       return res.json({
@@ -67,7 +67,7 @@ router.post('/login', async (req, res) => {
         is_viewer: false 
       },
       process.env.JWT_SECRET || 'default_secret',
-      { expiresIn: '24h' }
+      { expiresIn: '60d' }
     );
     
     res.json({
@@ -188,7 +188,7 @@ router.post('/change-team-name', authenticateToken, async (req, res) => {
     const token = jwt.sign(
       { teamId: team.id, username: team.username, teamName: newTeamName, is_admin: team.is_admin || false },
       process.env.JWT_SECRET || 'default_secret',
-      { expiresIn: '24h' }
+      { expiresIn: '60d' }
     );
     
     res.json({ 

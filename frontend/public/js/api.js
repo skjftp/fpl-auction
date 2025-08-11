@@ -42,6 +42,16 @@ class API {
             });
 
             if (!response.ok) {
+                // Handle token expiry - redirect to login
+                if (response.status === 401) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unauthorized' }));
+                    if (errorData.error && (errorData.error.includes('token') || errorData.error.includes('expired') || errorData.error.includes('invalid'))) {
+                        this.clearToken();
+                        window.location.href = '/';
+                        return;
+                    }
+                }
+                
                 const error = await response.json().catch(() => ({ error: 'Request failed' }));
                 throw new Error(error.error || `HTTP ${response.status}`);
             }

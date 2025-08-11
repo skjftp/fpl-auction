@@ -7,6 +7,22 @@ class MobileAPI {
             : 'https://fpl-auction-backend-945963649649.us-central1.run.app/api';
         this.token = localStorage.getItem('fpl_token');
     }
+    
+    // Handle 401 errors and expired tokens
+    handleAuthError(response, errorData) {
+        if (response.status === 401) {
+            if (errorData && errorData.error && 
+                (errorData.error.includes('token') || 
+                 errorData.error.includes('expired') || 
+                 errorData.error.includes('invalid') ||
+                 errorData.error.includes('Unauthorized'))) {
+                this.logout();
+                window.location.href = '/mobile.html';
+                return true;
+            }
+        }
+        return false;
+    }
 
     // Authentication
     async login(username, password) {
@@ -64,8 +80,14 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Request failed');
+                const errorData = await response.json().catch(() => ({ error: 'Unauthorized' }));
+                
+                // Handle token expiry - redirect to login
+                if (this.handleAuthError(response, errorData)) {
+                    return;
+                }
+                
+                throw new Error(errorData.error || 'Request failed');
             }
 
             return await response.json();
@@ -85,7 +107,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch team data');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch team data' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to fetch team data');
             }
 
             return await response.json();
@@ -104,7 +128,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch team squad');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch team squad' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to fetch team squad');
             }
 
             return await response.json();
@@ -123,7 +149,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch teams');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch teams' }));
+                if (this.handleAuthError(response, errorData)) return [];
+                throw new Error(errorData.error || 'Failed to fetch teams');
             }
 
             return await response.json();
@@ -143,7 +171,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch players');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch players' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to fetch players');
             }
 
             return await response.json();
@@ -162,7 +192,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch clubs');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch clubs' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to fetch clubs');
             }
 
             return await response.json();
@@ -182,7 +214,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch active auctions');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch active auctions' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to fetch active auctions');
             }
 
             return await response.json();
@@ -203,8 +237,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to start auction');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to start auction' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to start auction');
             }
 
             return await response.json();
@@ -225,8 +260,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to start club auction');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to start club auction' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to start club auction');
             }
 
             return await response.json();
@@ -248,8 +284,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to place bid');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to place bid' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to place bid');
             }
 
             return await response.json();
@@ -271,8 +308,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to update selling stage');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to update selling stage' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to update selling stage');
             }
 
             return await response.json();
@@ -292,8 +330,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to request wait');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to request wait' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to request wait');
             }
 
             return await response.json();
@@ -315,8 +354,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to handle wait request');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to handle wait request' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to handle wait request');
             }
 
             return await response.json();
@@ -336,7 +376,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch draft state');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch draft state' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to fetch draft state');
             }
 
             return await response.json();
@@ -355,7 +397,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to check auction permission');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to check auction permission' }));
+                if (this.handleAuthError(response, errorData)) return { can_start: false };
+                throw new Error(errorData.error || 'Failed to check auction permission');
             }
 
             return await response.json();
@@ -377,7 +421,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch chat messages');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch chat messages' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to fetch chat messages');
             }
 
             return await response.json();
@@ -399,8 +445,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to send message');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to send message' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to send message');
             }
 
             return await response.json();
@@ -420,7 +467,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch bid history');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch bid history' }));
+                if (this.handleAuthError(response, errorData)) return [];
+                throw new Error(errorData.error || 'Failed to fetch bid history');
             }
 
             const data = await response.json();
@@ -441,7 +490,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch auto-bid config');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch auto-bid config' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to fetch auto-bid config');
             }
 
             return await response.json();
@@ -463,8 +514,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to save auto-bid config');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to save auto-bid config' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to save auto-bid config');
             }
 
             return await response.json();
@@ -484,7 +536,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch sold items');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to fetch sold items' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to fetch sold items');
             }
 
             return await response.json();
@@ -510,8 +564,9 @@ class MobileAPI {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to change password');
+                const errorData = await response.json().catch(() => ({ error: 'Failed to change password' }));
+                if (this.handleAuthError(response, errorData)) return;
+                throw new Error(errorData.error || 'Failed to change password');
             }
 
             return await response.json();
