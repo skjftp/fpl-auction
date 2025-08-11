@@ -472,6 +472,13 @@ class MobileSubmitTeamManagerV2 {
         const isViceCaptain = player.id === this.viceCaptainId;
         const positionName = this.positionLimits[player.position || player.element_type]?.name || '';
         
+        // Format fixture display
+        let fixtureDisplay = '';
+        if (player.fixture) {
+            const homeAway = player.fixture.is_home ? '(H)' : '(A)';
+            fixtureDisplay = `${player.fixture.short_name} ${homeAway}`;
+        }
+        
         return `
             <div class="list-player-card player-card" data-player-id="${player.id}">
                 <div class="list-player-photo">
@@ -485,7 +492,7 @@ class MobileSubmitTeamManagerV2 {
                         ${isViceCaptain ? '<span class="vice-tag">V</span>' : ''}
                     </div>
                     <div class="list-player-details">
-                        ${positionName} • ${player.team_short_name || ''}
+                        ${positionName} • ${fixtureDisplay || player.team_short_name || ''}
                     </div>
                 </div>
                 <div class="list-player-actions">
@@ -508,6 +515,13 @@ class MobileSubmitTeamManagerV2 {
         const isCaptain = player.id === this.captainId;
         const isViceCaptain = player.id === this.viceCaptainId;
         
+        // Format fixture display
+        let fixtureDisplay = '';
+        if (player.fixture) {
+            const homeAway = player.fixture.is_home ? '(H)' : '(A)';
+            fixtureDisplay = `${player.fixture.short_name} ${homeAway}`;
+        }
+        
         return `
             <div class="player-card ${isStarting ? 'pitch-player' : 'bench-player'}" 
                  data-player-id="${player.id}"
@@ -525,7 +539,7 @@ class MobileSubmitTeamManagerV2 {
                 </div>
                 <div class="player-info">
                     <div class="player-name">${player.web_name || player.name}</div>
-                    <div class="player-team">${player.team_short_name || ''}</div>
+                    <div class="player-fixture">${fixtureDisplay}</div>
                 </div>
             </div>
         `;

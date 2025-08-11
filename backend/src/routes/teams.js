@@ -2,8 +2,58 @@ const express = require('express');
 const { collections } = require('../models/database');
 const { requireAdmin } = require('../middleware/auth');
 const { getActiveDraftId } = require('../utils/draft');
+const axios = require('axios');
 
 const router = express.Router();
+
+// Cache for fixtures and team names
+let fixturesCache = null;
+let teamNamesCache = null;
+let cacheTimestamp = null;
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+
+// Function to get current gameweek fixtures
+async function getCurrentGameweekFixtures() {
+  const now = Date.now();
+  
+  // Return cached data if still valid
+  if (fixturesCache && teamNamesCache && cacheTimestamp && (now - cacheTimestamp < CACHE_DURATION)) {
+    return { fixtures: fixturesCache, teams: teamNamesCache };
+  }
+
+  try {
+    // First get current gameweek
+    const bootstrapResponse = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
+    const currentEvent = bootstrapResponse.data.events.find(event => event.is_current);
+    const nextEvent = bootstrapResponse.data.events.find(event => event.is_next);
+    const activeGameweek = currentEvent || nextEvent;
+    
+    if (!activeGameweek) {
+      return { fixtures: [], teams: {} };
+    }
+
+    // Get fixtures for current gameweek
+    const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/fixtures/?event=${activeGameweek.id}`);
+    
+    // Create team names map
+    const teams = {};
+    bootstrapResponse.data.teams.forEach(team => {
+      teams[team.id] = {
+        name: team.name,
+        short_name: team.short_name
+      };
+    });
+
+    fixturesCache = fixturesResponse.data;
+    teamNamesCache = teams;
+    cacheTimestamp = now;
+    
+    return { fixtures: fixturesCache, teams: teamNamesCache };
+  } catch (error) {
+    console.error('Error fetching fixtures:', error);
+    return { fixtures: [], teams: {} };
+  }
+}
 
 // Test endpoint to verify route is working
 router.get('/test', (req, res) => {
@@ -32,6 +82,9 @@ router.get('/:teamId/squad', async (req, res) => {
     const draftId = await getActiveDraftId();
     console.log('Getting squad for team:', teamId, 'in draft:', draftId);
     
+    // Get current gameweek fixtures
+    const { fixtures, teams } = await getCurrentGameweekFixtures();
+    
     // Get squad for this team in active draft
     const squadSnapshot = await collections.teamSquads
       .where('team_id', '==', teamId)
@@ -55,10 +108,35 @@ router.get('/:teamId/squad', async (req, res) => {
           const playerDoc = await collections.fplPlayers.doc(squadItem.player_id.toString()).get();
           if (playerDoc.exists) {
             const player = playerDoc.data();
+            
+            // Add fixture info for the player
+            const playerTeamId = player.team;
+            let opponent = null;
+            let isHome = null;
+            
+            // Find the fixture for this player's team
+            const fixture = fixtures.find(f => 
+              f.team_h === playerTeamId || f.team_a === playerTeamId
+            );
+            
+            if (fixture) {
+              isHome = fixture.team_h === playerTeamId;
+              const opponentId = isHome ? fixture.team_a : fixture.team_h;
+              const opponentTeam = teams[opponentId];
+              
+              opponent = {
+                id: opponentId,
+                name: opponentTeam?.name || '',
+                short_name: opponentTeam?.short_name || '',
+                is_home: isHome
+              };
+            }
+            
             players.push({
               ...player,
               price_paid: pricePaid,
-              acquired_at: squadItem.acquired_at
+              acquired_at: squadItem.acquired_at,
+              fixture: opponent
             });
           }
         } catch (err) {

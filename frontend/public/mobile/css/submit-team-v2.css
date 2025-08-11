@@ -657,6 +657,18 @@
     opacity: 0.9;
 }
 
+.player-fixture {
+    font-size: 10px;
+    color: #4b5563;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
 /* Captain Menu Popup */
 .captain-menu-popup {
     position: fixed;
@@ -886,6 +898,13 @@
     color: #6b7280;
     font-size: 9px;
     text-shadow: none;
+}
+
+.bench-player .player-fixture {
+    font-size: 9px;
+    color: #6b7280;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 1px 3px;
 }
 
 /* Substitution Modal */
