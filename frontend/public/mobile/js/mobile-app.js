@@ -1669,6 +1669,17 @@ MobileApp.prototype.showSubmissionHistory = async function() {
         // Setup close button
         document.getElementById('closeSubmissionHistoryBtn').onclick = () => {
             modal.classList.add('hidden');
+            // Reset to list view
+            document.getElementById('historyListView').classList.remove('hidden');
+            document.getElementById('historyDetailView').classList.add('hidden');
+            document.getElementById('historyModalTitle').textContent = 'Submission History';
+        };
+        
+        // Setup back button
+        document.getElementById('backToHistoryList').onclick = () => {
+            document.getElementById('historyListView').classList.remove('hidden');
+            document.getElementById('historyDetailView').classList.add('hidden');
+            document.getElementById('historyModalTitle').textContent = 'Submission History';
         };
         
         // Show loading
@@ -1708,12 +1719,25 @@ MobileApp.prototype.showSubmissionHistory = async function() {
                 const statusClass = deadlineStatus === 'late' ? 'late' : deadlineStatus === 'grace_period' ? 'grace' : 'on-time';
                 const statusColor = deadlineStatus === 'late' ? '#ef4444' : deadlineStatus === 'grace_period' ? '#f59e0b' : '#10b981';
                 
+                // Store submission data in window for access
+                const submissionId = `submission_${gw}_${submission.submission_version || Date.now()}`;
+                if (!window.submissionHistoryData) {
+                    window.submissionHistoryData = {};
+                }
+                window.submissionHistoryData[submissionId] = submission;
+                
                 html += `
-                    <div class="submission-entry" style="padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid ${statusColor};">
+                    <div class="submission-entry" style="padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid ${statusColor}; cursor: pointer; transition: all 0.2s;" 
+                         onclick="mobileApp.showSubmissionDetail('${submissionId}')"
+                         onmouseover="this.style.background='#f9fafb'" 
+                         onmouseout="this.style.background='white'">
                         <div class="submission-time" style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">${submitTime.toLocaleString()}</div>
-                        <div class="submission-details" style="display: flex; gap: 8px; align-items: center;">
-                            <span class="submission-status" style="font-size: 11px; padding: 2px 6px; background: ${statusColor}20; color: ${statusColor}; border-radius: 4px; font-weight: 600;">${deadlineStatus.replace('_', ' ').toUpperCase()}</span>
-                            ${submission.chip_used ? `<span class="chip-used" style="font-size: 11px; padding: 2px 6px; background: #3b82f620; color: #3b82f6; border-radius: 4px;">${submission.chip_used}</span>` : ''}
+                        <div class="submission-details" style="display: flex; gap: 8px; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <span class="submission-status" style="font-size: 11px; padding: 2px 6px; background: ${statusColor}20; color: ${statusColor}; border-radius: 4px; font-weight: 600;">${deadlineStatus.replace('_', ' ').toUpperCase()}</span>
+                                ${submission.chip_used ? `<span class="chip-used" style="font-size: 11px; padding: 2px 6px; background: #3b82f620; color: #3b82f6; border-radius: 4px;">${submission.chip_used}</span>` : ''}
+                            </div>
+                            <span style="color: #6b7280; font-size: 14px;">→</span>
                         </div>
                     </div>
                 `;
@@ -1730,6 +1754,160 @@ MobileApp.prototype.showSubmissionHistory = async function() {
     } catch (error) {
         console.error('Error loading submission history:', error);
         this.showToast('Failed to load submission history', 'error');
+    }
+};
+
+MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
+    try {
+        const submission = window.submissionHistoryData[submissionId];
+        if (!submission) {
+            this.showToast('Submission not found', 'error');
+            return;
+        }
+        
+        // Hide list view, show detail view
+        document.getElementById('historyListView').classList.add('hidden');
+        document.getElementById('historyDetailView').classList.remove('hidden');
+        document.getElementById('historyModalTitle').textContent = `Gameweek ${submission.gameweek} Submission`;
+        
+        const detailContent = document.getElementById('historyDetailContent');
+        detailContent.innerHTML = '<div class="loading">Loading team details...</div>';
+        
+        // Fetch player and club details
+        const playerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
+        const players = [];
+        
+        // Get all players data
+        const allPlayers = await window.mobileAPI.getPlayers();
+        const allClubs = await window.mobileAPI.getClubs();
+        
+        // Map player IDs to player data
+        playerIds.forEach(playerId => {
+            const player = allPlayers.find(p => p.id === playerId);
+            if (player) {
+                players.push(player);
+            }
+        });
+        
+        // Find club details
+        let clubMultiplier = null;
+        if (submission.club_multiplier_id) {
+            clubMultiplier = allClubs.find(c => c.id === submission.club_multiplier_id);
+        }
+        
+        // Separate starting 11 and bench
+        const starting11 = [];
+        const bench = [];
+        
+        submission.starting_11.forEach(id => {
+            const player = players.find(p => p.id === id);
+            if (player) starting11.push(player);
+        });
+        
+        submission.bench.forEach(id => {
+            const player = players.find(p => p.id === id);
+            if (player) bench.push(player);
+        });
+        
+        // Group starting 11 by position
+        const positions = { 1: [], 2: [], 3: [], 4: [] };
+        starting11.forEach(player => {
+            if (positions[player.position]) {
+                positions[player.position].push(player);
+            }
+        });
+        
+        // Render the team in pitch view style
+        let html = `
+            <div style="background: white; border-radius: 12px; padding: 15px;">
+                <!-- Submission Info -->
+                <div style="background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: #1f2937;">Submitted:</span>
+                        <span style="color: #6b7280; font-size: 14px;">${new Date(submission.submitted_at).toLocaleString()}</span>
+                    </div>
+                    ${submission.chip_used ? `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600; color: #1f2937;">Chip Used:</span>
+                            <span style="background: #3b82f620; color: #3b82f6; padding: 4px 8px; border-radius: 4px; font-size: 14px; font-weight: 600;">${submission.chip_used}</span>
+                        </div>
+                    ` : ''}
+                    ${clubMultiplier ? `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 600; color: #1f2937;">Club Multiplier:</span>
+                            <span style="background: #10b98120; color: #059669; padding: 4px 8px; border-radius: 4px; font-size: 14px; font-weight: 600;">${clubMultiplier.name} (1.5x)</span>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Pitch View -->
+                <div style="background: linear-gradient(to bottom, #10b981 0%, #059669 50%, #047857 100%); border-radius: 12px; padding: 20px 10px; position: relative; min-height: 420px;">
+        `;
+        
+        // Render each position row
+        const positionNames = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
+        [4, 3, 2, 1].forEach(posId => {
+            const posPlayers = positions[posId] || [];
+            if (posPlayers.length > 0) {
+                html += `<div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 25px;">`;
+                posPlayers.forEach(player => {
+                    const isCaptain = player.id === submission.captain_id;
+                    const isViceCaptain = player.id === submission.vice_captain_id;
+                    
+                    html += `
+                        <div style="width: 70px; text-align: center;">
+                            <div style="width: 60px; height: 60px; margin: 0 auto 4px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 10px 10px 25px 25px; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                                <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
+                                     style="width: 45px; height: 45px; object-fit: cover; border-radius: 50%; background: white;"
+                                     onerror="this.style.display='none'">
+                                ${isCaptain ? '<div style="position: absolute; top: -8px; right: -8px; background: white; color: #1f2937; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid #fbbf24;">C</div>' : ''}
+                                ${isViceCaptain ? '<div style="position: absolute; top: -8px; right: -8px; background: white; color: #1f2937; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid #a78bfa;">V</div>' : ''}
+                            </div>
+                            <div style="background: white; border-radius: 4px; padding: 3px 4px; margin-top: 3px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                                <div style="font-size: 11px; font-weight: 700; color: #1f2937;">${player.web_name || player.name}</div>
+                                <div style="font-size: 10px; color: #374151; font-weight: 600; margin-top: 1px;">${positionNames[player.position]}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+        });
+        
+        html += `
+                </div>
+                
+                <!-- Bench -->
+                <div style="background: #f3f4f6; padding: 12px 16px; border-radius: 8px; margin-top: 15px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">BENCH</div>
+                    <div style="display: flex; gap: 12px; overflow-x: auto;">
+        `;
+        
+        bench.forEach((player, index) => {
+            html += `
+                <div style="flex: 0 0 auto; width: 80px; background: white; border-radius: 8px; padding: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="width: 40px; height: 40px; margin: 0 auto 4px; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); border-radius: 10px 10px 15px 15px; display: flex; align-items: center; justify-content: center;">
+                        <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
+                             style="width: 30px; height: 30px; object-fit: cover; border-radius: 50%; background: white;"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <div style="font-size: 11px; font-weight: 600; color: #374151;">${player.web_name || player.name}</div>
+                    <div style="font-size: 9px; color: #6b7280;">${positionNames[player.position]}</div>
+                </div>
+            `;
+        });
+        
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        detailContent.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error showing submission detail:', error);
+        this.showToast('Failed to load submission details', 'error');
     }
 };
 

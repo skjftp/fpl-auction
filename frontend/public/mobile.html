@@ -507,21 +507,34 @@
 
     <!-- Submission History Modal -->
     <div id="submissionHistoryModal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-                <h3>Submission History</h3>
+                <h3 id="historyModalTitle">Submission History</h3>
                 <button id="closeSubmissionHistoryBtn" class="close-btn">×</button>
             </div>
             
             <div class="modal-body">
-                <div class="history-filters">
-                    <select id="historyGameweek" class="gameweek-select">
-                        <option value="all">All Gameweeks</option>
-                        <!-- Gameweeks will be populated dynamically -->
-                    </select>
+                <!-- List View -->
+                <div id="historyListView">
+                    <div class="history-filters">
+                        <select id="historyGameweek" class="gameweek-select">
+                            <option value="all">All Gameweeks</option>
+                            <!-- Gameweeks will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div id="submissionHistoryContent" class="submission-history-content">
+                        <!-- History will be populated here -->
+                    </div>
                 </div>
-                <div id="submissionHistoryContent" class="submission-history-content">
-                    <!-- History will be populated here -->
+                
+                <!-- Detail View (hidden by default) -->
+                <div id="historyDetailView" class="hidden">
+                    <button id="backToHistoryList" class="btn-secondary" style="margin-bottom: 15px;">
+                        ← Back to History
+                    </button>
+                    <div id="historyDetailContent">
+                        <!-- Team details will be shown here -->
+                    </div>
                 </div>
             </div>
         </div>
