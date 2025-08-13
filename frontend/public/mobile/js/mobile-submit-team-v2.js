@@ -340,7 +340,7 @@ class MobileSubmitTeamManagerV2 {
                 ` : ''}
                 
                 <div class="submit-section">
-                    <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.viceCaptainId || !this.clubMultiplierId || (!this.hasChanges && this.existingSubmission && !this.editMode) ? 'disabled' : ''}>
+                    <button id="confirmTeamBtn" class="confirm-team-btn" ${this.editMode ? '' : (!this.formationValid || !this.captainId || !this.viceCaptainId || !this.clubMultiplierId ? 'disabled' : '')}>
                         ${this.existingSubmission ? 'Update Team' : 'Submit Team'}
                     </button>
                     ${this.existingSubmission ? `
@@ -1266,8 +1266,8 @@ class MobileSubmitTeamManagerV2 {
             (positions[1] + positions[2] + positions[3] + positions[4]) === 11;
 
         // Check if there are any changes from existing submission
-        // Use the class property hasChanges if it's been set by edit actions
-        if (!this.hasChanges) {
+        // Skip this check if in edit mode - always allow submission in edit mode
+        if (!this.editMode && !this.hasChanges) {
             if (this.existingSubmission) {
                 // Check if any values have changed
                 this.hasChanges = 
@@ -1283,15 +1283,21 @@ class MobileSubmitTeamManagerV2 {
             }
         }
 
-        // Update UI - button enabled if formation valid, all required fields set, AND (there are changes OR in edit mode)
+        // Update UI - button enabled in edit mode OR when all conditions are met
         const confirmBtn = document.getElementById('confirmTeamBtn');
         if (confirmBtn) {
-            const shouldEnable = this.formationValid && 
-                                this.captainId && 
-                                this.viceCaptainId && 
-                                this.clubMultiplierId &&
-                                (this.hasChanges || this.editMode || !this.existingSubmission);
-            confirmBtn.disabled = !shouldEnable;
+            if (this.editMode) {
+                // In edit mode, always enable the button
+                confirmBtn.disabled = false;
+            } else {
+                // Normal mode - check all conditions
+                const shouldEnable = this.formationValid && 
+                                    this.captainId && 
+                                    this.viceCaptainId && 
+                                    this.clubMultiplierId &&
+                                    (this.hasChanges || !this.existingSubmission);
+                confirmBtn.disabled = !shouldEnable;
+            }
         }
     }
 
