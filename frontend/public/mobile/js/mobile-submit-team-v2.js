@@ -272,31 +272,20 @@ class MobileSubmitTeamManagerV2 {
         this.editMode = !this.editMode;
         
         if (this.editMode) {
-            // Entering edit mode - immediately enable submit button
-            this.hasChanges = true;
-            window.mobileApp.showToast('Edit mode: Make changes and click Submit to save', 'info');
+            // Entering edit mode
+            window.mobileApp.showToast('Edit mode: Make changes and click Update Team to save', 'info');
         } else {
-            // Exiting edit mode - reset hasChanges
-            this.hasChanges = false;
+            // Exiting edit mode
             window.mobileApp.showToast('Edit mode closed', 'info');
         }
         
         this.renderHeader();
         this.renderView();
         
-        // After rendering, force enable the submit button if in edit mode
-        if (this.editMode) {
-            setTimeout(() => {
-                const confirmBtn = document.getElementById('confirmTeamBtn');
-                if (confirmBtn && this.formationValid && this.captainId && this.viceCaptainId && this.clubMultiplierId) {
-                    confirmBtn.disabled = false;
-                    console.log('Submit button enabled after entering edit mode');
-                }
-            }, 10);
-        } else {
-            // Ensure validation runs after render to update button state
+        // Force button state update after render
+        setTimeout(() => {
             this.validateFormation();
-        }
+        }, 10);
     }
     
     saveEdit() {
@@ -351,7 +340,7 @@ class MobileSubmitTeamManagerV2 {
                 ` : ''}
                 
                 <div class="submit-section">
-                    <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.viceCaptainId || !this.clubMultiplierId || (!this.hasChanges && this.existingSubmission) ? 'disabled' : ''}>
+                    <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.viceCaptainId || !this.clubMultiplierId || (!this.hasChanges && this.existingSubmission && !this.editMode) ? 'disabled' : ''}>
                         ${this.existingSubmission ? 'Update Team' : 'Submit Team'}
                     </button>
                     ${this.existingSubmission ? `
@@ -1294,14 +1283,14 @@ class MobileSubmitTeamManagerV2 {
             }
         }
 
-        // Update UI - button enabled if formation valid, all required fields set, AND there are changes
+        // Update UI - button enabled if formation valid, all required fields set, AND (there are changes OR in edit mode)
         const confirmBtn = document.getElementById('confirmTeamBtn');
         if (confirmBtn) {
             const shouldEnable = this.formationValid && 
                                 this.captainId && 
                                 this.viceCaptainId && 
                                 this.clubMultiplierId &&
-                                this.hasChanges;
+                                (this.hasChanges || this.editMode || !this.existingSubmission);
             confirmBtn.disabled = !shouldEnable;
         }
     }
