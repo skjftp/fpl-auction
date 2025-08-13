@@ -275,12 +275,6 @@ class MobileSubmitTeamManagerV2 {
             // Entering edit mode - immediately enable submit button
             this.hasChanges = true;
             window.mobileApp.showToast('Edit mode: Make changes and click Submit to save', 'info');
-            
-            // Enable submit button immediately
-            const confirmBtn = document.getElementById('confirmTeamBtn');
-            if (confirmBtn && this.formationValid && this.captainId && this.viceCaptainId && this.clubMultiplierId) {
-                confirmBtn.disabled = false;
-            }
         } else {
             // Exiting edit mode - reset hasChanges
             this.hasChanges = false;
@@ -289,8 +283,20 @@ class MobileSubmitTeamManagerV2 {
         
         this.renderHeader();
         this.renderView();
-        // Ensure validation runs after render to update button state
-        this.validateFormation();
+        
+        // After rendering, force enable the submit button if in edit mode
+        if (this.editMode) {
+            setTimeout(() => {
+                const confirmBtn = document.getElementById('confirmTeamBtn');
+                if (confirmBtn && this.formationValid && this.captainId && this.viceCaptainId && this.clubMultiplierId) {
+                    confirmBtn.disabled = false;
+                    console.log('Submit button enabled after entering edit mode');
+                }
+            }, 10);
+        } else {
+            // Ensure validation runs after render to update button state
+            this.validateFormation();
+        }
     }
     
     saveEdit() {
@@ -345,7 +351,7 @@ class MobileSubmitTeamManagerV2 {
                 ` : ''}
                 
                 <div class="submit-section">
-                    <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.viceCaptainId || !this.clubMultiplierId ? 'disabled' : ''}>
+                    <button id="confirmTeamBtn" class="confirm-team-btn" ${!this.formationValid || !this.captainId || !this.viceCaptainId || !this.clubMultiplierId || (!this.hasChanges && this.existingSubmission) ? 'disabled' : ''}>
                         ${this.existingSubmission ? 'Update Team' : 'Submit Team'}
                     </button>
                     ${this.existingSubmission ? `
