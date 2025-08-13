@@ -363,7 +363,7 @@ class MobileLeague {
 
     getChipName(chipId) {
         const chips = {
-            'brahmashtra': '🎯 Brahmashtra',
+            'brahmashtra': '🕉️ Brahmashtra',
             'wildcard': '♻️ Wildcard',
             'free_hit': '🎲 Free Hit',
             'bench_boost': '📈 Bench Boost',

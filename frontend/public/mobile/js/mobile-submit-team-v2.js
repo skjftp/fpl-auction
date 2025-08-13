@@ -37,7 +37,7 @@ class MobileSubmitTeamManagerV2 {
                 name: 'Brahmasthra',
                 short: 'BRM',
                 description: 'Auto-picks best 11',
-                icon: '🔱'
+                icon: '🕉️'
             },
             'triple_captain': {
                 name: 'Triple Captain',
