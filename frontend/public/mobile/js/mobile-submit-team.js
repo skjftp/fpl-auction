@@ -145,7 +145,13 @@ class MobileSubmitTeamManager {
                 this.viceCaptainId = submission.vice_captain_id;
                 this.clubMultiplierId = submission.club_multiplier_id;
                 
-                if (submission.is_default) {
+                // Show if this was auto-copied
+                if (submission.auto_copied) {
+                    console.log(`Team auto-copied from GW${submission.copied_from_gw}`);
+                    if (window.mobileApp && window.mobileApp.showToast) {
+                        window.mobileApp.showToast(`Your team from GW${submission.copied_from_gw} has been automatically loaded. You can make changes before the deadline.`, 'info');
+                    }
+                } else if (submission.is_default) {
                     window.mobileApp.showToast('Using previous gameweek team as default', 'info');
                 }
             }

@@ -120,6 +120,32 @@ router.get('/submission/:gameweek', authenticateToken, async (req, res) => {
         const doc = await db.collection('gameweekTeams').doc(docId).get();
 
         if (!doc.exists) {
+            // Try to auto-copy from previous gameweek if gameweek > 1
+            if (gameweek > 1) {
+                const prevGameweek = gameweek - 1;
+                const prevDocId = `${teamId}_gw${prevGameweek}`;
+                const prevDoc = await db.collection('gameweekTeams').doc(prevDocId).get();
+                
+                if (prevDoc.exists) {
+                    // Auto-copy previous gameweek's team
+                    const prevData = prevDoc.data();
+                    const newSubmission = {
+                        ...prevData,
+                        gameweek: gameweek,
+                        chip_used: null, // Reset chip for new gameweek
+                        submission_time: admin.firestore.FieldValue.serverTimestamp(),
+                        auto_copied: true,
+                        copied_from_gw: prevGameweek
+                    };
+                    
+                    // Save the auto-copied submission
+                    await db.collection('gameweekTeams').doc(docId).set(newSubmission);
+                    
+                    console.log(`Auto-copied team ${teamId} from GW${prevGameweek} to GW${gameweek}`);
+                    return res.json(newSubmission);
+                }
+            }
+            
             return res.status(404).json({
                 error: 'No submission found for this gameweek'
             });
@@ -280,6 +306,66 @@ router.get('/history/:teamId/:gameweek', authenticateToken, async (req, res) => 
         });
     } catch (error) {
         console.error('Error fetching submission history:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Auto-copy team from previous gameweek
+router.post('/auto-copy/:gameweek', authenticateToken, async (req, res) => {
+    try {
+        const gameweek = parseInt(req.params.gameweek);
+        const teamId = req.user.teamId;
+        
+        if (gameweek <= 1) {
+            return res.status(400).json({
+                error: 'Cannot auto-copy for gameweek 1'
+            });
+        }
+        
+        // Check if submission already exists
+        const docId = `${teamId}_gw${gameweek}`;
+        const existingDoc = await db.collection('gameweekTeams').doc(docId).get();
+        
+        if (existingDoc.exists && !existingDoc.data().auto_copied) {
+            return res.status(400).json({
+                error: 'Submission already exists for this gameweek',
+                submission: existingDoc.data()
+            });
+        }
+        
+        // Get previous gameweek submission
+        const prevGameweek = gameweek - 1;
+        const prevDocId = `${teamId}_gw${prevGameweek}`;
+        const prevDoc = await db.collection('gameweekTeams').doc(prevDocId).get();
+        
+        if (!prevDoc.exists) {
+            return res.status(404).json({
+                error: `No submission found for gameweek ${prevGameweek} to copy from`
+            });
+        }
+        
+        // Create auto-copied submission
+        const prevData = prevDoc.data();
+        const newSubmission = {
+            ...prevData,
+            gameweek: gameweek,
+            chip_used: null, // Reset chip for new gameweek
+            submission_time: admin.firestore.FieldValue.serverTimestamp(),
+            auto_copied: true,
+            copied_from_gw: prevGameweek
+        };
+        
+        // Save the auto-copied submission
+        await db.collection('gameweekTeams').doc(docId).set(newSubmission);
+        
+        console.log(`Auto-copied team ${teamId} from GW${prevGameweek} to GW${gameweek}`);
+        res.json({
+            message: 'Team auto-copied successfully',
+            submission: newSubmission
+        });
+        
+    } catch (error) {
+        console.error('Error auto-copying team:', error);
         res.status(500).json({ error: error.message });
     }
 });

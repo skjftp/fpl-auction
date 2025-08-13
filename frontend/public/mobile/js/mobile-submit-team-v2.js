@@ -180,6 +180,14 @@ class MobileSubmitTeamManagerV2 {
                 if (submission.club_multiplier_id) this.clubMultiplierId = submission.club_multiplier_id;
                 if (submission.chip_used) this.selectedChip = submission.chip_used;
                 
+                // Show if this was auto-copied
+                if (submission.auto_copied) {
+                    console.log(`Team auto-copied from GW${submission.copied_from_gw}`);
+                    if (window.mobileApp && window.mobileApp.showToast) {
+                        window.mobileApp.showToast(`Your team from GW${submission.copied_from_gw} has been automatically loaded. You can make changes before the deadline.`, 'info');
+                    }
+                }
+                
                 this.renderHeader();
                 this.renderView();
             }
