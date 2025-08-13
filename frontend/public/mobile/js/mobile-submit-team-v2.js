@@ -272,9 +272,15 @@ class MobileSubmitTeamManagerV2 {
         this.editMode = !this.editMode;
         
         if (this.editMode) {
-            // Entering edit mode - reset hasChanges
-            this.hasChanges = false;
+            // Entering edit mode - immediately enable submit button
+            this.hasChanges = true;
             window.mobileApp.showToast('Edit mode: Make changes and click Submit to save', 'info');
+            
+            // Enable submit button immediately
+            const confirmBtn = document.getElementById('confirmTeamBtn');
+            if (confirmBtn && this.formationValid && this.captainId && this.viceCaptainId && this.clubMultiplierId) {
+                confirmBtn.disabled = false;
+            }
         } else {
             // Exiting edit mode - reset hasChanges
             this.hasChanges = false;
@@ -283,6 +289,8 @@ class MobileSubmitTeamManagerV2 {
         
         this.renderHeader();
         this.renderView();
+        // Ensure validation runs after render to update button state
+        this.validateFormation();
     }
     
     saveEdit() {
