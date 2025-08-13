@@ -148,6 +148,8 @@ class MobileSubmitTeamManager {
                 // Show if this was auto-copied
                 if (submission.auto_copied) {
                     console.log(`Team auto-copied from GW${submission.copied_from_gw}`);
+                    // Enable form validation after auto-copy
+                    this.validateFormation();
                     if (window.mobileApp && window.mobileApp.showToast) {
                         window.mobileApp.showToast(`Your team from GW${submission.copied_from_gw} has been automatically loaded. You can make changes before the deadline.`, 'info');
                     }

@@ -183,6 +183,8 @@ class MobileSubmitTeamManagerV2 {
                 // Show if this was auto-copied
                 if (submission.auto_copied) {
                     console.log(`Team auto-copied from GW${submission.copied_from_gw}`);
+                    // Auto-copied teams should be treated as having changes to allow submission
+                    this.hasChanges = true;
                     if (window.mobileApp && window.mobileApp.showToast) {
                         window.mobileApp.showToast(`Your team from GW${submission.copied_from_gw} has been automatically loaded. You can make changes before the deadline.`, 'info');
                     }
@@ -194,6 +196,10 @@ class MobileSubmitTeamManagerV2 {
         }).catch((error) => {
             // No existing submission - that's ok, user hasn't submitted yet
             console.log('No existing submission for gameweek', this.currentGameweek || 1);
+            this.existingSubmission = null;
+            // For first-time submission, any valid team should be submittable
+            this.hasChanges = true;
+            this.validateFormation();
         });
         
         // Load chip status with current gameweek
