@@ -797,7 +797,24 @@ class MobileSubmitTeamManagerV2 {
         const player1InStarting = this.starting11.includes(player1Id);
         const player2InStarting = this.starting11.includes(player2Id);
         
+        // Check if player being moved to bench is captain or vice-captain
+        let transferredRole = null;
+        let newRolePlayerId = null;
+        
         if (player1InStarting && !player2InStarting) {
+            // Player1 (starting) is being moved to bench, Player2 (bench) is coming in
+            if (player1Id === this.captainId) {
+                transferredRole = 'captain';
+                newRolePlayerId = player2Id;
+                this.captainId = player2Id;
+                console.log(`Captain transferred from player ${player1Id} to ${player2Id}`);
+            } else if (player1Id === this.viceCaptainId) {
+                transferredRole = 'vice-captain';
+                newRolePlayerId = player2Id;
+                this.viceCaptainId = player2Id;
+                console.log(`Vice-captain transferred from player ${player1Id} to ${player2Id}`);
+            }
+            
             // Swap starting with bench
             const index1 = this.starting11.indexOf(player1Id);
             const index2 = this.bench.indexOf(player2Id);
@@ -808,6 +825,19 @@ class MobileSubmitTeamManagerV2 {
                 this.hasChanges = true;
             }
         } else if (!player1InStarting && player2InStarting) {
+            // Player2 (starting) is being moved to bench, Player1 (bench) is coming in
+            if (player2Id === this.captainId) {
+                transferredRole = 'captain';
+                newRolePlayerId = player1Id;
+                this.captainId = player1Id;
+                console.log(`Captain transferred from player ${player2Id} to ${player1Id}`);
+            } else if (player2Id === this.viceCaptainId) {
+                transferredRole = 'vice-captain';
+                newRolePlayerId = player1Id;
+                this.viceCaptainId = player1Id;
+                console.log(`Vice-captain transferred from player ${player2Id} to ${player1Id}`);
+            }
+            
             // Swap bench with starting
             const index1 = this.bench.indexOf(player1Id);
             const index2 = this.starting11.indexOf(player2Id);
@@ -818,13 +848,22 @@ class MobileSubmitTeamManagerV2 {
                 this.hasChanges = true;
             }
         } else if (player1InStarting && player2InStarting) {
-            // Swap within starting 11
+            // Swap within starting 11 - no captain/vc transfer needed
             const index1 = this.starting11.indexOf(player1Id);
             const index2 = this.starting11.indexOf(player2Id);
             
             if (index1 !== -1 && index2 !== -1) {
                 [this.starting11[index1], this.starting11[index2]] = [this.starting11[index2], this.starting11[index1]];
                 this.hasChanges = true;
+            }
+        }
+        
+        // Show notification if captain/vc was transferred
+        if (transferredRole && newRolePlayerId) {
+            const player = this.mySquad.find(p => p.id === newRolePlayerId);
+            const playerName = player?.web_name || player?.name || 'new player';
+            if (window.mobileApp && window.mobileApp.showToast) {
+                window.mobileApp.showToast(`${transferredRole === 'captain' ? 'Captain' : 'Vice-captain'} transferred to ${playerName}`, 'info');
             }
         }
         
