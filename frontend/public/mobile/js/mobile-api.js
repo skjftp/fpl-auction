@@ -66,6 +66,12 @@ class MobileAPI {
         localStorage.removeItem('fpl_team');
     }
 
+    // Set new token
+    setToken(token) {
+        this.token = token;
+        localStorage.setItem('fpl_token', token);
+    }
+
     // Get current user
     getCurrentUser() {
         try {
