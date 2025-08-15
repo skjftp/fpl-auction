@@ -132,58 +132,16 @@ class MobileSubmitTeamManagerV2 {
         this.currentGameweek = 1;
         this.deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         
-        // Load gameweek info to get real deadline
+        // Load gameweek info first, THEN load submission
         this.loadGameweekInfo().then(() => {
             // Re-render header with correct deadline
             this.renderHeader();
-        });
-        
-        // Auto-select will happen after submission loads if needed
-        
-        // Don't render yet even with cached data - wait for submission check
-        
-        // Only render header initially, not the view (wait for data)
-        this.renderHeader();
-        // Don't render view yet - wait for data to load
-        this.setupEventListeners();
-        
-        // If no cache, fetch in background (don't block)
-        if (!cached && currentUser) {
-            window.mobileAPI.getTeamSquad(currentUser.id).then(squadData => {
-                this.mySquad = squadData.players || [];
-                this.myClubs = squadData.clubs || [];
-                
-                // Debug fixture data
-                console.log('Squad fetched with fixture data:');
-                console.log('First player:', this.mySquad[0]);
-                console.log('Has fixture:', this.mySquad[0]?.fixture);
-                
-                localStorage.setItem(cacheKey, JSON.stringify({
-                    players: this.mySquad,
-                    clubs: this.myClubs,
-                    timestamp: Date.now()
-                }));
-                if (this.starting11.length === 0 && this.mySquad.length >= 15) {
-                    this.autoSelectTeam();
-                }
-                // Squad data is loaded
-                this.dataLoaded = true;
-                
-                // If submission check is also complete, render now
-                if (this.submissionLoaded) {
-                    this.loading = false;
-                    this.renderView();
-                }
-            }).catch((err) => {
-                console.error('Failed to fetch squad:', err);
-                // Ignore errors - just show empty
-            });
-        }
-        
-        // Load existing submission for this gameweek
-        window.mobileAPI.getTeamSubmission(this.currentGameweek || 1).then(submission => {
+            
+            // NOW load the submission with the correct gameweek
+            return window.mobileAPI.getTeamSubmission(this.currentGameweek);
+        }).then(submission => {
             if (submission) {
-                console.log('Found existing submission:', submission);
+                console.log('Found existing submission for GW' + this.currentGameweek + ':', submission);
                 this.existingSubmission = submission;
                 // Apply the submission to current state
                 if (submission.starting_11) this.starting11 = submission.starting_11;
@@ -234,14 +192,20 @@ class MobileSubmitTeamManagerV2 {
                 this.loading = false;
                 this.renderView();
             }
-        });
-        
-        // Load chip status with current gameweek
-        window.mobileAPI.getChipStatus(this.currentGameweek || 1).then(chipStatus => {
+            
+            // Load chip status with the correct gameweek after submission is loaded
+            return window.mobileAPI.getChipStatus(this.currentGameweek);
+        }).then(chipStatus => {
             this.chipStatus = chipStatus;
             this.renderHeader();
-        }).catch(() => {
-            // Ignore errors
+        }).catch((error) => {
+            console.log('Error in initialization chain:', error);
+            // Mark as loaded anyway to unblock UI
+            this.submissionLoaded = true;
+            if (this.dataLoaded) {
+                this.loading = false;
+                this.renderView();
+            }
         });
     }
     

@@ -148,6 +148,7 @@ class MobileSubmitTeamManager {
 
     async loadExistingSubmission() {
         try {
+            console.log('Loading submission for gameweek:', this.currentGameweek);
             const submission = await window.mobileAPI.getTeamSubmission(this.currentGameweek);
             
             if (submission) {
