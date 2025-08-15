@@ -1961,6 +1961,19 @@ MobileApp.prototype.showAllClubs = async function() {
 
 MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
     try {
+        // Show loader
+        const content = document.getElementById('leaderboardContent');
+        if (content) {
+            content.innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; min-height: 200px;">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 12px; color: #666;">Loading league standings...</p>
+                    </div>
+                </div>
+            `;
+        }
+        
         // Populate gameweek selector if not already done
         const gwSelector = document.getElementById('leaderboardGameweek');
         if (gwSelector && gwSelector.options.length <= 1) {
@@ -1980,7 +1993,6 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
         }
         
         const data = await window.mobileAPI.getLeaderboard(gameweek);
-        const content = document.getElementById('leaderboardContent');
         const currentUser = window.mobileAPI.getCurrentUser();
         
         if (content) {
@@ -2013,12 +2025,201 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
 
 MobileApp.prototype.viewTeamSubmission = async function(teamId) {
     try {
-        // For now, show the team's current squad
-        // Team submissions will be available after gameweek deadline
-        await this.showTeamSquad(teamId);
+        // Get current gameweek
+        const gwInfo = await window.mobileAPI.getCurrentGameweek();
+        const currentGameweek = gwInfo.gameweek || 1;
+        
+        // Get team submission for current gameweek
+        const submission = await window.mobileAPI.getTeamSubmission(currentGameweek, teamId);
+        
+        if (!submission) {
+            // No submission yet, show squad instead
+            await this.showTeamSquad(teamId);
+            return;
+        }
+        
+        // Get team info
+        const teams = await window.mobileAPI.getAllTeams();
+        const team = teams.find(t => t.id === teamId);
+        
+        // Show submission in nice pitch view
+        await this.showTeamSubmissionDetail(submission, team ? team.name : `Team ${teamId}`);
+        
     } catch (error) {
-        console.error('Error viewing team:', error);
-        this.showToast('Failed to load team', 'error');
+        console.error('Error viewing team submission:', error);
+        // Fall back to showing squad
+        await this.showTeamSquad(teamId);
+    }
+};
+
+MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamName) {
+    try {
+        // Create modal container
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.zIndex = '10000';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3>Gameweek ${submission.gameweek} Submission</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                </div>
+                <div class="modal-body" id="submissionDetailBody">
+                    <div style="display: flex; justify-content: center; align-items: center; min-height: 300px;">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <p style="margin-top: 12px;">Loading team details...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Fetch player and club details
+        const playerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
+        const players = [];
+        
+        // Get all players data
+        const allPlayers = await window.mobileAPI.getPlayers();
+        const allClubs = await window.mobileAPI.getClubs();
+        
+        // Map player IDs to player data
+        playerIds.forEach(playerId => {
+            const player = allPlayers.find(p => p.id === playerId);
+            if (player) {
+                players.push(player);
+            }
+        });
+        
+        // Find club details
+        let clubMultiplier = null;
+        if (submission.club_multiplier_id) {
+            clubMultiplier = allClubs.find(c => c.id === submission.club_multiplier_id);
+        }
+        
+        // Separate starting 11 and bench
+        const starting11 = [];
+        const bench = [];
+        
+        submission.starting_11.forEach(id => {
+            const player = players.find(p => p.id === id);
+            if (player) starting11.push(player);
+        });
+        
+        submission.bench.forEach(id => {
+            const player = players.find(p => p.id === id);
+            if (player) bench.push(player);
+        });
+        
+        // Group starting 11 by position
+        const positions = { 1: [], 2: [], 3: [], 4: [] };
+        starting11.forEach(player => {
+            if (positions[player.position]) {
+                positions[player.position].push(player);
+            }
+        });
+        
+        // Render the team in pitch view style
+        const detailContent = document.getElementById('submissionDetailBody');
+        let html = `
+            <div style="background: white; border-radius: 12px; padding: 8px;">
+                <!-- Back button and Team Name -->
+                <div style="margin-bottom: 10px;">
+                    <h4 style="text-align: center; color: #1f2937; margin: 8px 0;">${teamName}</h4>
+                </div>
+                
+                <!-- Submission Info -->
+                <div style="background: #f9fafb; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
+                        <span style="font-weight: 600; color: #1f2937; font-size: 12px;">Submitted:</span>
+                        <span style="color: #6b7280; font-size: 11px;">${new Date(submission.submitted_at).toLocaleString()}</span>
+                    </div>
+                    ${submission.chip_used ? `
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
+                            <span style="font-weight: 600; color: #1f2937; font-size: 12px;">Chip Used:</span>
+                            <span style="background: #3b82f620; color: #3b82f6; padding: 2px 5px; border-radius: 3px; font-size: 11px; font-weight: 600;">${submission.chip_used}</span>
+                        </div>
+                    ` : ''}
+                    ${clubMultiplier ? `
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                            <span style="font-weight: 600; color: #1f2937; font-size: 12px;">Club Multiplier:</span>
+                            <span style="background: #10b98120; color: #059669; padding: 2px 5px; border-radius: 3px; font-size: 11px; font-weight: 600;">${clubMultiplier.name} (1.5x)</span>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Pitch View -->
+                <div style="background: linear-gradient(to bottom, #10b981 0%, #059669 50%, #047857 100%); border-radius: 10px; padding: 12px 3px; position: relative; min-height: 340px;">
+        `;
+        
+        // Render each position row
+        const positionNames = { 1: 'GKP', 2: 'DEF', 3: 'MID', 4: 'FWD' };
+        [4, 3, 2, 1].forEach(posId => {
+            const posPlayers = positions[posId] || [];
+            if (posPlayers.length > 0) {
+                html += `<div style="display: flex; justify-content: center; gap: 3px; margin-bottom: 15px; flex-wrap: wrap;">`;
+                posPlayers.forEach(player => {
+                    const isCaptain = player.id === submission.captain_id;
+                    const isViceCaptain = player.id === submission.vice_captain_id;
+                    
+                    html += `
+                        <div style="width: 52px; text-align: center; flex: 0 0 auto;">
+                            <div style="width: 44px; height: 44px; margin: 0 auto 2px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 6px 6px 16px 16px; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.2);">
+                                <img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo?.replace('.jpg', '').replace('.png', '') || '0'}.png" 
+                                     style="width: 32px; height: 32px; object-fit: cover; border-radius: 50%; background: white;"
+                                     onerror="this.style.display='none'">
+                                ${isCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #fbbf24;">C</div>' : ''}
+                                ${isViceCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #a78bfa;">V</div>' : ''}
+                            </div>
+                            <div style="background: white; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                                <div style="font-size: 9px; font-weight: 700; color: #1f2937; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
+                                <div style="font-size: 8px; color: #374151; font-weight: 600; margin-top: 1px;">${positionNames[player.position]}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+        });
+        
+        html += `
+                </div>
+                
+                <!-- Bench -->
+                <div style="background: #f3f4f6; padding: 10px 8px; border-radius: 6px; margin-top: 12px;">
+                    <div style="font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">BENCH</div>
+                    <div style="display: flex; gap: 8px; overflow-x: auto; justify-content: center;">
+        `;
+        
+        bench.forEach((player, index) => {
+            html += `
+                <div style="flex: 0 0 auto; width: 65px; background: white; border-radius: 6px; padding: 6px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                    <div style="width: 35px; height: 35px; margin: 0 auto 3px; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); border-radius: 8px 8px 12px 12px; display: flex; align-items: center; justify-content: center;">
+                        <img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo?.replace('.jpg', '').replace('.png', '') || '0'}.png" 
+                             style="width: 26px; height: 26px; object-fit: cover; border-radius: 50%; background: white;"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <div style="font-size: 9px; font-weight: 600; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
+                    <div style="font-size: 8px; color: #6b7280;">${positionNames[player.position]}</div>
+                </div>
+            `;
+        });
+        
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        detailContent.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Error showing team submission detail:', error);
+        this.showToast('Failed to load submission details', 'error');
+        // Close the modal
+        const modal = document.querySelector('.modal');
+        if (modal) modal.remove();
     }
 };
 
