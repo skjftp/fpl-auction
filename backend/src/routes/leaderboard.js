@@ -2,6 +2,83 @@ const express = require('express');
 const router = express.Router();
 const { collections } = require('../models/database');
 const { authenticateToken } = require('../middleware/auth');
+const axios = require('axios');
+
+// Helper function to calculate points for a submission
+async function calculateSubmissionPoints(submission, livePointsData) {
+    let totalPoints = 0;
+    const starting11Points = [];
+    const benchPoints = [];
+    
+    // Get player details for club multiplier calculation
+    const allPlayerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
+    const playerClubs = {};
+    
+    // Fetch player club info if we have a club multiplier
+    if (submission.club_multiplier_id) {
+        const playerPromises = allPlayerIds.map(playerId => 
+            collections.fplPlayers.doc(playerId.toString()).get()
+        );
+        const playerDocs = await Promise.all(playerPromises);
+        playerDocs.forEach(doc => {
+            if (doc.exists) {
+                const player = doc.data();
+                playerClubs[player.id] = player.team_id;
+            }
+        });
+    }
+    
+    // Calculate starting 11 points
+    for (const playerId of submission.starting_11 || []) {
+        const playerPoints = livePointsData[playerId]?.points || 0;
+        let finalPoints = playerPoints;
+        
+        // Apply captain/vice-captain multiplier
+        if (playerId === submission.captain_id) {
+            const multiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
+            finalPoints = playerPoints * multiplier;
+        } else if (playerId === submission.vice_captain_id && submission.captain_played === false) {
+            finalPoints = playerPoints * 2;
+        }
+        
+        // Apply club multiplier (1.5x for players from selected club)
+        if (submission.club_multiplier_id && playerClubs[playerId] == submission.club_multiplier_id) {
+            finalPoints = finalPoints * 1.5;
+        }
+        
+        starting11Points.push({ playerId, points: finalPoints });
+        totalPoints += finalPoints;
+    }
+    
+    // Calculate bench points if bench boost is active
+    if (submission.chip_used === 'bench_boost') {
+        for (const playerId of submission.bench || []) {
+            const playerPoints = livePointsData[playerId]?.points || 0;
+            let finalPoints = playerPoints;
+            
+            // Apply club multiplier to bench players too
+            if (submission.club_multiplier_id && playerClubs[playerId] == submission.club_multiplier_id) {
+                finalPoints = finalPoints * 1.5;
+            }
+            
+            benchPoints.push({ playerId, points: finalPoints });
+            totalPoints += finalPoints;
+        }
+    }
+    
+    // Apply chip effects
+    if (submission.chip_used === 'double_up') {
+        totalPoints = totalPoints * 2;
+    } else if (submission.chip_used === 'negative_chip') {
+        totalPoints = Math.floor(totalPoints / 2);
+    }
+    
+    return {
+        total: Math.floor(totalPoints), // Round down final total
+        starting11: starting11Points,
+        bench: benchPoints
+    };
+}
 
 // Get leaderboard for a specific gameweek or overall
 router.get('/:gameweek', authenticateToken, async (req, res) => {
@@ -21,7 +98,7 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
         });
 
         if (gameweek === 'overall') {
-            // Calculate overall points
+            // Calculate overall points with fresh live data for current gameweek
             const leaderboard = [];
             
             // Get current gameweek
@@ -31,39 +108,76 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 currentGameweek = currentGwDoc.docs[0].data().gameweek;
             }
             
+            // Fetch live points for current gameweek
+            let livePointsData = {};
+            try {
+                const cacheKey = `live_points_gw${currentGameweek}`;
+                const cached = global.livePointsCache && global.livePointsCache[cacheKey];
+                
+                if (cached && (Date.now() - cached.timestamp < 60000)) {
+                    livePointsData = cached.data.points || {};
+                } else {
+                    const response = await axios.get(`https://fantasy.premierleague.com/api/event/${currentGameweek}/live/`);
+                    if (response.data && response.data.elements) {
+                        Object.keys(response.data.elements).forEach(playerId => {
+                            const playerData = response.data.elements[playerId];
+                            if (playerData && playerData.stats) {
+                                livePointsData[playerId] = {
+                                    points: playerData.stats.total_points || 0,
+                                    minutes: playerData.stats.minutes || 0
+                                };
+                            }
+                        });
+                        
+                        // Cache it
+                        if (!global.livePointsCache) {
+                            global.livePointsCache = {};
+                        }
+                        global.livePointsCache[cacheKey] = {
+                            data: { points: livePointsData },
+                            timestamp: Date.now()
+                        };
+                    }
+                }
+            } catch (error) {
+                console.log('Could not fetch live points for current gameweek:', error.message);
+            }
+            
             for (const team of teams) {
-                // Get all gameweek points for this team
+                // Get historical points (all gameweeks except current)
                 const pointsSnapshot = await collections.gameweekPoints
                     .where('team_id', '==', team.id)
+                    .where('gameweek', '<', currentGameweek)
                     .get();
                 
                 let totalPoints = 0;
                 let gameweeksPlayed = 0;
-                let latestGameweekPoints = 0;
-                let latestChipUsed = null;
                 
                 pointsSnapshot.forEach(doc => {
                     const points = doc.data();
                     totalPoints += points.total_points || 0;
                     gameweeksPlayed++;
-                    
-                    // Track latest gameweek points and chip
-                    if (points.gameweek === currentGameweek) {
-                        latestGameweekPoints = points.total_points || 0;
-                        latestChipUsed = points.chip_used || null;
-                    }
                 });
                 
-                // If no points for current gameweek, check submission for chip
-                if (latestChipUsed === null) {
-                    const submissionDoc = await collections.gameweekTeams
-                        .doc(`${team.id}_gw${currentGameweek}`)
-                        .get();
+                // Calculate live points for current gameweek
+                let latestGameweekPoints = 0;
+                let latestChipUsed = null;
+                
+                const submissionDoc = await collections.gameweekTeams
+                    .doc(`${team.id}_gw${currentGameweek}`)
+                    .get();
+                
+                if (submissionDoc.exists && Object.keys(livePointsData).length > 0) {
+                    const submission = submissionDoc.data();
+                    latestChipUsed = submission.chip_used || null;
                     
-                    if (submissionDoc.exists) {
-                        const submission = submissionDoc.data();
-                        latestChipUsed = submission.chip_used || null;
-                    }
+                    // Calculate points with live data
+                    const calculatedPoints = await calculateSubmissionPoints(submission, livePointsData);
+                    latestGameweekPoints = calculatedPoints.total;
+                    
+                    // Add to total
+                    totalPoints += latestGameweekPoints;
+                    gameweeksPlayed++;
                 }
                 
                 leaderboard.push({
@@ -91,23 +205,85 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
             
             res.json(leaderboard);
         } else {
-            // Get specific gameweek points
+            // Get specific gameweek points with fresh live data
             const gwNumber = parseInt(gameweek);
             const leaderboard = [];
             
+            // Check if this is the current gameweek
+            const currentGwDoc = await collections.gameweekInfo.where('is_current', '==', true).limit(1).get();
+            let currentGameweek = 1;
+            let isCurrentGw = false;
+            if (!currentGwDoc.empty) {
+                currentGameweek = currentGwDoc.docs[0].data().gameweek;
+                isCurrentGw = (gwNumber === currentGameweek);
+            }
+            
+            // Fetch live points if this is the current gameweek
+            let livePointsData = {};
+            if (isCurrentGw) {
+                try {
+                    const cacheKey = `live_points_gw${gwNumber}`;
+                    const cached = global.livePointsCache && global.livePointsCache[cacheKey];
+                    
+                    if (cached && (Date.now() - cached.timestamp < 60000)) {
+                        livePointsData = cached.data.points || {};
+                    } else {
+                        const response = await axios.get(`https://fantasy.premierleague.com/api/event/${gwNumber}/live/`);
+                        if (response.data && response.data.elements) {
+                            Object.keys(response.data.elements).forEach(playerId => {
+                                const playerData = response.data.elements[playerId];
+                                if (playerData && playerData.stats) {
+                                    livePointsData[playerId] = {
+                                        points: playerData.stats.total_points || 0,
+                                        minutes: playerData.stats.minutes || 0
+                                    };
+                                }
+                            });
+                            
+                            // Cache it
+                            if (!global.livePointsCache) {
+                                global.livePointsCache = {};
+                            }
+                            global.livePointsCache[cacheKey] = {
+                                data: { points: livePointsData },
+                                timestamp: Date.now()
+                            };
+                        }
+                    }
+                } catch (error) {
+                    console.log('Could not fetch live points for gameweek:', error.message);
+                }
+            }
+            
             for (const team of teams) {
-                // Get points for this gameweek
-                const pointsDoc = await collections.gameweekPoints
-                    .doc(`${team.id}_gw${gwNumber}`)
-                    .get();
-                
                 let gwPoints = 0;
                 let chipUsed = null;
                 
-                if (pointsDoc.exists) {
-                    const data = pointsDoc.data();
-                    gwPoints = data.total_points || 0;
-                    chipUsed = data.chip_used || null;
+                if (isCurrentGw && Object.keys(livePointsData).length > 0) {
+                    // Calculate live points for current gameweek
+                    const submissionDoc = await collections.gameweekTeams
+                        .doc(`${team.id}_gw${gwNumber}`)
+                        .get();
+                    
+                    if (submissionDoc.exists) {
+                        const submission = submissionDoc.data();
+                        chipUsed = submission.chip_used || null;
+                        
+                        // Calculate points with live data
+                        const calculatedPoints = await calculateSubmissionPoints(submission, livePointsData);
+                        gwPoints = calculatedPoints.total;
+                    }
+                } else {
+                    // For past gameweeks, use stored points
+                    const pointsDoc = await collections.gameweekPoints
+                        .doc(`${team.id}_gw${gwNumber}`)
+                        .get();
+                    
+                    if (pointsDoc.exists) {
+                        const data = pointsDoc.data();
+                        gwPoints = data.total_points || 0;
+                        chipUsed = data.chip_used || null;
+                    }
                 }
                 
                 // Get previous gameweek rank for movement
