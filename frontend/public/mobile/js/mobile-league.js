@@ -38,7 +38,30 @@ class MobileLeague {
             const teams = await window.mobileAPI.getAllTeams();
             this.teams = teams;
             
-            // Get points for current gameweek
+            // Try to get live standings with calculated points
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/api/submissions/gameweek/${this.currentGameweek}/standings`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.standings && data.standings.length > 0) {
+                        // Use live standings if available
+                        this.leaderboardData = data.standings.map(standing => ({
+                            team_id: standing.team_id,
+                            team_name: standing.team_name,
+                            gameweek_points: standing.gameweek_points,
+                            total_points: standing.total_points || 0,
+                            chip_used: standing.chip_used,
+                            rank: standing.rank
+                        }));
+                        this.renderLeaderboard();
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('Live standings not available yet');
+            }
+            
+            // Fallback to regular leaderboard
             const leaderboard = await window.mobileAPI.getLeaderboard(this.currentGameweek);
             this.leaderboardData = leaderboard || [];
             
@@ -171,26 +194,15 @@ class MobileLeague {
     }
 
     async viewTeam(teamId) {
-        // Check if deadline has passed
-        if (!this.deadlinePassed && this.currentGameweek === 1) {
-            window.mobileApp.showToast('You can view other teams only after the deadline', 'warning');
-            return;
+        // Use the new team viewer
+        if (window.mobileTeamViewer) {
+            window.mobileTeamViewer.show(teamId, this.currentGameweek);
+        } else {
+            // Fallback to old modal
+            const modal = document.getElementById('teamViewModal');
+            modal.classList.remove('hidden');
+            await this.loadTeamDetails(teamId);
         }
-        
-        // Check if viewing future gameweek
-        const gwInfo = await window.mobileAPI.getCurrentGameweek();
-        const actualCurrentGW = gwInfo.gameweek;
-        if (this.currentGameweek > actualCurrentGW) {
-            window.mobileApp.showToast('Cannot view teams for future gameweeks', 'warning');
-            return;
-        }
-        
-        // Show modal
-        const modal = document.getElementById('teamViewModal');
-        modal.classList.remove('hidden');
-        
-        // Load team details
-        await this.loadTeamDetails(teamId);
     }
 
     async loadTeamDetails(teamId) {

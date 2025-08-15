@@ -78,6 +78,35 @@ router.post('/sync-fpl-data', async (req, res) => {
   }
 });
 
+// Get single player by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const playerId = req.params.id;
+    const playerDoc = await collections.fplPlayers.doc(playerId.toString()).get();
+    
+    if (!playerDoc.exists) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+    
+    const player = playerDoc.data();
+    
+    // Get club info
+    if (player.team_id) {
+      const clubDoc = await collections.fplClubs.doc(player.team_id.toString()).get();
+      if (clubDoc.exists) {
+        const club = clubDoc.data();
+        player.team_name = club.name;
+        player.team_short_name = club.short_name;
+      }
+    }
+    
+    res.json(player);
+  } catch (error) {
+    console.error('Error fetching player:', error);
+    res.status(500).json({ error: 'Failed to fetch player' });
+  }
+});
+
 // Get all players with filters
 router.get('/', async (req, res) => {
   try {

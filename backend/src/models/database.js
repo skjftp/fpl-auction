@@ -19,7 +19,8 @@ const collections = {
   drafts: db.collection('drafts'),  // New collection for managing multiple drafts
   gameweekTeams: db.collection('gameweekTeams'),  // Team submissions for each gameweek
   gameweekPoints: db.collection('gameweekPoints'),  // Points calculation for each gameweek
-  gameweekInfo: db.collection('gameweekInfo')  // Gameweek information and deadlines
+  gameweekInfo: db.collection('gameweekInfo'),  // Gameweek information and deadlines
+  teamSubmissions: db.collection('gameweekTeams')  // Alias for gameweekTeams used in submissions
 };
 
 async function initializeDatabase() {

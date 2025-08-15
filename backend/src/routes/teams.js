@@ -98,72 +98,100 @@ router.get('/:teamId/squad', async (req, res) => {
     
     console.log('Squad snapshot size:', squadSnapshot.size);
     
-    const players = [];
-    const clubs = [];
+    // Collect all player and club IDs first
+    const playerIds = [];
+    const clubIds = [];
+    const squadItems = [];
     let totalSpent = 0;
     
-    for (const doc of squadSnapshot.docs) {
+    squadSnapshot.docs.forEach(doc => {
       const squadItem = doc.data();
-      const pricePaid = squadItem.price_paid || 0;
-      totalSpent += pricePaid;
+      squadItems.push(squadItem);
+      totalSpent += squadItem.price_paid || 0;
       
       if (squadItem.player_id) {
-        try {
-          // Get player details
-          const playerDoc = await collections.fplPlayers.doc(squadItem.player_id.toString()).get();
-          if (playerDoc.exists) {
-            const player = playerDoc.data();
+        playerIds.push(squadItem.player_id.toString());
+      } else if (squadItem.club_id) {
+        clubIds.push(squadItem.club_id.toString());
+      }
+    });
+    
+    // Batch fetch all players and clubs
+    const playerPromises = playerIds.map(id => 
+      collections.fplPlayers.doc(id).get()
+    );
+    const clubPromises = clubIds.map(id => 
+      collections.fplClubs.doc(id).get()
+    );
+    
+    const [playerDocs, clubDocs] = await Promise.all([
+      Promise.all(playerPromises),
+      Promise.all(clubPromises)
+    ]);
+    
+    // Create maps for quick lookup
+    const playerMap = new Map();
+    playerDocs.forEach((doc, index) => {
+      if (doc.exists) {
+        playerMap.set(playerIds[index], doc.data());
+      }
+    });
+    
+    const clubMap = new Map();
+    clubDocs.forEach((doc, index) => {
+      if (doc.exists) {
+        clubMap.set(clubIds[index], doc.data());
+      }
+    });
+    
+    // Process squad items with the fetched data
+    const players = [];
+    const clubs = [];
+    
+    squadItems.forEach(squadItem => {
+      if (squadItem.player_id) {
+        const player = playerMap.get(squadItem.player_id.toString());
+        if (player) {
+          // Add fixture info for the player
+          const playerTeamId = player.team_id || player.team;
+          let opponent = null;
+          let isHome = null;
+          
+          const fixture = fixtures.find(f => 
+            f.team_h === playerTeamId || f.team_a === playerTeamId
+          );
+          
+          if (fixture) {
+            isHome = fixture.team_h === playerTeamId;
+            const opponentId = isHome ? fixture.team_a : fixture.team_h;
+            const opponentTeam = teams[opponentId];
             
-            // Add fixture info for the player
-            const playerTeamId = player.team_id || player.team;
-            let opponent = null;
-            let isHome = null;
-            
-            // Find the fixture for this player's team
-            const fixture = fixtures.find(f => 
-              f.team_h === playerTeamId || f.team_a === playerTeamId
-            );
-            
-            if (fixture) {
-              isHome = fixture.team_h === playerTeamId;
-              const opponentId = isHome ? fixture.team_a : fixture.team_h;
-              const opponentTeam = teams[opponentId];
-              
-              opponent = {
-                id: opponentId,
-                name: opponentTeam?.name || '',
-                short_name: opponentTeam?.short_name || '',
-                is_home: isHome
-              };
-            }
-            
-            players.push({
-              ...player,
-              price_paid: pricePaid,
-              acquired_at: squadItem.acquired_at,
-              fixture: opponent
-            });
+            opponent = {
+              id: opponentId,
+              name: opponentTeam?.name || '',
+              short_name: opponentTeam?.short_name || '',
+              is_home: isHome
+            };
           }
-        } catch (err) {
-          console.error('Error fetching player details:', err);
+          
+          players.push({
+            ...player,
+            price_paid: squadItem.price_paid || 0,
+            acquired_at: squadItem.acquired_at,
+            fixture: opponent
+          });
         }
       } else if (squadItem.club_id) {
-        // Get club details
-        try {
-          const clubDoc = await collections.fplClubs.doc(squadItem.club_id.toString()).get();
-          if (clubDoc.exists) {
-            const club = clubDoc.data();
-            clubs.push({
-              ...club,
-              price_paid: pricePaid,
-              acquired_at: squadItem.acquired_at
-            });
-          }
-        } catch (err) {
-          console.error('Error fetching club details:', err);
+        const club = clubMap.get(squadItem.club_id.toString());
+        if (club) {
+          clubs.push({
+            ...club,
+            price_paid: squadItem.price_paid || 0,
+            acquired_at: squadItem.acquired_at
+          });
         }
       }
-    }
+    })
     
     // Count by position (with safety checks)
     const counts = {
@@ -207,41 +235,59 @@ router.get('/:teamId/squad', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const draftId = await getActiveDraftId();
-    const teamsSnapshot = await collections.teams.get();
-    const teams = [];
     
-    for (const doc of teamsSnapshot.docs) {
+    // Fetch all teams and all squad items in parallel
+    const [teamsSnapshot, allSquadsSnapshot] = await Promise.all([
+      collections.teams.get(),
+      collections.teamSquads.where('draft_id', '==', draftId).get()
+    ]);
+    
+    // Create a map of team squads for quick lookup
+    const teamSquadsMap = new Map();
+    
+    allSquadsSnapshot.forEach(doc => {
+      const item = doc.data();
+      const teamId = item.team_id;
+      
+      if (!teamSquadsMap.has(teamId)) {
+        teamSquadsMap.set(teamId, {
+          items: [],
+          playerCount: 0,
+          clubCount: 0,
+          totalSpent: 0
+        });
+      }
+      
+      const teamData = teamSquadsMap.get(teamId);
+      teamData.items.push(item);
+      
+      if (item.player_id) {
+        teamData.playerCount++;
+      } else if (item.club_id) {
+        teamData.clubCount++;
+      }
+      teamData.totalSpent += item.price_paid || 0;
+    });
+    
+    // Build teams array with squad data
+    const teams = teamsSnapshot.docs.map(doc => {
       const team = doc.data();
+      const squadData = teamSquadsMap.get(team.id) || {
+        items: [],
+        playerCount: 0,
+        clubCount: 0,
+        totalSpent: 0
+      };
       
-      // Get squad details for active draft
-      const squadSnapshot = await collections.teamSquads
-        .where('team_id', '==', team.id)
-        .where('draft_id', '==', draftId)
-        .get();
-      
-      let playerCount = 0;
-      let clubCount = 0;
-      let totalSpent = 0;
-      
-      squadSnapshot.forEach(doc => {
-        const item = doc.data();
-        if (item.player_id) {
-          playerCount++;
-        } else if (item.club_id) {
-          clubCount++;
-        }
-        totalSpent += item.price_paid || 0;
-      });
-      
-      teams.push({
+      return {
         ...team,
-        squad_count: squadSnapshot.size,
-        player_count: playerCount,
-        club_count: clubCount,
-        total_spent: totalSpent,
+        squad_count: squadData.items.length,
+        player_count: squadData.playerCount,
+        club_count: squadData.clubCount,
+        total_spent: squadData.totalSpent,
         total_points: 0 // TODO: Calculate from gameweeks
-      });
-    }
+      };
+    });
     
     // Sort by team id to maintain consistent order
     teams.sort((a, b) => a.id - b.id);
