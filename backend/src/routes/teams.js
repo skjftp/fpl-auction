@@ -87,8 +87,38 @@ router.get('/:teamId/squad', async (req, res) => {
     const draftId = await getActiveDraftId();
     console.log('Getting squad for team:', teamId, 'in draft:', draftId);
     
-    // Get current gameweek fixtures
-    const { fixtures, teams } = await getCurrentGameweekFixtures();
+    // Get fixtures for the requested gameweek (default to current/next)
+    // If forGameweek query param is provided, use that specific gameweek
+    const forGameweek = req.query.forGameweek ? parseInt(req.query.forGameweek) : null;
+    let fixtures = [];
+    let teams = {};
+    
+    if (forGameweek) {
+      // Fetch fixtures for specific gameweek
+      try {
+        const bootstrapResponse = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
+        const fixturesResponse = await axios.get(`https://fantasy.premierleague.com/api/fixtures/?event=${forGameweek}`);
+        
+        // Create team names map
+        teams = {};
+        bootstrapResponse.data.teams.forEach(team => {
+          teams[team.id] = {
+            name: team.name,
+            short_name: team.short_name
+          };
+        });
+        
+        fixtures = fixturesResponse.data;
+        console.log(`Fetched ${fixtures.length} fixtures for gameweek ${forGameweek}`);
+      } catch (error) {
+        console.error(`Error fetching fixtures for gameweek ${forGameweek}:`, error.message);
+      }
+    } else {
+      // Use default logic for current/next gameweek
+      const result = await getCurrentGameweekFixtures();
+      fixtures = result.fixtures;
+      teams = result.teams;
+    }
     
     // Get squad for this team in active draft
     const squadSnapshot = await collections.teamSquads

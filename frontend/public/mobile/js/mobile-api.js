@@ -133,9 +133,12 @@ class MobileAPI {
         }
     }
 
-    async getTeamSquad(teamId) {
+    async getTeamSquad(teamId, forGameweek = null) {
         try {
-            const response = await fetch(`${this.baseURL}/teams/${teamId}/squad`, {
+            const url = forGameweek 
+                ? `${this.baseURL}/teams/${teamId}/squad?forGameweek=${forGameweek}`
+                : `${this.baseURL}/teams/${teamId}/squad`;
+            const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${this.token}`
                 }
