@@ -725,21 +725,61 @@ class MobileApp {
         try {
             if (!this.currentUser?.id) return;
             
+            // Show loader while loading
+            this.showTeamLoader();
+            
             const squad = await window.mobileAPI.getTeamSquad(this.currentUser.id);
             this.renderTeamSquad(squad);
         } catch (error) {
             console.error('Error loading team squad:', error);
+            // Show error state
+            const container = document.getElementById('teamSquad');
+            if (container) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load team squad</div>';
+            }
+        }
+    }
+    
+    showTeamLoader() {
+        const container = document.getElementById('teamSquad');
+        if (container) {
+            container.innerHTML = `
+                <div class="loader-container" style="display: flex; justify-content: center; align-items: center; height: 400px;">
+                    <div class="loader" style="
+                        border: 4px solid #f3f3f3;
+                        border-top: 4px solid #00ff87;
+                        border-radius: 50%;
+                        width: 40px;
+                        height: 40px;
+                        animation: spin 1s linear infinite;
+                    "></div>
+                </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
         }
     }
     
     async loadSelectedTeamSquad(teamId) {
         try {
+            // Show loader while loading
+            this.showTeamLoader();
+            
             const selectedTeamId = teamId || this.currentUser.id;
             const squad = await window.mobileAPI.getTeamSquad(selectedTeamId);
             this.renderTeamSquad(squad);
         } catch (error) {
             console.error('Error loading selected team squad:', error);
             this.showToast('Failed to load team squad', 'error');
+            // Show error state
+            const container = document.getElementById('teamSquad');
+            if (container) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">Failed to load team squad</div>';
+            }
         }
     }
 

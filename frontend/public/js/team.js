@@ -90,6 +90,9 @@ class TeamManager {
                 }
             }
             
+            // Show loader while loading
+            this.showLoader();
+            
             const squad = await window.api.getTeamSquad(this.currentUser.id);
             this.renderTeamSquad(squad);
         } catch (error) {
@@ -100,12 +103,26 @@ class TeamManager {
     
     async loadSelectedTeamSquad(teamId) {
         try {
+            // Show loader while loading
+            this.showLoader();
+            
             const selectedTeamId = teamId || this.currentUser.id;
             const squad = await window.api.getTeamSquad(selectedTeamId);
             this.renderTeamSquad(squad);
         } catch (error) {
             console.error('Error loading selected team squad:', error);
             this.renderError();
+        }
+    }
+    
+    showLoader() {
+        const container = document.getElementById('mySquad');
+        if (container) {
+            container.innerHTML = `
+                <div class="flex justify-center items-center h-96">
+                    <div class="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent"></div>
+                </div>
+            `;
         }
     }
 
