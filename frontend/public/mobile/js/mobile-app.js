@@ -832,11 +832,11 @@ class MobileApp {
             const getPlayerImageUrl = () => {
                 if (player.photo) {
                     const photoCode = player.photo.replace('.jpg', '').replace('.png', '');
-                    return `https://resources.premierleague.com/premierleague25/photos/players/250x250/${photoCode}.png`;
+                    return `https://resources.premierleague.com/premierleague25/photos/players/110x140/${photoCode}.png`;
                 } else if (player.code) {
-                    return `https://resources.premierleague.com/premierleague25/photos/players/250x250/${player.code}.png`;
+                    return `https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.code}.png`;
                 } else if (player.id) {
-                    return `https://resources.premierleague.com/premierleague25/photos/players/250x250/${player.id}.png`;
+                    return `https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.id}.png`;
                 }
                 return null;
             };
