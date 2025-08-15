@@ -1817,9 +1817,15 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
         const playerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
         const players = [];
         
-        // Get all players data
-        const allPlayers = await window.mobileAPI.getPlayers();
-        const allClubs = await window.mobileAPI.getClubs();
+        // Cache players and clubs data if not already cached
+        if (!window.cachedPlayers) {
+            window.cachedPlayers = await window.mobileAPI.getPlayers();
+        }
+        if (!window.cachedClubs) {
+            window.cachedClubs = await window.mobileAPI.getClubs();
+        }
+        const allPlayers = window.cachedPlayers;
+        const allClubs = window.cachedClubs;
         
         // Map player IDs to player data
         playerIds.forEach(playerId => {
@@ -2042,9 +2048,11 @@ MobileApp.prototype.viewTeamSubmission = async function(teamId) {
             return;
         }
         
-        // Get team info
-        const teams = await window.mobileAPI.getAllTeams();
-        const team = teams.find(t => t.id === teamId);
+        // Cache teams data if not already cached
+        if (!window.cachedTeams) {
+            window.cachedTeams = await window.mobileAPI.getAllTeams();
+        }
+        const team = window.cachedTeams.find(t => t.id === teamId);
         
         // Show submission in nice pitch view
         await this.showTeamSubmissionDetail(submission, team ? team.name : `Team ${teamId}`);
@@ -2088,9 +2096,15 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         const playerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
         const players = [];
         
-        // Get all players data
-        const allPlayers = await window.mobileAPI.getPlayers();
-        const allClubs = await window.mobileAPI.getClubs();
+        // Cache players and clubs data if not already cached
+        if (!window.cachedPlayers) {
+            window.cachedPlayers = await window.mobileAPI.getPlayers();
+        }
+        if (!window.cachedClubs) {
+            window.cachedClubs = await window.mobileAPI.getClubs();
+        }
+        const allPlayers = window.cachedPlayers;
+        const allClubs = window.cachedClubs;
         
         // Map player IDs to player data
         playerIds.forEach(playerId => {

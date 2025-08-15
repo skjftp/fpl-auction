@@ -151,7 +151,15 @@ router.get('/submission/:gameweek', authenticateToken, async (req, res) => {
             });
         }
 
-        res.json(doc.data());
+        const data = doc.data();
+        // Convert Firestore Timestamp to ISO string
+        if (data.submitted_at && data.submitted_at.toDate) {
+            data.submitted_at = data.submitted_at.toDate().toISOString();
+        }
+        if (data.updated_at && data.updated_at.toDate) {
+            data.updated_at = data.updated_at.toDate().toISOString();
+        }
+        res.json(data);
     } catch (error) {
         console.error('Error fetching submission:', error);
         res.status(500).json({ error: error.message });
@@ -188,7 +196,15 @@ router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) 
             });
         }
 
-        res.json(doc.data());
+        const data = doc.data();
+        // Convert Firestore Timestamp to ISO string
+        if (data.submitted_at && data.submitted_at.toDate) {
+            data.submitted_at = data.submitted_at.toDate().toISOString();
+        }
+        if (data.updated_at && data.updated_at.toDate) {
+            data.updated_at = data.updated_at.toDate().toISOString();
+        }
+        res.json(data);
     } catch (error) {
         console.error('Error fetching team submission:', error);
         res.status(500).json({ error: error.message });
