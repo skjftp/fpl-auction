@@ -166,7 +166,7 @@ router.get('/submission/:gameweek', authenticateToken, async (req, res) => {
     }
 });
 
-// Get another team's submission for a specific gameweek (only after deadline)
+// Get another team's submission for a specific gameweek WITH player details (optimized)
 router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) => {
     try {
         const gameweek = parseInt(req.params.gameweek);
@@ -204,7 +204,83 @@ router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) 
         if (data.updated_at && data.updated_at.toDate) {
             data.updated_at = data.updated_at.toDate().toISOString();
         }
-        res.json(data);
+        
+        // Fetch player details for the submission
+        const allPlayerIds = [...(data.starting_11 || []), ...(data.bench || [])];
+        const playerPromises = allPlayerIds.map(playerId => 
+            db.collection('fpl_players').doc(playerId.toString()).get()
+        );
+        
+        const playerDocs = await Promise.all(playerPromises);
+        const playerDetails = {};
+        const clubIds = new Set(); // Track unique club IDs for fetching club details
+        
+        playerDocs.forEach(doc => {
+            if (doc.exists) {
+                const player = doc.data();
+                // Only send necessary fields to minimize payload
+                playerDetails[player.id] = {
+                    id: player.id,
+                    web_name: player.web_name,
+                    first_name: player.first_name,
+                    second_name: player.second_name,
+                    position: player.position,
+                    team_id: player.team_id,
+                    photo: player.photo,
+                    total_points: player.total_points
+                };
+                // Collect club IDs
+                if (player.team_id) {
+                    clubIds.add(player.team_id.toString());
+                }
+            }
+        });
+        
+        // Fetch all needed club details in parallel
+        const clubDetailsMap = {};
+        if (clubIds.size > 0) {
+            const clubPromises = Array.from(clubIds).map(clubId => 
+                db.collection('fpl_clubs').doc(clubId).get()
+            );
+            const clubDocs = await Promise.all(clubPromises);
+            clubDocs.forEach(doc => {
+                if (doc.exists) {
+                    const club = doc.data();
+                    clubDetailsMap[club.id] = {
+                        id: club.id,
+                        name: club.name,
+                        short_name: club.short_name
+                    };
+                }
+            });
+        }
+        
+        // Add club multiplier details if set
+        let clubMultiplierDetails = null;
+        if (data.club_multiplier_id) {
+            if (clubDetailsMap[data.club_multiplier_id]) {
+                clubMultiplierDetails = clubDetailsMap[data.club_multiplier_id];
+            } else {
+                // Fetch if not already in map
+                const clubDoc = await db.collection('fpl_clubs').doc(data.club_multiplier_id.toString()).get();
+                if (clubDoc.exists) {
+                    const club = clubDoc.data();
+                    clubMultiplierDetails = {
+                        id: club.id,
+                        name: club.name,
+                        short_name: club.short_name
+                    };
+                }
+            }
+        }
+        
+        // Return submission with player and club details
+        res.json({
+            ...data,
+            player_details: playerDetails,
+            club_details: clubDetailsMap,
+            club_multiplier_details: clubMultiplierDetails
+        });
     } catch (error) {
         console.error('Error fetching team submission:', error);
         res.status(500).json({ error: error.message });

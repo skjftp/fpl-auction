@@ -2140,55 +2140,62 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         `;
         document.body.appendChild(modal);
         
-        // Fetch player and club details
-        const playerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
-        const players = [];
-        
-        // Instead of fetching ALL players, fetch only the ones we need
-        // This is much faster for displaying team submissions
-        const playerPromises = playerIds.map(async (playerId) => {
-            try {
-                // Check if we have this player cached
-                if (window.playerCache && window.playerCache[playerId]) {
-                    return window.playerCache[playerId];
-                }
-                
-                // Fetch individual player (much smaller response)
-                const response = await fetch(`${window.API_BASE_URL}/api/players/${playerId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                
-                if (response.ok) {
-                    const player = await response.json();
-                    // Cache for future use
-                    if (!window.playerCache) window.playerCache = {};
-                    window.playerCache[playerId] = player;
-                    return player;
-                }
-            } catch (error) {
-                console.error(`Failed to fetch player ${playerId}:`, error);
-            }
-            return null;
-        });
-        
-        // Fetch players in parallel (much faster)
-        const fetchedPlayers = await Promise.all(playerPromises);
-        fetchedPlayers.forEach(player => {
-            if (player) players.push(player);
-        });
-        
-        // Only fetch clubs if needed (small dataset, ok to cache)
-        if (!window.cachedClubs) {
-            window.cachedClubs = await window.mobileAPI.getClubs();
-        }
-        const allClubs = window.cachedClubs;
-        
-        // Find club details
+        // Use the optimized endpoint data if available
+        let players = [];
         let clubMultiplier = null;
-        if (submission.club_multiplier_id) {
-            clubMultiplier = allClubs.find(c => c.id === submission.club_multiplier_id);
+        
+        if (submission.player_details && submission.club_details) {
+            // We already have player and club details from the optimized endpoint
+            const playerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
+            players = playerIds.map(id => submission.player_details[id]).filter(p => p);
+            
+            // Get club multiplier details
+            if (submission.club_multiplier_id) {
+                clubMultiplier = submission.club_multiplier_details || 
+                                submission.club_details[submission.club_multiplier_id];
+            }
+        } else {
+            // Fallback to old method (should not happen with new endpoint)
+            const playerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
+            
+            // Fetch players in parallel 
+            const playerPromises = playerIds.map(async (playerId) => {
+                try {
+                    // Check if we have this player cached
+                    if (window.playerCache && window.playerCache[playerId]) {
+                        return window.playerCache[playerId];
+                    }
+                    
+                    // Fetch individual player
+                    const response = await fetch(`${window.API_BASE_URL}/api/players/${playerId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const player = await response.json();
+                        // Cache for future use
+                        if (!window.playerCache) window.playerCache = {};
+                        window.playerCache[playerId] = player;
+                        return player;
+                    }
+                } catch (error) {
+                    console.error(`Failed to fetch player ${playerId}:`, error);
+                }
+                return null;
+            });
+            
+            const fetchedPlayers = await Promise.all(playerPromises);
+            players = fetchedPlayers.filter(p => p);
+            
+            // Get club details
+            if (submission.club_multiplier_id && !clubMultiplier) {
+                if (!window.cachedClubs) {
+                    window.cachedClubs = await window.mobileAPI.getClubs();
+                }
+                clubMultiplier = window.cachedClubs.find(c => c.id === submission.club_multiplier_id);
+            }
         }
         
         // Separate starting 11 and bench
