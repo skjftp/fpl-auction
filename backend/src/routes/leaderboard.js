@@ -145,9 +145,9 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
             
             for (const team of teams) {
                 // Get historical points (all gameweeks except current)
+                // Note: We need to get all points and filter in memory to avoid index requirement
                 const pointsSnapshot = await collections.gameweekPoints
                     .where('team_id', '==', team.id)
-                    .where('gameweek', '<', currentGameweek)
                     .get();
                 
                 let totalPoints = 0;
@@ -155,8 +155,11 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 
                 pointsSnapshot.forEach(doc => {
                     const points = doc.data();
-                    totalPoints += points.total_points || 0;
-                    gameweeksPlayed++;
+                    // Only include gameweeks before the current one (historical points)
+                    if (points.gameweek < currentGameweek) {
+                        totalPoints += points.total_points || 0;
+                        gameweeksPlayed++;
+                    }
                 });
                 
                 // Calculate live points for current gameweek
