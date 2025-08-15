@@ -1972,7 +1972,7 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                             </div>
                             <div style="background: white; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                                 <div style="font-size: 9px; font-weight: 700; color: #1f2937; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
-                                <div style="font-size: ${displayPoints > 0 ? '10px' : '9px'}; color: ${displayPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${displayPoints % 1 === 0 ? displayPoints : displayPoints.toFixed(3)}pts</div>
+                                <div style="font-size: ${displayPoints > 0 ? '10px' : '9px'}; color: ${displayPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${displayPoints % 1 === 0 ? displayPoints : parseFloat(displayPoints.toFixed(3))}pts</div>
                             </div>
                         </div>
                     `;
@@ -2013,7 +2013,7 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                              onerror="this.style.display='none'">
                     </div>
                     <div style="font-size: 9px; font-weight: 600; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
-                    <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${benchPoints % 1 === 0 ? benchPoints : benchPoints.toFixed(3)}pts</div>
+                    <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${benchPoints % 1 === 0 ? benchPoints : parseFloat(benchPoints.toFixed(3))}pts</div>
                 </div>
             `;
         });
@@ -2387,7 +2387,7 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                             </div>
                             <div style="background: white; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                                 <div style="font-size: 9px; font-weight: 700; color: #1f2937; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
-                                <div style="font-size: ${displayPoints > 0 ? '10px' : '9px'}; color: ${displayPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${displayPoints % 1 === 0 ? displayPoints : displayPoints.toFixed(3)}pts</div>
+                                <div style="font-size: ${displayPoints > 0 ? '10px' : '9px'}; color: ${displayPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${displayPoints % 1 === 0 ? displayPoints : parseFloat(displayPoints.toFixed(3))}pts</div>
                             </div>
                         </div>
                     `;
@@ -2428,7 +2428,7 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                              onerror="this.style.display='none'">
                     </div>
                     <div style="font-size: 9px; font-weight: 600; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
-                    <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${benchPoints % 1 === 0 ? benchPoints : benchPoints.toFixed(3)}pts</div>
+                    <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${benchPoints % 1 === 0 ? benchPoints : parseFloat(benchPoints.toFixed(3))}pts</div>
                 </div>
             `;
         });
