@@ -2013,19 +2013,89 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
 
 MobileApp.prototype.viewTeamSubmission = async function(teamId) {
     try {
-        // Get current gameweek
-        const gwInfo = await window.mobileAPI.getCurrentGameweek();
-        const currentGameweek = gwInfo.gameweek || 1;
-        
-        // Use the team viewer to show the team
-        if (window.mobileTeamViewer) {
-            window.mobileTeamViewer.show(teamId, currentGameweek);
-        } else {
-            this.showToast('Team viewer not available', 'error');
-        }
+        // For now, show the team's current squad
+        // Team submissions will be available after gameweek deadline
+        await this.showTeamSquad(teamId);
     } catch (error) {
-        console.error('Error viewing team submission:', error);
+        console.error('Error viewing team:', error);
         this.showToast('Failed to load team', 'error');
+    }
+};
+
+MobileApp.prototype.getPositionName = function(position) {
+    const positions = {
+        1: 'GKP',
+        2: 'DEF', 
+        3: 'MID',
+        4: 'FWD'
+    };
+    return positions[position] || 'Unknown';
+};
+
+MobileApp.prototype.showTeamSquad = async function(teamId) {
+    try {
+        const squadData = await window.mobileAPI.getTeamSquad(teamId);
+        const teams = await window.mobileAPI.getAllTeams();
+        const team = teams.find(t => t.id === teamId);
+        
+        // Create modal to show team squad
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3>${team ? team.name : `Team ${teamId}`}</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="squad-summary">
+                        <p><strong>Players:</strong> ${squadData.players ? squadData.players.length : 0}/15</p>
+                        <p><strong>Clubs:</strong> ${squadData.clubs ? squadData.clubs.length : 0}/2</p>
+                        <p><strong>Budget Remaining:</strong> <span class="currency-j">J</span>${squadData.budget_remaining || 0}</p>
+                    </div>
+                    
+                    ${squadData.players && squadData.players.length > 0 ? `
+                        <div class="squad-section">
+                            <h4>Players</h4>
+                            <div class="squad-list">
+                                ${squadData.players.map(player => `
+                                    <div class="squad-item">
+                                        <div class="player-info">
+                                            <span class="player-name">${player.web_name || player.name}</span>
+                                            <span class="player-details">${this.getPositionName(player.position)} - ${player.team_name || ''}</span>
+                                        </div>
+                                        <span class="player-price"><span class="currency-j">J</span>${player.price_paid || 0}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : '<p>No players in squad</p>'}
+                    
+                    ${squadData.clubs && squadData.clubs.length > 0 ? `
+                        <div class="squad-section">
+                            <h4>Clubs</h4>
+                            <div class="squad-list">
+                                ${squadData.clubs.map(club => `
+                                    <div class="squad-item">
+                                        <span class="club-name">${club.name || club.club_name}</span>
+                                        <span class="club-price"><span class="currency-j">J</span>${club.price_paid || 0}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Apply currency formatting
+        window.applyCurrencyFormatting();
+        
+    } catch (error) {
+        console.error('Error loading team squad:', error);
+        this.showToast('Failed to load team squad', 'error');
     }
 };
 

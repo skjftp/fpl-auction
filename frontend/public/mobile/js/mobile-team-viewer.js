@@ -49,21 +49,31 @@ class MobileTeamViewer {
     }
     
     async fetchSubmission(teamId, gameweek) {
-        const response = await fetch(`${window.API_BASE_URL}/api/submissions/team/${teamId}/gameweek/${gameweek}`);
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to fetch submission');
+        // Use existing gameweek-teams endpoint which works
+        const submission = await window.mobileAPI.getTeamSubmission(gameweek, teamId);
+        if (!submission) {
+            throw new Error('No submission found for this gameweek');
         }
-        return response.json();
+        
+        // Get team info
+        const teams = await window.mobileAPI.getAllTeams();
+        const team = teams.find(t => t.id === teamId);
+        
+        return {
+            submission,
+            team: team ? { id: team.id, name: team.name } : null
+        };
     }
     
     async fetchLivePoints(gameweek) {
-        const response = await fetch(`${window.API_BASE_URL}/api/submissions/gameweek/${gameweek}/live`);
-        if (!response.ok) {
+        try {
+            // For now, return empty as live points aren't available yet
+            // This will be implemented when FPL API is available
+            return { elements: {} };
+        } catch (error) {
             console.error('Failed to fetch live points');
             return { elements: {} };
         }
-        return response.json();
     }
     
     async fetchPlayerDetails() {
@@ -72,20 +82,22 @@ class MobileTeamViewer {
             ...(this.submission.bench || [])
         ];
         
-        // Fetch all player details in parallel
-        const promises = allPlayerIds.map(async (playerId) => {
-            try {
-                const response = await fetch(`${window.API_BASE_URL}/api/players/${playerId}`);
-                if (response.ok) {
-                    const player = await response.json();
-                    this.playerData.set(playerId, player);
-                }
-            } catch (error) {
-                console.error(`Failed to fetch player ${playerId}:`, error);
+        // Get team squad data which includes all player details
+        try {
+            const currentUser = window.mobileAPI.getCurrentUser();
+            const squadData = await window.mobileAPI.getTeamSquad(this.currentTeamId);
+            
+            if (squadData && squadData.players) {
+                // Map all players by ID for quick lookup
+                squadData.players.forEach(player => {
+                    if (allPlayerIds.includes(player.id)) {
+                        this.playerData.set(player.id, player);
+                    }
+                });
             }
-        });
-        
-        await Promise.all(promises);
+        } catch (error) {
+            console.error('Failed to fetch player details:', error);
+        }
     }
     
     createModal() {
