@@ -49,18 +49,12 @@ class AuctionManager {
     }
 
     bindEvents() {
-        // Sync data button - only show for admins
+        // Sync data button - available for all users
         const syncBtn = document.getElementById('syncDataBtn');
         if (syncBtn) {
-            // Hide sync button if not admin
-            const isAdmin = window.app?.currentUser?.is_admin || false;
-            if (!isAdmin) {
-                syncBtn.style.display = 'none';
-            } else {
-                syncBtn.addEventListener('click', () => {
-                    this.syncFPLData();
-                });
-            }
+            syncBtn.addEventListener('click', () => {
+                this.syncFPLData();
+            });
         }
 
         // Filter events
