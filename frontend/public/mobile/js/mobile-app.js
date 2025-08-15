@@ -1952,8 +1952,8 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                             displayPoints = Math.floor(displayPoints / 2);
                         }
                         
-                        // Apply club multiplier
-                        if (clubMultiplier && (player.team_id === clubMultiplier.id || player.team === clubMultiplier.id)) {
+                        // Apply club multiplier (use loose equality to handle string/number mismatch)
+                        if (submission.club_multiplier_id && player.team_id == submission.club_multiplier_id) {
                             displayPoints = Math.floor(displayPoints * 1.5);
                         }
                     }
@@ -1993,8 +1993,8 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
             if (submission.chip_used === 'bench_boost' && player.live_points !== undefined) {
                 benchPoints = player.live_points || 0;
                 
-                // Apply club multiplier if applicable
-                if (clubMultiplier && (player.team_id === clubMultiplier.id || player.team === clubMultiplier.id)) {
+                // Apply club multiplier if applicable (use loose equality to handle string/number mismatch)
+                if (submission.club_multiplier_id && player.team_id == submission.club_multiplier_id) {
                     benchPoints = Math.floor(benchPoints * 1.5);
                 }
             }
@@ -2361,8 +2361,8 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                             displayPoints = Math.floor(displayPoints / 2);
                         }
                         
-                        // Apply club multiplier
-                        if (clubMultiplier && (player.team_id === clubMultiplier.id || player.team === clubMultiplier.id)) {
+                        // Apply club multiplier (use loose equality to handle string/number mismatch)
+                        if (submission.club_multiplier_id && player.team_id == submission.club_multiplier_id) {
                             displayPoints = Math.floor(displayPoints * 1.5);
                         }
                     }
@@ -2402,8 +2402,8 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
             if (submission.chip_used === 'bench_boost' && player.live_points !== undefined) {
                 benchPoints = player.live_points || 0;
                 
-                // Apply club multiplier if applicable
-                if (clubMultiplier && (player.team_id === clubMultiplier.id || player.team === clubMultiplier.id)) {
+                // Apply club multiplier if applicable (use loose equality to handle string/number mismatch)
+                if (submission.club_multiplier_id && player.team_id == submission.club_multiplier_id) {
                     benchPoints = Math.floor(benchPoints * 1.5);
                 }
             }
