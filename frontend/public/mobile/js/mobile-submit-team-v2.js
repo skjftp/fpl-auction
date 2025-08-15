@@ -128,6 +128,27 @@ class MobileSubmitTeamManagerV2 {
             console.log('Cache read failed:', e);
         }
         
+        // If we don't have cached data, load squad data
+        if (!cached) {
+            console.log('No cached squad data, loading from API...');
+            this.loadMySquad().then(() => {
+                this.dataLoaded = true;
+                // Check if submission is also loaded
+                if (this.submissionLoaded) {
+                    this.loading = false;
+                    this.renderHeader();
+                    this.renderView();
+                }
+            }).catch(error => {
+                console.error('Failed to load squad:', error);
+                this.dataLoaded = true; // Mark as loaded even on error to unblock UI
+                if (this.submissionLoaded) {
+                    this.loading = false;
+                    this.renderView();
+                }
+            });
+        }
+        
         // Set defaults
         this.currentGameweek = 1;
         this.deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
