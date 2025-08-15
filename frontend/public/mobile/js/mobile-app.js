@@ -1827,7 +1827,10 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                 }
                 
                 // Fetch individual player (much smaller response)
-                const response = await fetch(`${window.API_BASE_URL}/api/players/${playerId}`, {
+                const baseURL = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3001'
+                    : 'https://fpl-auction-backend-945963649649.us-central1.run.app';
+                const response = await fetch(`${baseURL}/api/players/${playerId}`, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
@@ -2191,7 +2194,10 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         let playerPoints = {};
         try {
             // Fetch live points from backend (which proxies FPL API to avoid CORS)
-            const pointsResponse = await fetch(`${window.API_BASE_URL}/api/submissions/gameweek/${submission.gameweek || gameweek || 1}/live`, {
+            const baseURL = window.location.hostname === 'localhost' 
+                ? 'http://localhost:3001'
+                : 'https://fpl-auction-backend-945963649649.us-central1.run.app';
+            const pointsResponse = await fetch(`${baseURL}/api/submissions/gameweek/${submission.gameweek || gameweek || 1}/live`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('fpl_token')}`
                 }
@@ -2234,7 +2240,10 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                     }
                     
                     // Fetch individual player
-                    const response = await fetch(`${window.API_BASE_URL}/api/players/${playerId}`, {
+                    const baseURL = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:3001'
+                    : 'https://fpl-auction-backend-945963649649.us-central1.run.app';
+                const response = await fetch(`${baseURL}/api/players/${playerId}`, {
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('token')}`
                         }
