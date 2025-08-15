@@ -24,6 +24,13 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
             // Calculate overall points
             const leaderboard = [];
             
+            // Get current gameweek
+            const currentGwDoc = await collections.gameweekInfo.where('is_current', '==', true).limit(1).get();
+            let currentGameweek = 1;
+            if (!currentGwDoc.empty) {
+                currentGameweek = currentGwDoc.docs[0].data().gameweek;
+            }
+            
             for (const team of teams) {
                 // Get all gameweek points for this team
                 const pointsSnapshot = await collections.gameweekPoints
@@ -32,12 +39,32 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 
                 let totalPoints = 0;
                 let gameweeksPlayed = 0;
+                let latestGameweekPoints = 0;
+                let latestChipUsed = null;
                 
                 pointsSnapshot.forEach(doc => {
                     const points = doc.data();
                     totalPoints += points.total_points || 0;
                     gameweeksPlayed++;
+                    
+                    // Track latest gameweek points and chip
+                    if (points.gameweek === currentGameweek) {
+                        latestGameweekPoints = points.total_points || 0;
+                        latestChipUsed = points.chip_used || null;
+                    }
                 });
+                
+                // If no points for current gameweek, check submission for chip
+                if (latestChipUsed === null) {
+                    const submissionDoc = await collections.gameweekTeams
+                        .doc(`${team.id}_gw${currentGameweek}`)
+                        .get();
+                    
+                    if (submissionDoc.exists) {
+                        const submission = submissionDoc.data();
+                        latestChipUsed = submission.chip_used || null;
+                    }
+                }
                 
                 leaderboard.push({
                     team_id: team.id,
@@ -45,9 +72,10 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                     username: team.username,
                     total_points: totalPoints,
                     gameweeks_played: gameweeksPlayed,
+                    latest_gameweek_points: latestGameweekPoints,
                     gameweek_points: 0, // For overall view
                     average_points: gameweeksPlayed > 0 ? Math.round(totalPoints / gameweeksPlayed) : 0,
-                    chip_used: null,
+                    chip_used: latestChipUsed,
                     hit_points: 0
                 });
             }

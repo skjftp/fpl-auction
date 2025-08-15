@@ -2045,7 +2045,7 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
                         <div class="team-name">${team.team_name}</div>
                         <div class="team-stats">
                             ${gameweek === 'overall' ? 
-                                `<span>${team.total_points} pts</span> • <span>${team.gameweeks_played} GWs</span>` :
+                                `<span>GW: ${team.latest_gameweek_points || 0} pts</span> • <span>Total: ${team.total_points} pts</span>` :
                                 `<span>${team.gameweek_points} pts</span>${team.chip_used ? ' • <span class="chip">' + team.chip_used + '</span>' : ''}`
                             }
                         </div>
