@@ -170,7 +170,7 @@ class MobileLeague {
         }
         
         return `
-            <div class="leaderboard-row ${isMyTeam ? 'my-team' : ''}" onclick="mobileLeague.viewTeam('${team.team_id}')">
+            <div class="leaderboard-row ${isMyTeam ? 'my-team' : ''}" onclick="mobileLeague.viewTeam(${team.team_id})">
                 <div class="rank-col">
                     <span class="rank-number">${rank}</span>
                     ${rankChange}
@@ -185,7 +185,7 @@ class MobileLeague {
                         `<span class="hit-indicator">-${team.hit_points}</span>` : ''}
                 </div>
                 <div class="action-col">
-                    <button class="view-btn" onclick="event.stopPropagation(); mobileLeague.viewTeam('${team.team_id}')">
+                    <button class="view-btn" onclick="event.stopPropagation(); mobileLeague.viewTeam(${team.team_id})">
                         👀
                     </button>
                 </div>
