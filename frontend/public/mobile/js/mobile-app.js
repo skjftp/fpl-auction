@@ -2042,6 +2042,55 @@ MobileApp.prototype.showTeamSquad = async function(teamId) {
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.innerHTML = `
+            <style>
+                .squad-summary {
+                    background: #f5f5f5;
+                    padding: 12px;
+                    border-radius: 8px;
+                    margin-bottom: 16px;
+                }
+                .squad-summary p {
+                    margin: 4px 0;
+                }
+                .squad-section {
+                    margin-top: 20px;
+                }
+                .squad-section h4 {
+                    margin-bottom: 12px;
+                    color: #333;
+                }
+                .squad-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                .squad-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 8px 12px;
+                    background: white;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 6px;
+                }
+                .player-info {
+                    display: flex;
+                    flex-direction: column;
+                }
+                .player-name, .club-name {
+                    font-weight: 600;
+                    color: #333;
+                }
+                .player-details {
+                    font-size: 12px;
+                    color: #666;
+                    margin-top: 2px;
+                }
+                .player-price, .club-price {
+                    font-weight: 600;
+                    color: #10B981;
+                }
+            </style>
             <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
                 <div class="modal-header">
                     <h3>${team ? team.name : `Team ${teamId}`}</h3>
@@ -2051,7 +2100,7 @@ MobileApp.prototype.showTeamSquad = async function(teamId) {
                     <div class="squad-summary">
                         <p><strong>Players:</strong> ${squadData.players ? squadData.players.length : 0}/15</p>
                         <p><strong>Clubs:</strong> ${squadData.clubs ? squadData.clubs.length : 0}/2</p>
-                        <p><strong>Budget Remaining:</strong> <span class="currency-j">J</span>${squadData.budget_remaining || 0}</p>
+                        <p><strong>Budget Remaining:</strong> ${formatCurrency(squadData.budget_remaining || 0)}</p>
                     </div>
                     
                     ${squadData.players && squadData.players.length > 0 ? `
@@ -2064,7 +2113,7 @@ MobileApp.prototype.showTeamSquad = async function(teamId) {
                                             <span class="player-name">${player.web_name || player.name}</span>
                                             <span class="player-details">${this.getPositionName(player.position)} - ${player.team_name || ''}</span>
                                         </div>
-                                        <span class="player-price"><span class="currency-j">J</span>${player.price_paid || 0}</span>
+                                        <span class="player-price">${formatCurrency(player.price_paid || 0)}</span>
                                     </div>
                                 `).join('')}
                             </div>
@@ -2078,7 +2127,7 @@ MobileApp.prototype.showTeamSquad = async function(teamId) {
                                 ${squadData.clubs.map(club => `
                                     <div class="squad-item">
                                         <span class="club-name">${club.name || club.club_name}</span>
-                                        <span class="club-price"><span class="currency-j">J</span>${club.price_paid || 0}</span>
+                                        <span class="club-price">${formatCurrency(club.price_paid || 0)}</span>
                                     </div>
                                 `).join('')}
                             </div>
@@ -2089,9 +2138,6 @@ MobileApp.prototype.showTeamSquad = async function(teamId) {
         `;
         
         document.body.appendChild(modal);
-        
-        // Apply currency formatting
-        window.applyCurrencyFormatting();
         
     } catch (error) {
         console.error('Error loading team squad:', error);
