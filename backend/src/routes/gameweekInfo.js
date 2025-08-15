@@ -79,11 +79,33 @@ router.get('/current', async (req, res) => {
     try {
         const fplData = await fetchFPLData();
         
-        // Find current gameweek
+        // Find current and next gameweeks from FPL
         const currentEvent = fplData.events.find(event => event.is_current);
         const nextEvent = fplData.events.find(event => event.is_next);
         
-        const activeGameweek = currentEvent || nextEvent;
+        // Custom logic: Check if we should show next gameweek
+        // If current gameweek deadline + 1 hour has passed, show next gameweek
+        let activeGameweek = currentEvent;
+        
+        if (currentEvent && currentEvent.deadline_time) {
+            const deadline = new Date(currentEvent.deadline_time);
+            const oneHourAfterDeadline = new Date(deadline.getTime() + (60 * 60 * 1000));
+            const now = new Date();
+            
+            if (now > oneHourAfterDeadline && nextEvent) {
+                // More than 1 hour after deadline, switch to next gameweek
+                activeGameweek = nextEvent;
+                console.log(`Switching to Gameweek ${nextEvent.id} as we're past 1 hour grace period of GW${currentEvent.id}`);
+            } else if (now > deadline && now <= oneHourAfterDeadline) {
+                // Within grace period, still show current gameweek but mark it
+                console.log(`Still in grace period for GW${currentEvent.id}`);
+            }
+        }
+        
+        // Fallback to next event if no current event
+        if (!activeGameweek) {
+            activeGameweek = nextEvent;
+        }
         
         if (!activeGameweek) {
             return res.status(404).json({ error: 'No active gameweek found' });
@@ -98,7 +120,7 @@ router.get('/current', async (req, res) => {
             name: activeGameweek.name,
             deadline: activeGameweek.deadline_time,
             finished: activeGameweek.finished,
-            is_current: activeGameweek.is_current,
+            is_current: activeGameweek.is_current || (activeGameweek === nextEvent && currentEvent && new Date() > new Date(currentEvent.deadline_time).getTime() + 3600000),
             is_next: activeGameweek.is_next,
             type: gwType.type,
             match_count: gwType.matchCount,
@@ -110,7 +132,7 @@ router.get('/current', async (req, res) => {
             name: activeGameweek.name,
             deadline_time: activeGameweek.deadline_time,
             finished: activeGameweek.finished,
-            is_current: activeGameweek.is_current,
+            is_current: activeGameweek.is_current || (activeGameweek === nextEvent && currentEvent && new Date() > new Date(currentEvent.deadline_time).getTime() + 3600000),
             is_next: activeGameweek.is_next,
             type: gwType.type,
             match_count: gwType.matchCount,

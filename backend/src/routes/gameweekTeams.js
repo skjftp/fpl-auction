@@ -133,9 +133,11 @@ router.get('/submission/:gameweek', authenticateToken, async (req, res) => {
                         ...prevData,
                         gameweek: gameweek,
                         chip_used: null, // Reset chip for new gameweek
-                        submission_time: admin.firestore.FieldValue.serverTimestamp(),
+                        submitted_at: admin.firestore.FieldValue.serverTimestamp(),
+                        updated_at: admin.firestore.FieldValue.serverTimestamp(),
                         auto_copied: true,
-                        copied_from_gw: prevGameweek
+                        copied_from_gw: prevGameweek,
+                        deadline_status: 'on_time' // Reset deadline status for new gameweek
                     };
                     
                     // Save the auto-copied submission
