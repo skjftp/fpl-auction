@@ -10,12 +10,12 @@ async function calculateSubmissionPoints(submission, livePointsData) {
     const starting11Points = [];
     const benchPoints = [];
     
-    // Get player details for club multiplier calculation
+    // Get player details for multiplier calculations
     const allPlayerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
-    const playerClubs = {};
+    const playerDetails = {};
     
-    // Fetch player club info if we have a club multiplier
-    if (submission.club_multiplier_id) {
+    // Fetch player info for multipliers (club and position-based chips)
+    if (allPlayerIds.length > 0) {
         const playerPromises = allPlayerIds.map(playerId => 
             collections.fplPlayers.doc(playerId.toString()).get()
         );
@@ -23,31 +23,46 @@ async function calculateSubmissionPoints(submission, livePointsData) {
         playerDocs.forEach(doc => {
             if (doc.exists) {
                 const player = doc.data();
-                playerClubs[player.id] = player.team_id;
+                // Store both team_id and position for each player
+                playerDetails[player.id] = {
+                    team_id: player.team_id,
+                    position: player.position
+                };
             }
         });
+        if (submission.club_multiplier_id) {
+            console.log(`Team ${submission.team_id}: Club multiplier ${submission.club_multiplier_id}, Matching players:`, Object.entries(playerDetails).filter(([id, data]) => data.team_id == submission.club_multiplier_id).length);
+        }
     }
     
     // Calculate starting 11 points
     for (const playerId of submission.starting_11 || []) {
         const playerPoints = livePointsData[playerId]?.points || 0;
         let finalPoints = playerPoints;
+        const playerData = playerDetails[playerId] || {};
         
-        // Apply captain/vice-captain multiplier
-        if (playerId === submission.captain_id) {
+        // Apply captain/vice-captain multiplier first
+        if (playerId == submission.captain_id) {
             const multiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
             finalPoints = playerPoints * multiplier;
-        } else if (playerId === submission.vice_captain_id && submission.captain_played === false) {
+        } else if (playerId == submission.vice_captain_id && submission.captain_played === false) {
             finalPoints = playerPoints * 2;
         }
         
-        // Apply club multiplier (1.5x for players from selected club)
-        if (submission.club_multiplier_id && playerClubs[playerId] == submission.club_multiplier_id) {
+        // Apply position-specific chip bonuses
+        if (submission.chip_used === 'attack_chip' && playerData.position && (playerData.position === 3 || playerData.position === 4)) {
+            finalPoints = finalPoints * 2;
+        } else if (submission.chip_used === 'park_the_bus' && playerData.position && (playerData.position === 1 || playerData.position === 2)) {
+            finalPoints = finalPoints * 2;
+        }
+        
+        // Apply club multiplier (1.5x for players from selected club) - use loose equality for type coercion
+        if (submission.club_multiplier_id && playerData.team_id && playerData.team_id == submission.club_multiplier_id) {
             finalPoints = finalPoints * 1.5;
         }
         
-        starting11Points.push({ playerId, points: finalPoints });
-        totalPoints += finalPoints;
+        starting11Points.push({ playerId, points: Math.floor(finalPoints) });
+        totalPoints += Math.floor(finalPoints);
     }
     
     // Calculate bench points if bench boost is active
@@ -55,14 +70,15 @@ async function calculateSubmissionPoints(submission, livePointsData) {
         for (const playerId of submission.bench || []) {
             const playerPoints = livePointsData[playerId]?.points || 0;
             let finalPoints = playerPoints;
+            const playerData = playerDetails[playerId] || {};
             
-            // Apply club multiplier to bench players too
-            if (submission.club_multiplier_id && playerClubs[playerId] == submission.club_multiplier_id) {
+            // Apply club multiplier to bench players too - use loose equality for type coercion
+            if (submission.club_multiplier_id && playerData.team_id && playerData.team_id == submission.club_multiplier_id) {
                 finalPoints = finalPoints * 1.5;
             }
             
-            benchPoints.push({ playerId, points: finalPoints });
-            totalPoints += finalPoints;
+            benchPoints.push({ playerId, points: Math.floor(finalPoints) });
+            totalPoints += Math.floor(finalPoints);
         }
     }
     
