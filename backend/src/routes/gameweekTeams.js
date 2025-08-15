@@ -251,10 +251,11 @@ router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) 
                 // Fetch fresh if not cached
                 const response = await axios.get(`https://fantasy.premierleague.com/api/event/${gameweek}/live/`);
                 if (response.data && response.data.elements) {
-                    Object.keys(response.data.elements).forEach(playerId => {
-                        const playerData = response.data.elements[playerId];
+                    // FPL API returns elements as an array, not an object
+                    response.data.elements.forEach(playerData => {
                         if (playerData && playerData.stats) {
-                            livePoints[playerId] = {
+                            // Use player ID as key
+                            livePoints[playerData.id] = {
                                 points: playerData.stats.total_points || 0,
                                 minutes: playerData.stats.minutes || 0,
                                 bonus: playerData.stats.bonus || 0
@@ -381,11 +382,11 @@ router.get('/gameweek/:gameweek/live-points', authenticateToken, async (req, res
         const pointsMap = {};
         
         if (response.data && response.data.elements) {
-            // Convert array to object keyed by player ID for faster lookup
-            Object.keys(response.data.elements).forEach(playerId => {
-                const playerData = response.data.elements[playerId];
+            // FPL API returns elements as an array
+            response.data.elements.forEach(playerData => {
                 if (playerData && playerData.stats) {
-                    pointsMap[playerId] = {
+                    // Use player ID as key
+                    pointsMap[playerData.id] = {
                         points: playerData.stats.total_points || 0,
                         minutes: playerData.stats.minutes || 0,
                         bonus: playerData.stats.bonus || 0

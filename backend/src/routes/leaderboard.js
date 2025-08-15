@@ -119,10 +119,11 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 } else {
                     const response = await axios.get(`https://fantasy.premierleague.com/api/event/${currentGameweek}/live/`);
                     if (response.data && response.data.elements) {
-                        Object.keys(response.data.elements).forEach(playerId => {
-                            const playerData = response.data.elements[playerId];
+                        // FPL API returns elements as an array, not an object
+                        response.data.elements.forEach(playerData => {
                             if (playerData && playerData.stats) {
-                                livePointsData[playerId] = {
+                                // Use player ID as key
+                                livePointsData[playerData.id] = {
                                     points: playerData.stats.total_points || 0,
                                     minutes: playerData.stats.minutes || 0
                                 };
@@ -233,10 +234,11 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                     } else {
                         const response = await axios.get(`https://fantasy.premierleague.com/api/event/${gwNumber}/live/`);
                         if (response.data && response.data.elements) {
-                            Object.keys(response.data.elements).forEach(playerId => {
-                                const playerData = response.data.elements[playerId];
+                            // FPL API returns elements as an array, not an object
+                            response.data.elements.forEach(playerData => {
                                 if (playerData && playerData.stats) {
-                                    livePointsData[playerId] = {
+                                    // Use player ID as key
+                                    livePointsData[playerData.id] = {
                                         points: playerData.stats.total_points || 0,
                                         minutes: playerData.stats.minutes || 0
                                     };
