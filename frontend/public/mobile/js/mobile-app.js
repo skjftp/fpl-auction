@@ -1923,6 +1923,38 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                     const isCaptain = player.id === submission.captain_id;
                     const isViceCaptain = player.id === submission.vice_captain_id;
                     
+                    // Calculate points with multipliers
+                    let displayPoints = 0;
+                    if (playerPoints && playerPoints[player.id]) {
+                        const liveStats = playerPoints[player.id].stats;
+                        let basePoints = liveStats.total_points || 0;
+                        displayPoints = basePoints;
+                        
+                        // Apply captain/vice-captain multiplier
+                        if (isCaptain) {
+                            const captainMultiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
+                            displayPoints = basePoints * captainMultiplier;
+                        } else if (isViceCaptain && submission.captain_played === false) {
+                            displayPoints = basePoints * 2;
+                        }
+                        
+                        // Apply chip multipliers
+                        if (submission.chip_used === 'attack_chip' && (player.position === 3 || player.position === 4)) {
+                            displayPoints = displayPoints * 2;
+                        } else if (submission.chip_used === 'park_the_bus' && (player.position === 1 || player.position === 2)) {
+                            displayPoints = displayPoints * 2;
+                        } else if (submission.chip_used === 'double_up') {
+                            displayPoints = displayPoints * 2;
+                        } else if (submission.chip_used === 'negative_chip') {
+                            displayPoints = Math.floor(displayPoints / 2);
+                        }
+                        
+                        // Apply club multiplier
+                        if (clubMultiplier && player.team === clubMultiplier.id) {
+                            displayPoints = Math.floor(displayPoints * 1.5);
+                        }
+                    }
+                    
                     html += `
                         <div style="width: 52px; text-align: center; flex: 0 0 auto;">
                             <div style="width: 44px; height: 44px; margin: 0 auto 2px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 6px 6px 16px 16px; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.2);">
@@ -1934,7 +1966,7 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                             </div>
                             <div style="background: white; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                                 <div style="font-size: 9px; font-weight: 700; color: #1f2937; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
-                                <div style="font-size: 8px; color: #374151; font-weight: 600; margin-top: 1px;">${positionNames[player.position]}</div>
+                                <div style="font-size: ${displayPoints > 0 ? '10px' : '8px'}; color: ${displayPoints > 0 ? '#059669' : '#374151'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${displayPoints > 0 ? displayPoints + 'pts' : positionNames[player.position]}</div>
                             </div>
                         </div>
                     `;
@@ -1953,6 +1985,18 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
         `;
         
         bench.forEach((player, index) => {
+            // Calculate bench player points (only with bench boost chip)
+            let benchPoints = 0;
+            if (submission.chip_used === 'bench_boost' && playerPoints && playerPoints[player.id]) {
+                const liveStats = playerPoints[player.id].stats;
+                benchPoints = liveStats.total_points || 0;
+                
+                // Apply club multiplier if applicable
+                if (clubMultiplier && player.team === clubMultiplier.id) {
+                    benchPoints = Math.floor(benchPoints * 1.5);
+                }
+            }
+            
             html += `
                 <div style="flex: 0 0 auto; width: 65px; background: white; border-radius: 6px; padding: 6px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                     <div style="width: 35px; height: 35px; margin: 0 auto 3px; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); border-radius: 8px 8px 12px 12px; display: flex; align-items: center; justify-content: center;">
@@ -1961,7 +2005,7 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                              onerror="this.style.display='none'">
                     </div>
                     <div style="font-size: 9px; font-weight: 600; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
-                    <div style="font-size: 8px; color: #6b7280;">${positionNames[player.position]}</div>
+                    <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${benchPoints > 0 ? benchPoints + 'pts' : positionNames[player.position]}</div>
                 </div>
             `;
         });
@@ -2124,7 +2168,7 @@ MobileApp.prototype.viewTeamSubmission = async function(teamId, gameweek = null)
     }
 };
 
-MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamName) {
+MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamName, gameweek = null) {
     try {
         // Create modal container (no loader needed as it's already shown)
         const modal = document.createElement('div');
@@ -2142,6 +2186,26 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
             </div>
         `;
         document.body.appendChild(modal);
+        
+        // Fetch live points data if available
+        let playerPoints = {};
+        try {
+            // Fetch live points from backend (which proxies FPL API to avoid CORS)
+            const pointsResponse = await fetch(`${window.API_BASE_URL}/api/submissions/gameweek/${submission.gameweek || gameweek || 1}/live`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('fpl_token')}`
+                }
+            });
+            if (pointsResponse.ok) {
+                const liveData = await pointsResponse.json();
+                if (liveData.elements) {
+                    playerPoints = liveData.elements;
+                    console.log('Fetched live points for gameweek', submission.gameweek || gameweek || 1, ':', playerPoints);
+                }
+            }
+        } catch (error) {
+            console.log('Could not fetch live points:', error);
+        }
         
         // Use the optimized endpoint data if available
         let players = [];
@@ -2283,6 +2347,38 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                     const isCaptain = player.id === submission.captain_id;
                     const isViceCaptain = player.id === submission.vice_captain_id;
                     
+                    // Calculate points with multipliers
+                    let displayPoints = 0;
+                    if (playerPoints && playerPoints[player.id]) {
+                        const liveStats = playerPoints[player.id].stats;
+                        let basePoints = liveStats.total_points || 0;
+                        displayPoints = basePoints;
+                        
+                        // Apply captain/vice-captain multiplier
+                        if (isCaptain) {
+                            const captainMultiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
+                            displayPoints = basePoints * captainMultiplier;
+                        } else if (isViceCaptain && submission.captain_played === false) {
+                            displayPoints = basePoints * 2;
+                        }
+                        
+                        // Apply chip multipliers
+                        if (submission.chip_used === 'attack_chip' && (player.position === 3 || player.position === 4)) {
+                            displayPoints = displayPoints * 2;
+                        } else if (submission.chip_used === 'park_the_bus' && (player.position === 1 || player.position === 2)) {
+                            displayPoints = displayPoints * 2;
+                        } else if (submission.chip_used === 'double_up') {
+                            displayPoints = displayPoints * 2;
+                        } else if (submission.chip_used === 'negative_chip') {
+                            displayPoints = Math.floor(displayPoints / 2);
+                        }
+                        
+                        // Apply club multiplier
+                        if (clubMultiplier && player.team === clubMultiplier.id) {
+                            displayPoints = Math.floor(displayPoints * 1.5);
+                        }
+                    }
+                    
                     html += `
                         <div style="width: 52px; text-align: center; flex: 0 0 auto;">
                             <div style="width: 44px; height: 44px; margin: 0 auto 2px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 6px 6px 16px 16px; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.2);">
@@ -2294,7 +2390,7 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                             </div>
                             <div style="background: white; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                                 <div style="font-size: 9px; font-weight: 700; color: #1f2937; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
-                                <div style="font-size: 8px; color: #374151; font-weight: 600; margin-top: 1px;">${positionNames[player.position]}</div>
+                                <div style="font-size: ${displayPoints > 0 ? '10px' : '8px'}; color: ${displayPoints > 0 ? '#059669' : '#374151'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${displayPoints > 0 ? displayPoints + 'pts' : positionNames[player.position]}</div>
                             </div>
                         </div>
                     `;
@@ -2313,6 +2409,18 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         `;
         
         bench.forEach((player, index) => {
+            // Calculate bench player points (only with bench boost chip)
+            let benchPoints = 0;
+            if (submission.chip_used === 'bench_boost' && playerPoints && playerPoints[player.id]) {
+                const liveStats = playerPoints[player.id].stats;
+                benchPoints = liveStats.total_points || 0;
+                
+                // Apply club multiplier if applicable
+                if (clubMultiplier && player.team === clubMultiplier.id) {
+                    benchPoints = Math.floor(benchPoints * 1.5);
+                }
+            }
+            
             html += `
                 <div style="flex: 0 0 auto; width: 65px; background: white; border-radius: 6px; padding: 6px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                     <div style="width: 35px; height: 35px; margin: 0 auto 3px; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); border-radius: 8px 8px 12px 12px; display: flex; align-items: center; justify-content: center;">
@@ -2321,7 +2429,7 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                              onerror="this.style.display='none'">
                     </div>
                     <div style="font-size: 9px; font-weight: 600; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
-                    <div style="font-size: 8px; color: #6b7280;">${positionNames[player.position]}</div>
+                    <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${benchPoints > 0 ? benchPoints + 'pts' : positionNames[player.position]}</div>
                 </div>
             `;
         });
