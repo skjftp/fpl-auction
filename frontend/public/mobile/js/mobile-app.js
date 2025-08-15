@@ -1965,12 +1965,16 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
         const content = document.getElementById('leaderboardContent');
         if (content) {
             content.innerHTML = `
-                <div style="display: flex; justify-content: center; align-items: center; min-height: 200px;">
-                    <div class="loading-spinner">
-                        <div class="spinner"></div>
-                        <p style="margin-top: 12px; color: #666;">Loading league standings...</p>
-                    </div>
+                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 200px;">
+                    <div style="border: 3px solid #f3f3f3; border-top: 3px solid #10B981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 16px; color: #666; font-size: 14px;">Loading league standings...</p>
                 </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
             `;
         }
         
@@ -2065,12 +2069,16 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                     <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
                 </div>
                 <div class="modal-body" id="submissionDetailBody">
-                    <div style="display: flex; justify-content: center; align-items: center; min-height: 300px;">
-                        <div class="loading-spinner">
-                            <div class="spinner"></div>
-                            <p style="margin-top: 12px;">Loading team details...</p>
-                        </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 300px;">
+                        <div style="border: 3px solid #f3f3f3; border-top: 3px solid #10B981; border-radius: 50%; width: 40px; height: 40px; animation: spin2 1s linear infinite;"></div>
+                        <p style="margin-top: 16px; color: #666; font-size: 14px;">Loading team details...</p>
                     </div>
+                    <style>
+                        @keyframes spin2 {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    </style>
                 </div>
             </div>
         `;
@@ -2122,6 +2130,23 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         
         // Render the team in pitch view style
         const detailContent = document.getElementById('submissionDetailBody');
+        
+        // Format submission date safely
+        let submittedDate = 'Not available';
+        if (submission.submitted_at) {
+            try {
+                submittedDate = new Date(submission.submitted_at).toLocaleString();
+            } catch (e) {
+                submittedDate = 'Recently';
+            }
+        } else if (submission.createdAt) {
+            try {
+                submittedDate = new Date(submission.createdAt).toLocaleString();
+            } catch (e) {
+                submittedDate = 'Recently';
+            }
+        }
+        
         let html = `
             <div style="background: white; border-radius: 12px; padding: 8px;">
                 <!-- Back button and Team Name -->
@@ -2132,8 +2157,8 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                 <!-- Submission Info -->
                 <div style="background: #f9fafb; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
-                        <span style="font-weight: 600; color: #1f2937; font-size: 12px;">Submitted:</span>
-                        <span style="color: #6b7280; font-size: 11px;">${new Date(submission.submitted_at).toLocaleString()}</span>
+                        <span style="font-weight: 600; color: #1f2937; font-size: 12px;">Gameweek ${submission.gameweek || ''}:</span>
+                        <span style="color: #6b7280; font-size: 11px;">${submittedDate}</span>
                     </div>
                     ${submission.chip_used ? `
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
