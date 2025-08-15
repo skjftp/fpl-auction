@@ -1985,8 +1985,8 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
         
         if (content) {
             content.innerHTML = data.map((team, index) => `
-                <div class="leaderboard-item ${team.id === currentUser.id ? 'current-team' : ''}" 
-                     onclick="window.mobileApp.viewTeamSubmission(${team.id})"
+                <div class="leaderboard-item ${team.team_id === currentUser.id ? 'current-team' : ''}" 
+                     onclick="window.mobileApp.viewTeamSubmission(${team.team_id})"
                      style="cursor: pointer;">
                     <div class="rank">
                         <span class="rank-number">${team.rank}</span>
@@ -2037,6 +2037,12 @@ MobileApp.prototype.showTeamSquad = async function(teamId) {
         const squadData = await window.mobileAPI.getTeamSquad(teamId);
         const teams = await window.mobileAPI.getAllTeams();
         const team = teams.find(t => t.id === teamId);
+        
+        // If no squad data or error, show appropriate message
+        if (!squadData) {
+            this.showToast('No squad data available', 'error');
+            return;
+        }
         
         // Create modal to show team squad
         const modal = document.createElement('div');
