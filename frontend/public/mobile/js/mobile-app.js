@@ -1985,7 +1985,9 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
         
         if (content) {
             content.innerHTML = data.map((team, index) => `
-                <div class="leaderboard-item ${team.id === currentUser.id ? 'current-team' : ''}">
+                <div class="leaderboard-item ${team.id === currentUser.id ? 'current-team' : ''}" 
+                     onclick="window.mobileApp.viewTeamSubmission(${team.id})"
+                     style="cursor: pointer;">
                     <div class="rank">
                         <span class="rank-number">${team.rank}</span>
                         ${team.movement > 0 ? '<span class="movement up">↑' + team.movement + '</span>' : ''}
@@ -2006,6 +2008,24 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
     } catch (error) {
         console.error('Error loading leaderboard:', error);
         this.showToast('Failed to load leaderboard', 'error');
+    }
+};
+
+MobileApp.prototype.viewTeamSubmission = async function(teamId) {
+    try {
+        // Get current gameweek
+        const gwInfo = await window.mobileAPI.getCurrentGameweek();
+        const currentGameweek = gwInfo.gameweek || 1;
+        
+        // Use the team viewer to show the team
+        if (window.mobileTeamViewer) {
+            window.mobileTeamViewer.show(teamId, currentGameweek);
+        } else {
+            this.showToast('Team viewer not available', 'error');
+        }
+    } catch (error) {
+        console.error('Error viewing team submission:', error);
+        this.showToast('Failed to load team', 'error');
     }
 };
 
