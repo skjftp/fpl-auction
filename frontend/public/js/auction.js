@@ -200,7 +200,9 @@ class AuctionManager {
 
     async loadPlayers() {
         try {
-            this.players = await api.getPlayers();
+            const allPlayers = await api.getPlayers();
+            // Filter out unavailable players (status: 'u') from auction list
+            this.players = allPlayers.filter(player => player.status !== 'u');
             this.displayPlayers(this.players);
             // Restore filters after loading players
             this.restoreFilterState();

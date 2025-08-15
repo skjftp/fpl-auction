@@ -30,10 +30,8 @@ router.post('/sync-fpl-data', async (req, res) => {
       });
     });
     
-    // Filter out unavailable players (status: "u") and update or insert players
-    const availablePlayers = players.filter(player => player.status !== 'u');
-    
-    availablePlayers.forEach(player => {
+    // Update or insert ALL players (including unavailable ones)
+    players.forEach(player => {
       const playerRef = collections.fplPlayers.doc(player.id.toString());
       batch.set(playerRef, {
         id: player.id,
@@ -53,27 +51,19 @@ router.post('/sync-fpl-data', async (req, res) => {
     // Commit the batch
     await batch.commit();
     
-    // Clean up unavailable players that might already be in the database
+    // Count available and unavailable players for logging
+    const availablePlayers = players.filter(player => player.status !== 'u');
     const unavailablePlayers = players.filter(player => player.status === 'u');
-    if (unavailablePlayers.length > 0) {
-      const cleanupBatch = admin.firestore().batch();
-      unavailablePlayers.forEach(player => {
-        const playerRef = collections.fplPlayers.doc(player.id.toString());
-        cleanupBatch.delete(playerRef);
-      });
-      await cleanupBatch.commit();
-      console.log(`🧹 Cleaned up ${unavailablePlayers.length} unavailable players`);
-    }
     
-    console.log(`✅ Synced ${availablePlayers.length} available players (excluded ${players.length - availablePlayers.length} unavailable) and ${clubs.length} clubs`);
+    console.log(`✅ Synced ${players.length} total players (${availablePlayers.length} available, ${unavailablePlayers.length} unavailable) and ${clubs.length} clubs`);
     
     res.json({
       success: true,
-      message: `Synced ${availablePlayers.length} available players and ${clubs.length} clubs`,
+      message: `Synced ${players.length} total players (${availablePlayers.length} available, ${unavailablePlayers.length} unavailable) and ${clubs.length} clubs`,
       stats: {
         total_players: players.length,
         available_players: availablePlayers.length,
-        excluded_players: players.length - availablePlayers.length,
+        unavailable_players: unavailablePlayers.length,
         clubs: clubs.length,
         positions: positions.length
       }

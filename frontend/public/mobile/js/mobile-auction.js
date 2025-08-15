@@ -118,8 +118,10 @@ class MobileAuctionManager {
 
     async loadPlayers() {
         try {
-            const players = await window.mobileAPI.getPlayers();
-            this.players = Array.isArray(players) ? players : (players.players || []);
+            const allPlayers = await window.mobileAPI.getPlayers();
+            const playersArray = Array.isArray(allPlayers) ? allPlayers : (allPlayers.players || []);
+            // Filter out unavailable players (status: 'u') from auction list
+            this.players = playersArray.filter(player => player.status !== 'u');
             this.filteredPlayers = [...this.players];
             this.renderPlayers();
             // Restore filters after loading players
