@@ -2031,7 +2031,7 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
         if (content) {
             content.innerHTML = data.map((team, index) => `
                 <div class="leaderboard-item ${team.team_id === currentUser.id ? 'current-team' : ''}" 
-                     onclick="event.stopPropagation(); window.mobileApp.viewTeamSubmission(${team.team_id})"
+                     onclick="event.stopPropagation(); window.mobileApp.viewTeamSubmission(${team.team_id}, ${gameweek === 'overall' ? 1 : gameweek})"
                      style="cursor: pointer; transition: all 0.2s ease;"
                      ontouchstart="this.style.transform='scale(0.98)'; this.style.opacity='0.8';"
                      ontouchend="this.style.transform='scale(1)'; this.style.opacity='1';"
@@ -2059,7 +2059,7 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
     }
 };
 
-MobileApp.prototype.viewTeamSubmission = async function(teamId) {
+MobileApp.prototype.viewTeamSubmission = async function(teamId, gameweek = null) {
     // Show modal immediately with loader for better UX
     const modal = document.createElement('div');
     modal.className = 'modal';
@@ -2087,12 +2087,15 @@ MobileApp.prototype.viewTeamSubmission = async function(teamId) {
     document.body.appendChild(modal);
     
     try {
-        // Get current gameweek
-        const gwInfo = await window.mobileAPI.getCurrentGameweek();
-        const currentGameweek = gwInfo.gameweek || 1;
+        // Use provided gameweek or get current
+        let targetGameweek = gameweek;
+        if (!targetGameweek) {
+            const gwInfo = await window.mobileAPI.getCurrentGameweek();
+            targetGameweek = gwInfo.gameweek || 1;
+        }
         
-        // Get team submission for current gameweek
-        const submission = await window.mobileAPI.getTeamSubmission(currentGameweek, teamId);
+        // Get team submission for the target gameweek
+        const submission = await window.mobileAPI.getTeamSubmission(targetGameweek, teamId);
         
         if (!submission) {
             // No submission yet, remove modal and show squad instead

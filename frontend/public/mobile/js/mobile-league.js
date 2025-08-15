@@ -13,14 +13,17 @@ class MobileLeague {
     async initialize() {
         console.log('League tab initialize called');
         
-        // Get current gameweek info
+        // League tab should show the currently PLAYING gameweek, not the submission gameweek
+        // Since GW1 has started playing, show GW1 until GW2 starts playing
         try {
-            const gwInfo = await window.mobileAPI.getCurrentGameweek();
-            this.currentGameweek = gwInfo.gameweek || 1;
-            this.deadlinePassed = new Date() > new Date(gwInfo.deadline_time);
-            console.log('Gameweek:', this.currentGameweek, 'Deadline passed:', this.deadlinePassed);
+            // For now, hardcode to GW1 since that's what's playing
+            // TODO: Get this from FPL API's current event flag
+            this.currentGameweek = 1; // Show GW1 since it's currently being played
+            this.deadlinePassed = true; // GW1 deadline has passed
+            console.log('League showing playing gameweek:', this.currentGameweek);
         } catch (error) {
             console.error('Error loading gameweek info:', error);
+            this.currentGameweek = 1;
         }
         
         // Render the UI
@@ -194,8 +197,12 @@ class MobileLeague {
     }
 
     async viewTeam(teamId) {
-        // Use the new team viewer
-        if (window.mobileTeamViewer) {
+        // Always show the submission for the playing gameweek (GW1)
+        // Use mobileApp's viewTeamSubmission which shows the nice pitch view
+        if (window.mobileApp && window.mobileApp.viewTeamSubmission) {
+            // Pass the current playing gameweek (1) explicitly
+            window.mobileApp.viewTeamSubmission(teamId, this.currentGameweek);
+        } else if (window.mobileTeamViewer) {
             window.mobileTeamViewer.show(teamId, this.currentGameweek);
         } else {
             // Fallback to old modal
