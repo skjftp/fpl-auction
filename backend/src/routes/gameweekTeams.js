@@ -238,6 +238,53 @@ router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) 
             }
         });
         
+        // Fetch live points if available
+        let livePoints = {};
+        try {
+            const axios = require('axios');
+            const cacheKey = `live_points_gw${gameweek}`;
+            const cached = global.livePointsCache && global.livePointsCache[cacheKey];
+            
+            if (cached && (Date.now() - cached.timestamp < 60000)) {
+                livePoints = cached.data.points || {};
+            } else {
+                // Fetch fresh if not cached
+                const response = await axios.get(`https://fantasy.premierleague.com/api/event/${gameweek}/live/`);
+                if (response.data && response.data.elements) {
+                    Object.keys(response.data.elements).forEach(playerId => {
+                        const playerData = response.data.elements[playerId];
+                        if (playerData && playerData.stats) {
+                            livePoints[playerId] = {
+                                points: playerData.stats.total_points || 0,
+                                minutes: playerData.stats.minutes || 0,
+                                bonus: playerData.stats.bonus || 0
+                            };
+                        }
+                    });
+                    
+                    // Cache it
+                    if (!global.livePointsCache) {
+                        global.livePointsCache = {};
+                    }
+                    global.livePointsCache[cacheKey] = {
+                        data: { points: livePoints },
+                        timestamp: Date.now()
+                    };
+                }
+            }
+            
+            // Add live points to player details
+            Object.keys(playerDetails).forEach(playerId => {
+                if (livePoints[playerId]) {
+                    playerDetails[playerId].live_points = livePoints[playerId].points;
+                    playerDetails[playerId].minutes = livePoints[playerId].minutes;
+                    playerDetails[playerId].bonus = livePoints[playerId].bonus;
+                }
+            });
+        } catch (error) {
+            console.log('Could not fetch live points:', error.message);
+        }
+        
         // Fetch all needed club details in parallel
         const clubDetailsMap = {};
         if (clubIds.size > 0) {
@@ -310,6 +357,61 @@ router.get('/all/:gameweek', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Error fetching all teams:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Get live points for a gameweek (optimized - returns only points mapping)
+router.get('/gameweek/:gameweek/live-points', authenticateToken, async (req, res) => {
+    try {
+        const gameweek = parseInt(req.params.gameweek);
+        
+        // Check cache first (cache for 1 minute during matches)
+        const cacheKey = `live_points_gw${gameweek}`;
+        const cached = global.livePointsCache && global.livePointsCache[cacheKey];
+        
+        if (cached && (Date.now() - cached.timestamp < 60000)) {
+            return res.json(cached.data);
+        }
+        
+        // Fetch from FPL API
+        const axios = require('axios');
+        const response = await axios.get(`https://fantasy.premierleague.com/api/event/${gameweek}/live/`);
+        
+        // Process and extract only what we need
+        const pointsMap = {};
+        
+        if (response.data && response.data.elements) {
+            // Convert array to object keyed by player ID for faster lookup
+            Object.keys(response.data.elements).forEach(playerId => {
+                const playerData = response.data.elements[playerId];
+                if (playerData && playerData.stats) {
+                    pointsMap[playerId] = {
+                        points: playerData.stats.total_points || 0,
+                        minutes: playerData.stats.minutes || 0,
+                        bonus: playerData.stats.bonus || 0
+                    };
+                }
+            });
+        }
+        
+        // Cache the processed data
+        if (!global.livePointsCache) {
+            global.livePointsCache = {};
+        }
+        global.livePointsCache[cacheKey] = {
+            data: { points: pointsMap, gameweek, timestamp: Date.now() },
+            timestamp: Date.now()
+        };
+        
+        res.json({ 
+            points: pointsMap,
+            gameweek,
+            timestamp: Date.now()
+        });
+        
+    } catch (error) {
+        console.error('Error fetching live points:', error);
+        res.status(500).json({ error: 'Failed to fetch live points' });
     }
 });
 

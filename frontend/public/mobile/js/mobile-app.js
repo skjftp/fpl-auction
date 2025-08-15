@@ -1928,9 +1928,9 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                     
                     // Calculate points with multipliers
                     let displayPoints = 0;
-                    if (playerPoints && playerPoints[player.id]) {
-                        const liveStats = playerPoints[player.id].stats;
-                        let basePoints = liveStats.total_points || 0;
+                    // Use live_points from the player data (backend already fetched it)
+                    if (player.live_points !== undefined) {
+                        let basePoints = player.live_points || 0;
                         displayPoints = basePoints;
                         
                         // Apply captain/vice-captain multiplier
@@ -1953,7 +1953,7 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                         }
                         
                         // Apply club multiplier
-                        if (clubMultiplier && player.team === clubMultiplier.id) {
+                        if (clubMultiplier && (player.team_id === clubMultiplier.id || player.team === clubMultiplier.id)) {
                             displayPoints = Math.floor(displayPoints * 1.5);
                         }
                     }
@@ -1990,12 +1990,11 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
         bench.forEach((player, index) => {
             // Calculate bench player points (only with bench boost chip)
             let benchPoints = 0;
-            if (submission.chip_used === 'bench_boost' && playerPoints && playerPoints[player.id]) {
-                const liveStats = playerPoints[player.id].stats;
-                benchPoints = liveStats.total_points || 0;
+            if (submission.chip_used === 'bench_boost' && player.live_points !== undefined) {
+                benchPoints = player.live_points || 0;
                 
                 // Apply club multiplier if applicable
-                if (clubMultiplier && player.team === clubMultiplier.id) {
+                if (clubMultiplier && (player.team_id === clubMultiplier.id || player.team === clubMultiplier.id)) {
                     benchPoints = Math.floor(benchPoints * 1.5);
                 }
             }
@@ -2190,28 +2189,8 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         `;
         document.body.appendChild(modal);
         
-        // Fetch live points data if available
-        let playerPoints = {};
-        try {
-            // Fetch live points from backend (which proxies FPL API to avoid CORS)
-            const baseURL = window.location.hostname === 'localhost' 
-                ? 'http://localhost:3001'
-                : 'https://fpl-auction-backend-945963649649.us-central1.run.app';
-            const pointsResponse = await fetch(`${baseURL}/api/submissions/gameweek/${submission.gameweek || gameweek || 1}/live`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('fpl_token')}`
-                }
-            });
-            if (pointsResponse.ok) {
-                const liveData = await pointsResponse.json();
-                if (liveData.elements) {
-                    playerPoints = liveData.elements;
-                    console.log('Fetched live points for gameweek', submission.gameweek || gameweek || 1, ':', playerPoints);
-                }
-            }
-        } catch (error) {
-            console.log('Could not fetch live points:', error);
-        }
+        // Live points are now included in the submission data from backend
+        // No need for separate API call - backend already fetched and processed them
         
         // Use the optimized endpoint data if available
         let players = [];
@@ -2358,9 +2337,9 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                     
                     // Calculate points with multipliers
                     let displayPoints = 0;
-                    if (playerPoints && playerPoints[player.id]) {
-                        const liveStats = playerPoints[player.id].stats;
-                        let basePoints = liveStats.total_points || 0;
+                    // Use live_points from the player data (backend already fetched it)
+                    if (player.live_points !== undefined) {
+                        let basePoints = player.live_points || 0;
                         displayPoints = basePoints;
                         
                         // Apply captain/vice-captain multiplier
@@ -2383,7 +2362,7 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                         }
                         
                         // Apply club multiplier
-                        if (clubMultiplier && player.team === clubMultiplier.id) {
+                        if (clubMultiplier && (player.team_id === clubMultiplier.id || player.team === clubMultiplier.id)) {
                             displayPoints = Math.floor(displayPoints * 1.5);
                         }
                     }
@@ -2420,12 +2399,11 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         bench.forEach((player, index) => {
             // Calculate bench player points (only with bench boost chip)
             let benchPoints = 0;
-            if (submission.chip_used === 'bench_boost' && playerPoints && playerPoints[player.id]) {
-                const liveStats = playerPoints[player.id].stats;
-                benchPoints = liveStats.total_points || 0;
+            if (submission.chip_used === 'bench_boost' && player.live_points !== undefined) {
+                benchPoints = player.live_points || 0;
                 
                 // Apply club multiplier if applicable
-                if (clubMultiplier && player.team === clubMultiplier.id) {
+                if (clubMultiplier && (player.team_id === clubMultiplier.id || player.team === clubMultiplier.id)) {
                     benchPoints = Math.floor(benchPoints * 1.5);
                 }
             }
