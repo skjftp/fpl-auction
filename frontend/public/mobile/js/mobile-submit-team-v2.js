@@ -2,7 +2,8 @@
 class MobileSubmitTeamManagerV2 {
     constructor() {
         this.initialized = false; // Track initialization
-        this.loading = false; // Track loading state - start as false
+        this.loading = true; // Track loading state - start as true to show loader
+        this.dataLoaded = false; // Track if initial data has been loaded
         this.mySquad = [];
         this.starting11 = [];
         this.bench = [];
@@ -81,15 +82,17 @@ class MobileSubmitTeamManagerV2 {
     initialize() {
         console.log('Submit Team initialize called');
         
-        // If already initialized, just re-render
-        if (this.initialized) {
+        // If already initialized and data loaded, just re-render
+        if (this.initialized && this.dataLoaded) {
             this.renderHeader();
             this.renderView();
             return;
         }
         
-        // IMMEDIATELY mark as initialized and render
+        // Mark as initialized but show loader first
         this.initialized = true;
+        this.loading = true;
+        this.showLoader();
         
         // Get cached squad if available
         let cached = false;
@@ -112,6 +115,9 @@ class MobileSubmitTeamManagerV2 {
                     this.myClubs = data.clubs || [];
                     cached = true;
                     console.log('Using cached squad with fixtures');
+                    // If we have cached data, mark as loaded
+                    this.dataLoaded = true;
+                    this.loading = false;
                 } else {
                     console.log('Cache is stale or missing fixtures, will refetch');
                     localStorage.removeItem(cacheKey); // Clear stale cache
@@ -136,9 +142,14 @@ class MobileSubmitTeamManagerV2 {
             this.autoSelectTeam();
         }
         
-        // Render NOW
+        // If we have cached data, render the view now
+        if (cached && this.dataLoaded) {
+            this.renderView();
+        }
+        
+        // Only render header initially, not the view (wait for data)
         this.renderHeader();
-        this.renderView();
+        // Don't render view yet - wait for data to load
         this.setupEventListeners();
         
         // If no cache, fetch in background (don't block)
@@ -160,6 +171,9 @@ class MobileSubmitTeamManagerV2 {
                 if (this.starting11.length === 0 && this.mySquad.length >= 15) {
                     this.autoSelectTeam();
                 }
+                // Data is now loaded, hide loader and render view
+                this.loading = false;
+                this.dataLoaded = true;
                 this.renderView();
             }).catch((err) => {
                 console.error('Failed to fetch squad:', err);
@@ -190,6 +204,9 @@ class MobileSubmitTeamManagerV2 {
                     }
                 }
                 
+                // Mark data as loaded and hide loader when submission is found
+                this.loading = false;
+                this.dataLoaded = true;
                 this.renderHeader();
                 this.renderView();
             }
@@ -200,6 +217,12 @@ class MobileSubmitTeamManagerV2 {
             // For first-time submission, any valid team should be submittable
             this.hasChanges = true;
             this.validateFormation();
+            // If data hasn't been rendered yet (first load), render now
+            if (!this.dataLoaded) {
+                this.loading = false;
+                this.dataLoaded = true;
+                this.renderView();
+            }
         });
         
         // Load chip status with current gameweek
@@ -233,7 +256,27 @@ class MobileSubmitTeamManagerV2 {
     }
     
     showLoader() {
-        // Not needed anymore - we render immediately
+        const container = document.getElementById('submitTeamContent');
+        if (container) {
+            container.innerHTML = `
+                <div class="loader-container" style="display: flex; justify-content: center; align-items: center; height: 400px;">
+                    <div class="loader" style="
+                        border: 4px solid #f3f3f3;
+                        border-top: 4px solid #00ff87;
+                        border-radius: 50%;
+                        width: 40px;
+                        height: 40px;
+                        animation: spin 1s linear infinite;
+                    "></div>
+                </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+        }
     }
     
     showError(message) {
@@ -447,6 +490,12 @@ class MobileSubmitTeamManagerV2 {
     renderView() {
         const container = document.getElementById('submitTeamContent');
         if (!container) return;
+
+        // Don't render if still loading
+        if (this.loading) {
+            this.showLoader();
+            return;
+        }
 
         // Always render pitch view
         this.renderPitchView(container);
