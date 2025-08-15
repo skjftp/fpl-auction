@@ -61,8 +61,10 @@ async function calculateSubmissionPoints(submission, livePointsData) {
             finalPoints = finalPoints * 1.5;
         }
         
-        starting11Points.push({ playerId, points: Math.floor(finalPoints) });
-        totalPoints += Math.floor(finalPoints);
+        // Keep 3 decimal places for precision
+        finalPoints = Math.round(finalPoints * 1000) / 1000;
+        starting11Points.push({ playerId, points: finalPoints });
+        totalPoints += finalPoints;
     }
     
     // Calculate bench points if bench boost is active
@@ -77,8 +79,10 @@ async function calculateSubmissionPoints(submission, livePointsData) {
                 finalPoints = finalPoints * 1.5;
             }
             
-            benchPoints.push({ playerId, points: Math.floor(finalPoints) });
-            totalPoints += Math.floor(finalPoints);
+            // Keep 3 decimal places for precision
+            finalPoints = Math.round(finalPoints * 1000) / 1000;
+            benchPoints.push({ playerId, points: finalPoints });
+            totalPoints += finalPoints;
         }
     }
     
@@ -89,8 +93,11 @@ async function calculateSubmissionPoints(submission, livePointsData) {
         totalPoints = Math.floor(totalPoints / 2);
     }
     
+    // Round final total to 3 decimal places
+    totalPoints = Math.round(totalPoints * 1000) / 1000;
+    
     return {
-        total: Math.floor(totalPoints), // Round down final total
+        total: totalPoints,
         starting11: starting11Points,
         bench: benchPoints
     };
