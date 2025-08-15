@@ -268,23 +268,20 @@ class TeamManager {
             // Multiple fallback strategies for player images
             const getPlayerImageUrl = (player) => {
                 // Try different URL formats for FPL player images
-                const baseUrls = [
-                    'https://resources.premierleague.com/premierleague/photos/players/250x250/',
-                    'https://fantasy.premierleague.com/dist/img/shirts/standard/'
-                ];
-                
                 if (player.photo) {
-                    // Remove .jpg extension and try different formats
-                    const photoCode = player.photo.replace('.jpg', '');
-                    return `${baseUrls[0]}p${photoCode}.png`;
-                } else if (player.code) {
-                    return `${baseUrls[0]}p${player.code}.png`;
-                } else if (player.id) {
-                    return `${baseUrls[0]}p${player.id}.png`;
+                    // Remove .jpg or .png extension and build URL
+                    const photoCode = player.photo.replace('.jpg', '').replace('.png', '');
+                    return `https://resources.premierleague.com/premierleague25/photos/players/110x140/${photoCode}.png`;
                 }
                 
-                // Default fallback
-                return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiNGM0Y0RjYiLz4KPHN2ZyB4PSIxNiIgeT0iMTYiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjOUI5OUIzIj4KPHA+VXNlcjwvcD4KPC9zdmc+Cjwvc3ZnPgo=';
+                // Fallback to player ID if no photo field
+                if (player.id) {
+                    // Try using player ID as photo code
+                    return `https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.id}.png`;
+                }
+                
+                // Default fallback - return empty string to trigger onerror handler
+                return '';
             };
             
             const playerImageUrl = getPlayerImageUrl(player);
@@ -301,7 +298,7 @@ class TeamManager {
                             <img src="${playerImageUrl}" 
                                  alt="${player.web_name || player.name || 'Player'}"
                                  class="w-full h-full object-cover"
-                                 onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiNGM0Y0RjYiLz4KPHN2ZyB4PSIxNiIgeT0iMTYiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjOUI5OUIzIj4KPHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQ9IkFyaWFsIiBmb250LXNpemU9IjEwIj4/PC90ZXh0Pgo8L3N2Zz4KPC9zdmc+';">
+                                 onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-white text-lg font-bold\\'>${(player.web_name || player.name || 'P').substring(0, 2).toUpperCase()}</div>';">
                         </div>
                         <!-- Price badge -->
                         <div class="absolute -bottom-1 -right-1 bg-white border border-gray-300 rounded-full px-1.5 py-0.5 text-xs font-semibold text-gray-700 shadow-sm">

@@ -212,7 +212,7 @@ class MobileAuctionManager {
         const photoEl = document.getElementById('playerPhoto');
         if (photoEl) {
             if (playerPhoto) {
-                const photoUrl = `https://resources.premierleague.com/premierleague/photos/players/110x140/p${playerPhoto.replace('.jpg', '')}.png`;
+                const photoUrl = `https://resources.premierleague.com/premierleague25/photos/players/110x140/${playerPhoto.replace('.jpg', '').replace('.png', '')}.png`;
                 photoEl.innerHTML = `<img src="${photoUrl}" alt="${playerName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.parentNode.innerHTML='👤'">`;
             } else {
                 photoEl.innerHTML = '👤';

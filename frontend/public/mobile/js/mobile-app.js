@@ -831,12 +831,12 @@ class MobileApp {
             // Get player image URL (same logic as web version)
             const getPlayerImageUrl = () => {
                 if (player.photo) {
-                    const photoCode = player.photo.replace('.jpg', '');
-                    return `https://resources.premierleague.com/premierleague/photos/players/250x250/p${photoCode}.png`;
+                    const photoCode = player.photo.replace('.jpg', '').replace('.png', '');
+                    return `https://resources.premierleague.com/premierleague25/photos/players/250x250/${photoCode}.png`;
                 } else if (player.code) {
-                    return `https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.code}.png`;
+                    return `https://resources.premierleague.com/premierleague25/photos/players/250x250/${player.code}.png`;
                 } else if (player.id) {
-                    return `https://resources.premierleague.com/premierleague/photos/players/250x250/p${player.id}.png`;
+                    return `https://resources.premierleague.com/premierleague25/photos/players/250x250/${player.id}.png`;
                 }
                 return null;
             };
@@ -1857,7 +1857,7 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                     html += `
                         <div style="width: 52px; text-align: center; flex: 0 0 auto;">
                             <div style="width: 44px; height: 44px; margin: 0 auto 2px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 6px 6px 16px 16px; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.2);">
-                                <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
+                                <img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo?.replace('.jpg', '').replace('.png', '') || '0'}.png" 
                                      style="width: 32px; height: 32px; object-fit: cover; border-radius: 50%; background: white;"
                                      onerror="this.style.display='none'">
                                 ${isCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #fbbf24;">C</div>' : ''}
@@ -1887,7 +1887,7 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
             html += `
                 <div style="flex: 0 0 auto; width: 65px; background: white; border-radius: 6px; padding: 6px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                     <div style="width: 35px; height: 35px; margin: 0 auto 3px; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); border-radius: 8px 8px 12px 12px; display: flex; align-items: center; justify-content: center;">
-                        <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
+                        <img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo?.replace('.jpg', '').replace('.png', '') || '0'}.png" 
                              style="width: 26px; height: 26px; object-fit: cover; border-radius: 50%; background: white;"
                              onerror="this.style.display='none'">
                     </div>

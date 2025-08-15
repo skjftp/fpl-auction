@@ -310,8 +310,9 @@ class AuctionManager {
                 <div class="flex items-center space-x-2 flex-1 min-w-0">
                     <div class="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
                         ${player.photo ? 
-                            `<img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo.replace('.jpg', '')}.png" 
-                                  alt="${player.web_name}" class="w-full h-full object-cover">` :
+                            `<img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo.replace('.jpg', '').replace('.png', '')}.png" 
+                                  alt="${player.web_name}" class="w-full h-full object-cover"
+                                  onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-xs font-bold\'>${player.web_name.substring(0, 2)}</span>'">` :
                             '<span class="text-xs font-bold">' + player.web_name.substring(0, 2) + '</span>'
                         }
                     </div>
@@ -429,7 +430,7 @@ class AuctionManager {
         const item = auction.player || auction.club;
         const itemName = auction.player ? item.web_name : item.name;
         const itemImage = auction.player && item.photo ? 
-            `https://resources.premierleague.com/premierleague/photos/players/110x140/p${item.photo.replace('.jpg', '')}.png` : 
+            `https://resources.premierleague.com/premierleague25/photos/players/110x140/${item.photo.replace('.jpg', '').replace('.png', '')}.png` : 
             null;
 
         // Calculate maximum bid for current user

@@ -352,7 +352,7 @@ class MobileSubmitTeamManager {
                 html += `
                     <div class="pitch-player" data-player-id="${player.id}" draggable="${this.editMode}">
                         <div class="player-shirt ${isCaptain ? 'captain' : ''} ${isViceCaptain ? 'vice-captain' : ''}">
-                            <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
+                            <img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo?.replace('.jpg', '').replace('.png', '') || '0'}.png" 
                                  onerror="this.style.display='none'" alt="">
                             ${isCaptain ? '<span class="captain-badge">C</span>' : ''}
                             ${isViceCaptain ? '<span class="vice-badge">V</span>' : ''}

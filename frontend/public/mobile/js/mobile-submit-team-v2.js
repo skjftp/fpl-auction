@@ -607,7 +607,7 @@ class MobileSubmitTeamManagerV2 {
         return `
             <div class="list-player-card player-card" data-player-id="${player.id}">
                 <div class="list-player-photo">
-                    <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
+                    <img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo?.replace('.jpg', '').replace('.png', '') || '0'}.png" 
                          onerror="this.style.display='none'" alt="">
                 </div>
                 <div class="list-player-info">
@@ -657,7 +657,7 @@ class MobileSubmitTeamManagerV2 {
                     </button>
                 ` : ''}
                 <div class="player-shirt">
-                    <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
+                    <img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo?.replace('.jpg', '').replace('.png', '') || '0'}.png" 
                          onerror="this.style.display='none'" alt="">
                     ${isCaptain ? '<div class="captain-badge">C</div>' : ''}
                     ${isViceCaptain ? '<div class="vice-badge">V</div>' : ''}
@@ -761,7 +761,7 @@ class MobileSubmitTeamManagerV2 {
                     ${validSubs.length > 0 ? validSubs.map(sub => `
                         <div class="substitute-option" onclick="mobileSubmitTeam.performSwap(${player.id}, ${sub.id})">
                             <div class="sub-player-info">
-                                <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${sub.photo?.replace('.jpg', '') || '0'}.png" 
+                                <img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${sub.photo?.replace('.jpg', '').replace('.png', '') || '0'}.png" 
                                      class="sub-player-img" onerror="this.style.display='none'">
                                 <div>
                                     <div class="sub-player-name">${sub.web_name || sub.name}</div>
@@ -1545,7 +1545,7 @@ class MobileSubmitTeamManagerV2 {
             <div class="captain-menu-overlay" onclick="this.parentElement.remove()"></div>
             <div class="captain-menu-content">
                 <div class="captain-menu-player">
-                    <img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p${player.photo?.replace('.jpg', '') || '0'}.png" 
+                    <img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo?.replace('.jpg', '').replace('.png', '') || '0'}.png" 
                          onerror="this.style.display='none'" alt="">
                     <div class="captain-menu-player-name">${player.web_name || player.name}</div>
                 </div>
