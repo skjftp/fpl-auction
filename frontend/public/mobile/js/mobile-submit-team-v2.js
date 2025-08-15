@@ -4,6 +4,7 @@ class MobileSubmitTeamManagerV2 {
         this.initialized = false; // Track initialization
         this.loading = true; // Track loading state - start as true to show loader
         this.dataLoaded = false; // Track if initial data has been loaded
+        this.submissionLoaded = false; // Track if submission check is complete
         this.mySquad = [];
         this.starting11 = [];
         this.bench = [];
@@ -82,8 +83,8 @@ class MobileSubmitTeamManagerV2 {
     initialize() {
         console.log('Submit Team initialize called');
         
-        // If already initialized and data loaded, just re-render
-        if (this.initialized && this.dataLoaded) {
+        // If already initialized and all data loaded, just re-render
+        if (this.initialized && this.dataLoaded && this.submissionLoaded) {
             this.renderHeader();
             this.renderView();
             return;
@@ -115,9 +116,9 @@ class MobileSubmitTeamManagerV2 {
                     this.myClubs = data.clubs || [];
                     cached = true;
                     console.log('Using cached squad with fixtures');
-                    // If we have cached data, mark as loaded
+                    // Don't mark as fully loaded yet - wait for submission check
                     this.dataLoaded = true;
-                    this.loading = false;
+                    // Keep loading true until submission is also checked
                 } else {
                     console.log('Cache is stale or missing fixtures, will refetch');
                     localStorage.removeItem(cacheKey); // Clear stale cache
@@ -137,15 +138,9 @@ class MobileSubmitTeamManagerV2 {
             this.renderHeader();
         });
         
-        // Auto-select if needed
-        if (this.starting11.length === 0 && this.mySquad.length >= 15) {
-            this.autoSelectTeam();
-        }
+        // Auto-select will happen after submission loads if needed
         
-        // If we have cached data, render the view now
-        if (cached && this.dataLoaded) {
-            this.renderView();
-        }
+        // Don't render yet even with cached data - wait for submission check
         
         // Only render header initially, not the view (wait for data)
         this.renderHeader();
@@ -171,10 +166,14 @@ class MobileSubmitTeamManagerV2 {
                 if (this.starting11.length === 0 && this.mySquad.length >= 15) {
                     this.autoSelectTeam();
                 }
-                // Data is now loaded, hide loader and render view
-                this.loading = false;
+                // Squad data is loaded
                 this.dataLoaded = true;
-                this.renderView();
+                
+                // If submission check is also complete, render now
+                if (this.submissionLoaded) {
+                    this.loading = false;
+                    this.renderView();
+                }
             }).catch((err) => {
                 console.error('Failed to fetch squad:', err);
                 // Ignore errors - just show empty
@@ -204,11 +203,15 @@ class MobileSubmitTeamManagerV2 {
                     }
                 }
                 
-                // Mark data as loaded and hide loader when submission is found
-                this.loading = false;
-                this.dataLoaded = true;
-                this.renderHeader();
-                this.renderView();
+                // Mark submission as loaded
+                this.submissionLoaded = true;
+                
+                // If we have all data, render now
+                if (this.dataLoaded) {
+                    this.loading = false;
+                    this.renderHeader();
+                    this.renderView();
+                }
             }
         }).catch((error) => {
             // No existing submission - that's ok, user hasn't submitted yet
@@ -216,11 +219,19 @@ class MobileSubmitTeamManagerV2 {
             this.existingSubmission = null;
             // For first-time submission, any valid team should be submittable
             this.hasChanges = true;
+            
+            // Auto-select team if no submission exists and we have squad data
+            if (this.starting11.length === 0 && this.mySquad.length >= 15) {
+                this.autoSelectTeam();
+            }
+            
             this.validateFormation();
-            // If data hasn't been rendered yet (first load), render now
-            if (!this.dataLoaded) {
+            // Mark submission check as complete
+            this.submissionLoaded = true;
+            
+            // If we have squad data too, render now
+            if (this.dataLoaded) {
                 this.loading = false;
-                this.dataLoaded = true;
                 this.renderView();
             }
         });
