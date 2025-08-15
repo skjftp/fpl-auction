@@ -2008,8 +2008,11 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
         if (content) {
             content.innerHTML = data.map((team, index) => `
                 <div class="leaderboard-item ${team.team_id === currentUser.id ? 'current-team' : ''}" 
-                     onclick="window.mobileApp.viewTeamSubmission(${team.team_id})"
-                     style="cursor: pointer;">
+                     onclick="event.stopPropagation(); window.mobileApp.viewTeamSubmission(${team.team_id})"
+                     style="cursor: pointer; transition: all 0.2s ease;"
+                     ontouchstart="this.style.transform='scale(0.98)'; this.style.opacity='0.8';"
+                     ontouchend="this.style.transform='scale(1)'; this.style.opacity='1';"
+                     ontouchcancel="this.style.transform='scale(1)'; this.style.opacity='1';">
                     <div class="rank">
                         <span class="rank-number">${team.rank}</span>
                         ${team.movement > 0 ? '<span class="movement up">↑' + team.movement + '</span>' : ''}
@@ -2034,6 +2037,32 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
 };
 
 MobileApp.prototype.viewTeamSubmission = async function(teamId) {
+    // Show modal immediately with loader for better UX
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.zIndex = '10000';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>Loading Team...</h3>
+                <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 300px;">
+                    <div style="border: 3px solid #f3f3f3; border-top: 3px solid #10B981; border-radius: 50%; width: 40px; height: 40px; animation: spin3 1s linear infinite;"></div>
+                    <p style="margin-top: 16px; color: #666; font-size: 14px;">Loading team details...</p>
+                </div>
+                <style>
+                    @keyframes spin3 {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
     try {
         // Get current gameweek
         const gwInfo = await window.mobileAPI.getCurrentGameweek();
@@ -2043,7 +2072,8 @@ MobileApp.prototype.viewTeamSubmission = async function(teamId) {
         const submission = await window.mobileAPI.getTeamSubmission(currentGameweek, teamId);
         
         if (!submission) {
-            // No submission yet, show squad instead
+            // No submission yet, remove modal and show squad instead
+            modal.remove();
             await this.showTeamSquad(teamId);
             return;
         }
@@ -2054,19 +2084,23 @@ MobileApp.prototype.viewTeamSubmission = async function(teamId) {
         }
         const team = window.cachedTeams.find(t => t.id === teamId);
         
+        // Remove the loading modal
+        modal.remove();
+        
         // Show submission in nice pitch view
         await this.showTeamSubmissionDetail(submission, team ? team.name : `Team ${teamId}`);
         
     } catch (error) {
         console.error('Error viewing team submission:', error);
-        // Fall back to showing squad
+        // Remove modal and fall back to showing squad
+        modal.remove();
         await this.showTeamSquad(teamId);
     }
 };
 
 MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamName) {
     try {
-        // Create modal container
+        // Create modal container (no loader needed as it's already shown)
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.style.zIndex = '10000';
@@ -2077,16 +2111,7 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                     <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
                 </div>
                 <div class="modal-body" id="submissionDetailBody">
-                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 300px;">
-                        <div style="border: 3px solid #f3f3f3; border-top: 3px solid #10B981; border-radius: 50%; width: 40px; height: 40px; animation: spin2 1s linear infinite;"></div>
-                        <p style="margin-top: 16px; color: #666; font-size: 14px;">Loading team details...</p>
-                    </div>
-                    <style>
-                        @keyframes spin2 {
-                            0% { transform: rotate(0deg); }
-                            100% { transform: rotate(360deg); }
-                        }
-                    </style>
+                    <!-- Content will be added immediately -->
                 </div>
             </div>
         `;
