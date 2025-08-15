@@ -95,48 +95,48 @@ class MobileSubmitTeamManagerV2 {
         this.loading = true;
         this.showLoader();
         
-        // Get cached squad if available
-        let cached = false;
-        let currentUser = null;
-        let cacheKey = null;
-        
-        try {
-            currentUser = window.mobileAPI.getCurrentUser();
-            cacheKey = `fpl_squad_cache_${currentUser.id}`;
-            const cachedData = localStorage.getItem(cacheKey);
-            
-            if (cachedData) {
-                const data = JSON.parse(cachedData);
-                // Check if cache is older than 1 hour or doesn't have fixture data
-                const cacheAge = Date.now() - (data.timestamp || 0);
-                const hasFixtures = data.players && data.players.length > 0 && data.players[0].fixture !== undefined;
-                
-                if (cacheAge < 3600000 && hasFixtures) { // 1 hour cache with fixtures
-                    this.mySquad = data.players || [];
-                    this.myClubs = data.clubs || [];
-                    cached = true;
-                    console.log('Using cached squad with fixtures');
-                    // Don't mark as fully loaded yet - wait for submission check
-                    this.dataLoaded = true;
-                    // Keep loading true until submission is also checked
-                } else {
-                    console.log('Cache is stale or missing fixtures, will refetch');
-                    localStorage.removeItem(cacheKey); // Clear stale cache
-                }
-            }
-        } catch (e) {
-            console.log('Cache read failed:', e);
-        }
-        
-        // Set defaults
-        this.currentGameweek = 1;
+        // Set defaults first
+        this.currentGameweek = 2; // Default to GW2 for submit team
         this.deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         
-        // Load gameweek info first, THEN load submission
+        // Load gameweek info first, THEN check cache and load data
         this.loadGameweekInfo().then(() => {
+            // NOW check cache after we know the current gameweek
+            let cached = false;
+            let currentUser = null;
+            let cacheKey = null;
+            
+            try {
+                currentUser = window.mobileAPI.getCurrentUser();
+                cacheKey = `fpl_squad_cache_${currentUser.id}`;
+                const cachedData = localStorage.getItem(cacheKey);
+                
+                if (cachedData) {
+                    const data = JSON.parse(cachedData);
+                    // Check if cache is older than 1 hour or doesn't have fixture data
+                    const cacheAge = Date.now() - (data.timestamp || 0);
+                    const hasFixtures = data.players && data.players.length > 0 && data.players[0].fixture !== undefined;
+                    const cachedGameweek = data.gameweek || 1;
+                    
+                    // Invalidate cache if it's for wrong gameweek
+                    if (cacheAge < 3600000 && hasFixtures && cachedGameweek === this.currentGameweek) { // 1 hour cache with correct gameweek fixtures
+                        this.mySquad = data.players || [];
+                        this.myClubs = data.clubs || [];
+                        cached = true;
+                        console.log('Using cached squad with fixtures for GW' + cachedGameweek);
+                        this.dataLoaded = true;
+                    } else {
+                        console.log('Cache is stale, missing fixtures, or wrong gameweek (cached: GW' + cachedGameweek + ', need: GW' + this.currentGameweek + '), will refetch');
+                        localStorage.removeItem(cacheKey); // Clear stale cache
+                    }
+                }
+            } catch (e) {
+                console.log('Cache read failed:', e);
+            }
+            
             // If we don't have cached data, load squad data with correct gameweek
             if (!cached) {
-                console.log('No cached squad data, loading from API...');
+                console.log('No valid cached squad data, loading from API for GW' + this.currentGameweek);
                 this.loadMySquad().then(() => {
                     this.dataLoaded = true;
                     // Check if submission is also loaded
@@ -301,6 +301,18 @@ class MobileSubmitTeamManagerV2 {
         this.renderHeader();
         this.renderView();
         this.setupEventListeners();
+    }
+    
+    // Force clear cache and reload
+    forceClearCache() {
+        const currentUser = window.mobileAPI.getCurrentUser();
+        if (currentUser && currentUser.id) {
+            const cacheKey = `fpl_squad_cache_${currentUser.id}`;
+            localStorage.removeItem(cacheKey);
+            console.log('Squad cache cleared');
+            // Reload the squad data
+            this.loadMySquad();
+        }
     }
 
     setupEventListeners() {
@@ -1089,10 +1101,11 @@ class MobileSubmitTeamManagerV2 {
                 console.log('First player fixture data:', this.mySquad[0]?.fixture);
                 console.log('Sample player:', this.mySquad[0]);
                 
-                // Cache it
+                // Cache it with gameweek info
                 localStorage.setItem(cacheKey, JSON.stringify({
                     players: this.mySquad,
                     clubs: this.myClubs,
+                    gameweek: gameweekToUse,
                     timestamp: Date.now()
                 }));
                 
@@ -1123,6 +1136,7 @@ class MobileSubmitTeamManagerV2 {
             localStorage.setItem(cacheKey, JSON.stringify({
                 players: squadData.players || [],
                 clubs: squadData.clubs || [],
+                gameweek: this.currentGameweek,
                 timestamp: Date.now()
             }));
             console.log('Squad cache refreshed in background');
