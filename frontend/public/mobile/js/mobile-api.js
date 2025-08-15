@@ -673,6 +673,10 @@ class MobileAPI {
     async getSubmissionHistoryForGameweek(teamId, gameweek) {
         return this.makeRequest(`/gameweek-teams/history/${teamId}/${gameweek}`);
     }
+
+    async getGameweekFixtures(gameweek) {
+        return this.makeRequest(`/gameweek-info/fixtures/${gameweek}`);
+    }
 }
 
 // Global API instance

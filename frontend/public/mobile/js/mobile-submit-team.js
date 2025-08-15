@@ -15,6 +15,7 @@ class MobileSubmitTeamManager {
         this.draggedPlayer = null;
         this.myClubs = [];
         this.editMode = false; // Track edit mode state
+        this.teamOpponents = {}; // Store opponent info for each team
         
         // Position requirements
         this.positionLimits = {
@@ -75,6 +76,7 @@ class MobileSubmitTeamManager {
         try {
             await this.loadMySquad();
             await this.loadCurrentGameweek();
+            await this.loadFixtures(); // Load fixtures for current gameweek
             await this.loadExistingSubmission();
             await this.loadChipStatus();
             this.setupEventListeners();
@@ -131,6 +133,16 @@ class MobileSubmitTeamManager {
         } catch (error) {
             console.error('Error loading gameweek:', error);
             throw error;
+        }
+    }
+
+    async loadFixtures() {
+        try {
+            const fixturesData = await window.mobileAPI.getGameweekFixtures(this.currentGameweek);
+            this.teamOpponents = fixturesData.team_opponents || {};
+        } catch (error) {
+            console.error('Error loading fixtures:', error);
+            // Don't throw - fixtures are optional enhancement
         }
     }
 
@@ -349,6 +361,12 @@ class MobileSubmitTeamManager {
                 const isCaptain = player.id === this.captainId;
                 const isViceCaptain = player.id === this.viceCaptainId;
                 
+                // Get opponent info for this player's team
+                const opponent = this.teamOpponents[player.team_id];
+                const opponentText = opponent ? 
+                    `${opponent.opponent_short}(${opponent.is_home ? 'H' : 'A'})` : 
+                    (player.team_short_name || '');
+                
                 html += `
                     <div class="pitch-player" data-player-id="${player.id}" draggable="${this.editMode}">
                         <div class="player-shirt ${isCaptain ? 'captain' : ''} ${isViceCaptain ? 'vice-captain' : ''}">
@@ -358,7 +376,7 @@ class MobileSubmitTeamManager {
                             ${isViceCaptain ? '<span class="vice-badge">V</span>' : ''}
                         </div>
                         <div class="player-name">${player.web_name || player.name}</div>
-                        <div class="player-team">${player.team_short_name || ''}</div>
+                        <div class="player-team">${opponentText}</div>
                         <div class="player-actions">
                             <button onclick="mobileSubmitTeam.toggleCaptain(${player.id})" class="captain-btn" ${this.editMode ? 'style="pointer-events: none; opacity: 0.5;"' : ''}>
                                 ${isCaptain ? '©' : 'C'}
@@ -393,15 +411,22 @@ class MobileSubmitTeamManager {
             <div class="bench-container">
                 <h4 class="bench-title">Bench</h4>
                 <div class="bench-players">
-                    ${benchPlayers.map((player, index) => `
-                        <div class="bench-player" data-player-id="${player.id}" draggable="${this.editMode}">
-                            <span class="bench-number">${index + 1}</span>
-                            <div class="player-info">
-                                <div class="player-name">${player.web_name || player.name}</div>
-                                <div class="player-position">${this.getPositionName(player.position || player.element_type)}</div>
+                    ${benchPlayers.map((player, index) => {
+                        const opponent = this.teamOpponents[player.team_id];
+                        const opponentText = opponent ? 
+                            `${opponent.opponent_short}(${opponent.is_home ? 'H' : 'A'})` : 
+                            '';
+                        
+                        return `
+                            <div class="bench-player" data-player-id="${player.id}" draggable="${this.editMode}">
+                                <span class="bench-number">${index + 1}</span>
+                                <div class="player-info">
+                                    <div class="player-name">${player.web_name || player.name}</div>
+                                    <div class="player-position">${this.getPositionName(player.position || player.element_type)} ${opponentText ? '• ' + opponentText : ''}</div>
+                                </div>
                             </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                     ${[...Array(4 - benchPlayers.length)].map((_, i) => `
                         <div class="bench-player empty">
                             <span class="bench-number">${benchPlayers.length + i + 1}</span>

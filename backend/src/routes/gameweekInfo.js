@@ -251,4 +251,74 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get fixtures for a specific gameweek
+router.get('/fixtures/:gameweek', async (req, res) => {
+    try {
+        const gameweek = parseInt(req.params.gameweek);
+        
+        // Fetch fixtures from FPL API
+        const fixturesResponse = await axios.get(`${FPL_FIXTURES_URL}?event=${gameweek}`);
+        const fixtures = fixturesResponse.data;
+        
+        // Get team names from FPL data
+        const fplData = await fetchFPLData();
+        const teams = {};
+        fplData.teams.forEach(team => {
+            teams[team.id] = {
+                id: team.id,
+                name: team.name,
+                short_name: team.short_name
+            };
+        });
+        
+        // Map fixtures with team names
+        const mappedFixtures = fixtures.map(fixture => ({
+            id: fixture.id,
+            gameweek: fixture.event,
+            kickoff: fixture.kickoff_time,
+            home_team_id: fixture.team_h,
+            home_team: teams[fixture.team_h]?.name || 'Unknown',
+            home_team_short: teams[fixture.team_h]?.short_name || '',
+            away_team_id: fixture.team_a,
+            away_team: teams[fixture.team_a]?.name || 'Unknown',
+            away_team_short: teams[fixture.team_a]?.short_name || '',
+            finished: fixture.finished,
+            started: fixture.started
+        }));
+        
+        // Create a map of team opponents for easy lookup
+        const teamOpponents = {};
+        mappedFixtures.forEach(fixture => {
+            // Home team's opponent is away team
+            teamOpponents[fixture.home_team_id] = {
+                opponent_id: fixture.away_team_id,
+                opponent_name: fixture.away_team,
+                opponent_short: fixture.away_team_short,
+                is_home: true,
+                fixture_id: fixture.id,
+                kickoff: fixture.kickoff
+            };
+            
+            // Away team's opponent is home team
+            teamOpponents[fixture.away_team_id] = {
+                opponent_id: fixture.home_team_id,
+                opponent_name: fixture.home_team,
+                opponent_short: fixture.home_team_short,
+                is_home: false,
+                fixture_id: fixture.id,
+                kickoff: fixture.kickoff
+            };
+        });
+        
+        res.json({
+            gameweek: gameweek,
+            fixtures: mappedFixtures,
+            team_opponents: teamOpponents
+        });
+    } catch (error) {
+        console.error('Error fetching fixtures:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
