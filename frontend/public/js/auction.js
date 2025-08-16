@@ -17,9 +17,15 @@ class AuctionManager {
         this.bindEvents();
         // Only load data if user is authenticated
         if (this.isAuthenticated()) {
-            this.loadInitialData();
-            this.initializeChat();
-            this.loadDraftState();
+            // Check if auction is enabled
+            if (!window.FEATURE_FLAGS || window.FEATURE_FLAGS.AUCTION) {
+                this.loadInitialData();
+                this.loadDraftState();
+            }
+            // Only initialize chat if enabled
+            if (!window.FEATURE_FLAGS || window.FEATURE_FLAGS.CHAT) {
+                this.initializeChat();
+            }
         }
     }
 
@@ -42,9 +48,15 @@ class AuctionManager {
     // Called after successful login to load data
     onUserLogin() {
         if (this.isAuthenticated()) {
-            this.loadInitialData();
-            this.initializeChat();
-            this.loadDraftState();
+            // Check if auction is enabled
+            if (!window.FEATURE_FLAGS || window.FEATURE_FLAGS.AUCTION) {
+                this.loadInitialData();
+                this.loadDraftState();
+            }
+            // Only initialize chat if enabled
+            if (!window.FEATURE_FLAGS || window.FEATURE_FLAGS.CHAT) {
+                this.initializeChat();
+            }
         }
     }
 
@@ -869,6 +881,11 @@ class AuctionManager {
     }
 
     setupChatSocketListeners(retryCount = 0) {
+        // Check if chat is disabled
+        if (window.FEATURE_FLAGS && !window.FEATURE_FLAGS.CHAT) {
+            return;
+        }
+        
         const maxRetries = 10;
         
         if (!window.socketManager || !window.socketManager.socket) {

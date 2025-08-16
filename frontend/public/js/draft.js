@@ -60,6 +60,11 @@ class DraftManager {
     }
 
     setupSocketListeners() {
+        // Check if draft is disabled
+        if (window.FEATURE_FLAGS && !window.FEATURE_FLAGS.DRAFT) {
+            return;
+        }
+        
         // Check if socket manager and socket exist
         if (!window.socketManager || !window.socketManager.socket) {
             this.socketRetryCount++;

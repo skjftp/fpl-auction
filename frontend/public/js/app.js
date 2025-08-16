@@ -2,7 +2,18 @@
 class App {
     constructor() {
         this.currentUser = null;
-        this.currentTab = 'auction'; // Changed default tab to auction
+        // Set default tab based on enabled features
+        if (window.FEATURE_FLAGS) {
+            if (window.FEATURE_FLAGS.TEAM_SUBMISSION) {
+                this.currentTab = 'scoring';
+            } else if (window.FEATURE_FLAGS.POINTS_CALCULATION) {
+                this.currentTab = 'leaderboard';
+            } else {
+                this.currentTab = 'auction';
+            }
+        } else {
+            this.currentTab = 'auction';
+        }
         this.init();
     }
 
@@ -88,14 +99,18 @@ class App {
                 this.currentUser = JSON.parse(team);
                 this.isViewer = this.currentUser.is_viewer || false;
                 this.showMainApp();
-                window.socketManager.connect();
+                
+                // Only connect to WebSocket if feature is enabled
+                if (!window.FEATURE_FLAGS || window.FEATURE_FLAGS.WEBSOCKET) {
+                    window.socketManager.connect();
+                }
                 
                 // Trigger data load after a small delay to ensure DOM is ready
                 setTimeout(() => {
-                    if (window.auctionManager) {
+                    if ((!window.FEATURE_FLAGS || window.FEATURE_FLAGS.AUCTION) && window.auctionManager) {
                         window.auctionManager.onUserLogin();
                     }
-                    if (window.draftManager) {
+                    if ((!window.FEATURE_FLAGS || window.FEATURE_FLAGS.DRAFT) && window.draftManager) {
                         window.draftManager.onUserLogin();
                     }
                 }, 100);
@@ -126,7 +141,11 @@ class App {
                 this.isViewer = response.team.is_viewer || false;
                 console.log('Logged in user:', this.currentUser); // Debug log
                 this.showMainApp();
-                window.socketManager.connect();
+                
+                // Only connect to WebSocket if feature is enabled
+                if (!window.FEATURE_FLAGS || window.FEATURE_FLAGS.WEBSOCKET) {
+                    window.socketManager.connect();
+                }
                 
                 // Show viewer notification
                 if (this.isViewer) {
@@ -326,6 +345,31 @@ class App {
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('navbar').classList.remove('hidden');
         
+        // Hide disabled tabs
+        if (window.FEATURE_FLAGS) {
+            const tabFeatureMap = {
+                'auction': 'AUCTION',
+                'draft': 'DRAFT',
+                'myTeam': 'MY_TEAM',
+                'scoring': 'TEAM_SUBMISSION',
+                'leaderboard': 'POINTS_CALCULATION',
+                'admin': 'ADMIN',
+                'history': 'HISTORY'
+            };
+            
+            Object.entries(tabFeatureMap).forEach(([tabName, featureFlag]) => {
+                if (!window.FEATURE_FLAGS[featureFlag]) {
+                    // Hide tab button
+                    const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+                    if (tabBtn) tabBtn.style.display = 'none';
+                    
+                    // Hide nav item
+                    const navItem = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+                    if (navItem) navItem.style.display = 'none';
+                }
+            });
+        }
+        
         // Update break button visibility for admins
         if (window.breakManager) {
             window.breakManager.updateAdminVisibility();
@@ -342,14 +386,15 @@ class App {
             window.draftManager.onUserLogin();
         }
         
-        // Show admin tab if user is admin
+        // Show admin tab if user is admin (but only if admin feature is enabled)
         const adminTab = document.querySelector('[data-tab="admin"]');
         const adminTabNav = document.querySelector('.nav-item[data-tab="admin"]');
+        const adminEnabled = !window.FEATURE_FLAGS || window.FEATURE_FLAGS.ADMIN;
         if (adminTab) {
-            adminTab.style.display = this.currentUser?.is_admin ? 'block' : 'none';
+            adminTab.style.display = (this.currentUser?.is_admin && adminEnabled) ? 'block' : 'none';
         }
         if (adminTabNav) {
-            adminTabNav.style.display = this.currentUser?.is_admin ? 'flex' : 'none';
+            adminTabNav.style.display = (this.currentUser?.is_admin && adminEnabled) ? 'flex' : 'none';
         }
         
         // Hide action buttons for viewers
@@ -405,6 +450,25 @@ class App {
     }
 
     switchTab(tabName) {
+        // Check if tab is enabled
+        if (window.FEATURE_FLAGS) {
+            const tabFeatureMap = {
+                'auction': 'AUCTION',
+                'draft': 'DRAFT',
+                'myTeam': 'MY_TEAM',
+                'scoring': 'TEAM_SUBMISSION',
+                'leaderboard': 'POINTS_CALCULATION',
+                'admin': 'ADMIN',
+                'history': 'HISTORY'
+            };
+            
+            const featureFlag = tabFeatureMap[tabName];
+            if (featureFlag && !window.FEATURE_FLAGS[featureFlag]) {
+                console.log(`Tab ${tabName} is disabled`);
+                return;
+            }
+        }
+        
         // Update tab buttons (old style)
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active');

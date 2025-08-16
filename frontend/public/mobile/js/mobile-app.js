@@ -2149,6 +2149,8 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
                             return `
                                 <span 
                                     id="${chipId}"
+                                    data-chip-name="${chipNames[chip]}"
+                                    data-chip-status="${statusText}"
                                     style="
                                         background: ${bgColor};
                                         opacity: ${opacity};
@@ -2165,7 +2167,7 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
                                         cursor: pointer;
                                         position: relative;
                                     " 
-                                    onclick="event.stopPropagation(); window.mobileApp.showChipTooltip('${chipNames[chip]}', '${statusText}', event)"
+                                    onclick="event.stopPropagation(); window.mobileApp.showChipTooltipFromElement(this, event)"
                                     title="${chipNames[chip]} - ${statusText}">
                                     ${chipEmojis[chip] || chip.substring(0, 2).toUpperCase()}
                                 </span>

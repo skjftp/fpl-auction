@@ -6,6 +6,12 @@ class SocketManager {
     }
 
     connect() {
+        // Check if WebSocket is disabled
+        if (window.FEATURE_FLAGS && !window.FEATURE_FLAGS.WEBSOCKET) {
+            console.log('WebSocket connections are disabled');
+            return;
+        }
+        
         // Production Socket URL - FPL Auction Backend on Google Cloud Run
         const PRODUCTION_SOCKET_URL = 'https://fpl-auction-backend-945963649649.us-central1.run.app';
         
