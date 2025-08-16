@@ -416,6 +416,73 @@ router.get('/gameweek/:gameweek/live-points', authenticateToken, async (req, res
     }
 });
 
+// Get chip usage status for all teams
+router.get('/chips/all-teams', authenticateToken, async (req, res) => {
+    try {
+        // Get all teams
+        const teamsSnapshot = await db.collection('teams').get();
+        const teams = {};
+        teamsSnapshot.forEach(doc => {
+            const team = doc.data();
+            teams[team.id] = {
+                id: team.id,
+                name: team.name,
+                chips_used: [],
+                chip_current_gw: null
+            };
+        });
+        
+        // Get current gameweek
+        const currentGwDoc = await db.collection('gameweekInfo').where('is_current', '==', true).limit(1).get();
+        let currentGameweek = 1;
+        if (!currentGwDoc.empty) {
+            currentGameweek = currentGwDoc.docs[0].data().gameweek;
+        }
+        
+        // Get all historical chip usage (from past gameweeks)
+        const historicalChipsSnapshot = await db.collection('gameweekTeams')
+            .where('gameweek', '<', currentGameweek)
+            .get();
+            
+        historicalChipsSnapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.chip_used && teams[data.team_id]) {
+                teams[data.team_id].chips_used.push(data.chip_used);
+            }
+        });
+        
+        // Get current gameweek chip usage
+        const currentGwSnapshot = await db.collection('gameweekTeams')
+            .where('gameweek', '==', currentGameweek)
+            .get();
+            
+        currentGwSnapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.chip_used && teams[data.team_id]) {
+                teams[data.team_id].chip_current_gw = data.chip_used;
+            }
+        });
+        
+        res.json({
+            teams: teams,
+            current_gameweek: currentGameweek,
+            all_chips: [
+                'triple_captain',
+                'bench_boost',
+                'free_hit',
+                'double_up',
+                'negative_chip',
+                'attack_chip',
+                'park_the_bus',
+                'brahmashtra'
+            ]
+        });
+    } catch (error) {
+        console.error('Error fetching all teams chip status:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get chip usage status for a team
 router.get('/chips/status', authenticateToken, async (req, res) => {
     try {

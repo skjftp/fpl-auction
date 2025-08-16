@@ -2083,26 +2083,105 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
         const data = await window.mobileAPI.getLeaderboard(gameweek);
         const currentUser = window.mobileAPI.getCurrentUser();
         
+        // Fetch chip usage data for all teams
+        let chipData = null;
+        try {
+            const response = await fetch(`${window.mobileAPI.baseURL}/gameweek-teams/chips/all-teams`, {
+                headers: {
+                    'Authorization': `Bearer ${window.mobileAPI.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            chipData = await response.json();
+        } catch (error) {
+            console.log('Could not fetch chip data:', error);
+        }
+        
         if (content) {
+            // Helper function to get chip icons with color coding
+            const getChipIcons = (teamId) => {
+                if (!chipData || !chipData.teams[teamId]) return '';
+                
+                const teamChipData = chipData.teams[teamId];
+                const allChips = chipData.all_chips;
+                
+                // Chip emoji mapping
+                const chipEmojis = {
+                    'triple_captain': '3️⃣C',
+                    'bench_boost': '💺',
+                    'free_hit': '🎯',
+                    'double_up': '2️⃣X',
+                    'negative_chip': '➖',
+                    'attack_chip': '⚔️',
+                    'park_the_bus': '🚌',
+                    'brahmashtra': '💥'
+                };
+                
+                return `
+                    <div style="display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap;">
+                        ${allChips.map(chip => {
+                            let bgColor = '#10b981'; // Green - available
+                            let opacity = '0.7';
+                            let title = `${chip.replace(/_/g, ' ')} - Available`;
+                            
+                            if (teamChipData.chips_used.includes(chip)) {
+                                bgColor = '#ef4444'; // Red - used in previous gameweeks
+                                opacity = '1';
+                                title = `${chip.replace(/_/g, ' ')} - Used`;
+                            } else if (teamChipData.chip_current_gw === chip) {
+                                bgColor = '#3b82f6'; // Blue - used in current gameweek
+                                opacity = '1';
+                                title = `${chip.replace(/_/g, ' ')} - Current GW`;
+                            }
+                            
+                            return `
+                                <span style="
+                                    background: ${bgColor};
+                                    opacity: ${opacity};
+                                    color: white;
+                                    padding: 2px 4px;
+                                    border-radius: 4px;
+                                    font-size: 10px;
+                                    font-weight: 600;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    min-width: 24px;
+                                    height: 18px;
+                                    cursor: help;
+                                " title="${title}">
+                                    ${chipEmojis[chip] || chip.substring(0, 2).toUpperCase()}
+                                </span>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            };
+            
             content.innerHTML = data.map((team, index) => `
                 <div class="leaderboard-item ${team.team_id === currentUser.id ? 'current-team' : ''}" 
                      onclick="event.stopPropagation(); window.mobileApp.viewTeamSubmission(${team.team_id}, ${gameweek === 'overall' ? 1 : gameweek})"
-                     style="cursor: pointer; transition: all 0.2s ease;"
+                     style="cursor: pointer; transition: all 0.2s ease; padding: 12px;"
                      ontouchstart="this.style.transform='scale(0.98)'; this.style.opacity='0.8';"
                      ontouchend="this.style.transform='scale(1)'; this.style.opacity='1';"
                      ontouchcancel="this.style.transform='scale(1)'; this.style.opacity='1';">
-                    <div class="rank">
-                        <span class="rank-number">${team.rank}</span>
-                        ${team.movement > 0 ? '<span class="movement up">↑' + team.movement + '</span>' : ''}
-                        ${team.movement < 0 ? '<span class="movement down">↓' + Math.abs(team.movement) + '</span>' : ''}
-                    </div>
-                    <div class="team-info">
-                        <div class="team-name">${team.team_name}</div>
-                        <div class="team-stats">
-                            ${gameweek === 'overall' ? 
-                                `<span>GW: ${team.latest_gameweek_points || 0} pts</span> • <span>Total: ${team.total_points} pts</span>` :
-                                `<span>${team.gameweek_points} pts</span>${team.chip_used ? ' • <span class="chip">' + team.chip_used + '</span>' : ''}`
-                            }
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="display: flex; gap: 12px; align-items: start; flex: 1;">
+                            <div class="rank" style="min-width: 30px;">
+                                <span class="rank-number">${team.rank}</span>
+                                ${team.movement > 0 ? '<span class="movement up">↑' + team.movement + '</span>' : ''}
+                                ${team.movement < 0 ? '<span class="movement down">↓' + Math.abs(team.movement) + '</span>' : ''}
+                            </div>
+                            <div class="team-info" style="flex: 1;">
+                                <div class="team-name" style="font-weight: 600; color: #1f2937;">${team.team_name}</div>
+                                <div class="team-stats" style="color: #6b7280; font-size: 12px; margin-top: 2px;">
+                                    ${gameweek === 'overall' ? 
+                                        `<span>GW: ${parseFloat(team.latest_gameweek_points || 0).toFixed(3).replace(/\.?0+$/, '')} pts</span> • <span>Total: ${parseFloat(team.total_points || 0).toFixed(3).replace(/\.?0+$/, '')} pts</span>` :
+                                        `<span>${parseFloat(team.gameweek_points || 0).toFixed(3).replace(/\.?0+$/, '')} pts</span>${team.chip_used ? ' • <span class="chip">' + team.chip_used + '</span>' : ''}`
+                                    }
+                                </div>
+                                ${chipData ? getChipIcons(team.team_id) : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
