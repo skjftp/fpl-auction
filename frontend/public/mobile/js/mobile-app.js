@@ -1934,21 +1934,14 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                         displayPoints = basePoints;
                         
                         // Apply captain/vice-captain multiplier
-                        // Find captain's minutes to determine if they played
-                        const captainPlayer = players.find(p => p.id === submission.captain_id);
-                        const captainMinutes = captainPlayer?.minutes || 0;
-                        
                         if (isCaptain) {
                             const captainMultiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
                             displayPoints = basePoints * captainMultiplier;
                         } else if (isViceCaptain) {
-                            if (captainMinutes === 0) {
-                                // If captain didn't play, VC becomes captain and gets 2x
-                                displayPoints = basePoints * 2;
-                            } else {
-                                // If captain played, VC gets 1.25x
-                                displayPoints = basePoints * 1.25;
-                            }
+                            // For now, always give VC 1.25x during active gameweek
+                            // TODO: After gameweek is complete, check if captain played
+                            // and give VC 2x if captain didn't play
+                            displayPoints = basePoints * 1.25;
                         }
                         
                         // Apply chip multipliers
@@ -2359,21 +2352,14 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                         displayPoints = basePoints;
                         
                         // Apply captain/vice-captain multiplier
-                        // Find captain's minutes to determine if they played
-                        const captainPlayer = players.find(p => p.id === submission.captain_id);
-                        const captainMinutes = captainPlayer?.minutes || 0;
-                        
                         if (isCaptain) {
                             const captainMultiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
                             displayPoints = basePoints * captainMultiplier;
                         } else if (isViceCaptain) {
-                            if (captainMinutes === 0) {
-                                // If captain didn't play, VC becomes captain and gets 2x
-                                displayPoints = basePoints * 2;
-                            } else {
-                                // If captain played, VC gets 1.25x
-                                displayPoints = basePoints * 1.25;
-                            }
+                            // For now, always give VC 1.25x during active gameweek
+                            // TODO: After gameweek is complete, check if captain played
+                            // and give VC 2x if captain didn't play
+                            displayPoints = basePoints * 1.25;
                         }
                         
                         // Apply chip multipliers

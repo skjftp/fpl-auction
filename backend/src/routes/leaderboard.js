@@ -42,20 +42,14 @@ async function calculateSubmissionPoints(submission, livePointsData) {
         const playerData = playerDetails[playerId] || {};
         
         // Apply captain/vice-captain multiplier first
-        const captainPoints = livePointsData[submission.captain_id]?.points || 0;
-        const captainMinutes = livePointsData[submission.captain_id]?.minutes || 0;
-        
         if (playerId == submission.captain_id) {
             const multiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
             finalPoints = playerPoints * multiplier;
         } else if (playerId == submission.vice_captain_id) {
-            if (captainMinutes === 0) {
-                // If captain didn't play, VC becomes captain and gets 2x
-                finalPoints = playerPoints * 2;
-            } else {
-                // If captain played, VC gets 1.25x
-                finalPoints = playerPoints * 1.25;
-            }
+            // For now, always give VC 1.25x during active gameweek
+            // TODO: After gameweek is complete, check if captain played (minutes > 0)
+            // and give VC 2x if captain didn't play
+            finalPoints = playerPoints * 1.25;
         }
         
         // Apply position-specific chip bonuses
