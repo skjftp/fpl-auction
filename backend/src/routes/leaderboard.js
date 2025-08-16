@@ -90,7 +90,7 @@ async function calculateSubmissionPoints(submission, livePointsData) {
     if (submission.chip_used === 'double_up') {
         totalPoints = totalPoints * 2;
     } else if (submission.chip_used === 'negative_chip') {
-        totalPoints = Math.floor(totalPoints / 2);
+        totalPoints = totalPoints / 2;
     }
     
     // Round final total to 3 decimal places

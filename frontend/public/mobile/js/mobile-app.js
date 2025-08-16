@@ -1949,7 +1949,7 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                         } else if (submission.chip_used === 'double_up') {
                             displayPoints = displayPoints * 2;
                         } else if (submission.chip_used === 'negative_chip') {
-                            displayPoints = Math.floor(displayPoints / 2);
+                            displayPoints = displayPoints / 2;
                         }
                         
                         // Apply club multiplier (use loose equality to handle string/number mismatch)
@@ -2364,7 +2364,7 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                         } else if (submission.chip_used === 'double_up') {
                             displayPoints = displayPoints * 2;
                         } else if (submission.chip_used === 'negative_chip') {
-                            displayPoints = Math.floor(displayPoints / 2);
+                            displayPoints = displayPoints / 2;
                         }
                         
                         // Apply club multiplier (use loose equality to handle string/number mismatch)
