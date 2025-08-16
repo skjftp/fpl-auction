@@ -2109,7 +2109,6 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
                 const chipEmojis = {
                     'triple_captain': '3️⃣C',
                     'bench_boost': '💺',
-                    'free_hit': '🎯',
                     'double_up': '2️⃣X',
                     'negative_chip': '➖',
                     'attack_chip': '⚔️',
@@ -2117,39 +2116,57 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
                     'brahmashtra': '💥'
                 };
                 
+                // Chip display names
+                const chipNames = {
+                    'triple_captain': 'Triple Captain',
+                    'bench_boost': 'Bench Boost',
+                    'double_up': 'Double Up',
+                    'negative_chip': 'Negative Chip',
+                    'attack_chip': 'Attack Chip',
+                    'park_the_bus': 'Park the Bus',
+                    'brahmashtra': 'Brahmashtra'
+                };
+                
                 return `
                     <div style="display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap;">
-                        ${allChips.map(chip => {
+                        ${allChips.map((chip, idx) => {
                             let bgColor = '#10b981'; // Green - available
                             let opacity = '0.7';
-                            let title = `${chip.replace(/_/g, ' ')} - Available`;
+                            let statusText = 'Available';
                             
                             if (teamChipData.chips_used.includes(chip)) {
                                 bgColor = '#ef4444'; // Red - used in previous gameweeks
                                 opacity = '1';
-                                title = `${chip.replace(/_/g, ' ')} - Used`;
+                                statusText = 'Used';
                             } else if (teamChipData.chip_current_gw === chip) {
                                 bgColor = '#3b82f6'; // Blue - used in current gameweek
                                 opacity = '1';
-                                title = `${chip.replace(/_/g, ' ')} - Current GW`;
+                                statusText = 'Current GW';
                             }
                             
+                            const chipId = `chip_${teamId}_${idx}`;
+                            
                             return `
-                                <span style="
-                                    background: ${bgColor};
-                                    opacity: ${opacity};
-                                    color: white;
-                                    padding: 2px 4px;
-                                    border-radius: 4px;
-                                    font-size: 10px;
-                                    font-weight: 600;
-                                    display: inline-flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    min-width: 24px;
-                                    height: 18px;
-                                    cursor: help;
-                                " title="${title}">
+                                <span 
+                                    id="${chipId}"
+                                    style="
+                                        background: ${bgColor};
+                                        opacity: ${opacity};
+                                        color: white;
+                                        padding: 2px 4px;
+                                        border-radius: 4px;
+                                        font-size: 10px;
+                                        font-weight: 600;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        min-width: 24px;
+                                        height: 18px;
+                                        cursor: pointer;
+                                        position: relative;
+                                    " 
+                                    onclick="event.stopPropagation(); window.mobileApp.showChipTooltip('${chipNames[chip]}', '${statusText}', event)"
+                                    title="${chipNames[chip]} - ${statusText}">
                                     ${chipEmojis[chip] || chip.substring(0, 2).toUpperCase()}
                                 </span>
                             `;
@@ -2191,6 +2208,57 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
         console.error('Error loading leaderboard:', error);
         this.showToast('Failed to load leaderboard', 'error');
     }
+};
+
+MobileApp.prototype.showChipTooltip = function(chipName, status, event) {
+    // Remove any existing tooltip
+    const existingTooltip = document.getElementById('chipTooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
+    
+    // Create tooltip
+    const tooltip = document.createElement('div');
+    tooltip.id = 'chipTooltip';
+    tooltip.style.cssText = `
+        position: fixed;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 10001;
+        pointer-events: none;
+        white-space: nowrap;
+        animation: fadeIn 0.2s ease;
+    `;
+    tooltip.innerHTML = `${chipName} - ${status}`;
+    
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Position tooltip above the chip
+    document.body.appendChild(tooltip);
+    const rect = event.target.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    
+    tooltip.style.left = `${rect.left + rect.width/2 - tooltipRect.width/2}px`;
+    tooltip.style.top = `${rect.top - tooltipRect.height - 5}px`;
+    
+    // Remove tooltip after 1.5 seconds
+    setTimeout(() => {
+        if (document.getElementById('chipTooltip')) {
+            document.getElementById('chipTooltip').remove();
+        }
+    }, 1500);
 };
 
 MobileApp.prototype.viewTeamSubmission = async function(teamId, gameweek = null) {

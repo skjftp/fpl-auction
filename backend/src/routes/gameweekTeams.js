@@ -469,7 +469,6 @@ router.get('/chips/all-teams', authenticateToken, async (req, res) => {
             all_chips: [
                 'triple_captain',
                 'bench_boost',
-                'free_hit',
                 'double_up',
                 'negative_chip',
                 'attack_chip',
