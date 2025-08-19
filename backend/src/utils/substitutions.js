@@ -16,10 +16,23 @@ function applyAutomaticSubstitutions(starting11, bench, livePoints, playerData, 
   // Check each starting player
   for (let i = 0; i < finalStarting11.length; i++) {
     const playerId = finalStarting11[i];
-    const playerLive = livePoints[playerId];
+    
+    // Handle both data formats: 
+    // From submissions.js: livePoints[playerId].stats.minutes
+    // From leaderboard.js: livePoints[playerId].minutes or playerData[playerId].minutes
+    let playerMinutes = 0;
+    if (livePoints[playerId]) {
+      if (livePoints[playerId].stats !== undefined) {
+        playerMinutes = livePoints[playerId].stats.minutes || 0;
+      } else {
+        playerMinutes = livePoints[playerId].minutes || 0;
+      }
+    } else if (playerData[playerId]) {
+      playerMinutes = playerData[playerId].minutes || 0;
+    }
     
     // Check if player didn't play (0 minutes)
-    if (playerLive && playerLive.stats.minutes === 0) {
+    if (playerMinutes === 0) {
       const player = playerData[playerId];
       if (!player) continue;
       
@@ -31,10 +44,20 @@ function applyAutomaticSubstitutions(starting11, bench, livePoints, playerData, 
         for (let j = 0; j < finalBench.length; j++) {
           const benchPlayerId = finalBench[j];
           const benchPlayer = playerData[benchPlayerId];
-          const benchLive = livePoints[benchPlayerId];
           
-          if (benchPlayer && benchPlayer.position === 1 && 
-              benchLive && benchLive.stats.minutes > 0) {
+          // Get bench player minutes
+          let benchMinutes = 0;
+          if (livePoints[benchPlayerId]) {
+            if (livePoints[benchPlayerId].stats !== undefined) {
+              benchMinutes = livePoints[benchPlayerId].stats.minutes || 0;
+            } else {
+              benchMinutes = livePoints[benchPlayerId].minutes || 0;
+            }
+          } else if (benchPlayer) {
+            benchMinutes = benchPlayer.minutes || 0;
+          }
+          
+          if (benchPlayer && benchPlayer.position === 1 && benchMinutes > 0) {
             substitutions.push({
               out: playerId,
               in: benchPlayerId,
@@ -53,11 +76,21 @@ function applyAutomaticSubstitutions(starting11, bench, livePoints, playerData, 
         for (let j = 0; j < finalBench.length; j++) {
           const benchPlayerId = finalBench[j];
           const benchPlayer = playerData[benchPlayerId];
-          const benchLive = livePoints[benchPlayerId];
+          
+          // Get bench player minutes
+          let benchMinutes = 0;
+          if (livePoints[benchPlayerId]) {
+            if (livePoints[benchPlayerId].stats !== undefined) {
+              benchMinutes = livePoints[benchPlayerId].stats.minutes || 0;
+            } else {
+              benchMinutes = livePoints[benchPlayerId].minutes || 0;
+            }
+          } else if (benchPlayer) {
+            benchMinutes = benchPlayer.minutes || 0;
+          }
           
           // Skip if bench player is a goalkeeper or didn't play
-          if (!benchPlayer || benchPlayer.position === 1 || 
-              !benchLive || benchLive.stats.minutes === 0) {
+          if (!benchPlayer || benchPlayer.position === 1 || benchMinutes === 0) {
             continue;
           }
           

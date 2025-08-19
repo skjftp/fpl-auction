@@ -3,6 +3,7 @@ const router = express.Router();
 const { collections } = require('../models/database');
 const { authenticateToken } = require('../middleware/auth');
 const axios = require('axios');
+const { applyAutomaticSubstitutions } = require('../utils/substitutions');
 
 // Helper function to calculate points for a submission
 async function calculateSubmissionPoints(submission, livePointsData) {
@@ -23,10 +24,11 @@ async function calculateSubmissionPoints(submission, livePointsData) {
         playerDocs.forEach(doc => {
             if (doc.exists) {
                 const player = doc.data();
-                // Store both team_id and position for each player
+                // Store team_id, position, and add minutes from live data
                 playerDetails[player.id] = {
                     team_id: player.team_id,
-                    position: player.position
+                    position: player.position,
+                    minutes: livePointsData[player.id]?.minutes || 0
                 };
             }
         });
@@ -35,20 +37,37 @@ async function calculateSubmissionPoints(submission, livePointsData) {
         }
     }
     
-    // Calculate starting 11 points
-    for (const playerId of submission.starting_11 || []) {
+    // Apply automatic substitutions
+    const subsResult = applyAutomaticSubstitutions(
+        submission.starting_11 || [],
+        submission.bench || [],
+        livePointsData,
+        playerDetails,
+        submission.chip_used === 'bench_boost'
+    );
+    
+    const finalStarting11 = subsResult.finalStarting11;
+    const finalBench = subsResult.finalBench;
+    
+    // Check for captain/vice-captain substitution
+    let effectiveCaptainId = submission.captain_id;
+    const captainMinutes = livePointsData[submission.captain_id]?.minutes || 0;
+    if (captainMinutes === 0 && submission.vice_captain_id) {
+        effectiveCaptainId = submission.vice_captain_id;
+    }
+    
+    // Calculate starting 11 points (after substitutions)
+    for (const playerId of finalStarting11) {
         const playerPoints = livePointsData[playerId]?.points || 0;
         let finalPoints = playerPoints;
         const playerData = playerDetails[playerId] || {};
         
-        // Apply captain/vice-captain multiplier first
-        if (playerId == submission.captain_id) {
+        // Apply captain/vice-captain multiplier using effective captain
+        if (playerId == effectiveCaptainId) {
             const multiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
             finalPoints = playerPoints * multiplier;
-        } else if (playerId == submission.vice_captain_id) {
-            // For now, always give VC 1.25x during active gameweek
-            // TODO: After gameweek is complete, check if captain played (minutes > 0)
-            // and give VC 2x if captain didn't play
+        } else if (playerId == submission.vice_captain_id && effectiveCaptainId === submission.captain_id) {
+            // VC gets 1.25x only if captain played and VC is still VC
             finalPoints = playerPoints * 1.25;
         }
         
@@ -72,7 +91,7 @@ async function calculateSubmissionPoints(submission, livePointsData) {
     
     // Calculate bench points if bench boost is active
     if (submission.chip_used === 'bench_boost') {
-        for (const playerId of submission.bench || []) {
+        for (const playerId of finalBench) {
             const playerPoints = livePointsData[playerId]?.points || 0;
             let finalPoints = playerPoints;
             const playerData = playerDetails[playerId] || {};
