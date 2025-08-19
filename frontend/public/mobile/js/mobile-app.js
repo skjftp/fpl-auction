@@ -1923,8 +1923,12 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
             if (posPlayers.length > 0) {
                 html += `<div style="display: flex; justify-content: center; gap: 3px; margin-bottom: 15px; flex-wrap: wrap;">`;
                 posPlayers.forEach(player => {
-                    const isCaptain = player.id === submission.captain_id;
-                    const isViceCaptain = player.id === submission.vice_captain_id;
+                    // Check if player was substituted in
+                    const wasSubbedIn = substitutions.some(s => s.in && s.in.id === player.id);
+                    
+                    // Use effective captain ID after substitution
+                    const isCaptain = player.id === effectiveCaptainId;
+                    const isViceCaptain = !captainSubstituted && player.id === submission.vice_captain_id;
                     
                     // Calculate points with multipliers
                     let displayPoints = 0;
@@ -1972,8 +1976,9 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                                      onerror="this.style.display='none'">
                                 ${isCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #fbbf24;">C</div>' : ''}
                                 ${isViceCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #a78bfa;">V</div>' : ''}
+                                ${wasSubbedIn ? '<div style="position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3);">↑</div>' : ''}
                             </div>
-                            <div style="background: white; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                            <div style="background: ${wasSubbedIn ? '#10b98110' : 'white'}; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); ${wasSubbedIn ? 'border: 1px solid #10b981;' : ''}">
                                 <div style="font-size: 9px; font-weight: 700; color: #1f2937; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
                                 <div style="font-size: ${displayPoints > 0 ? '10px' : '9px'}; color: ${displayPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${Number.isInteger(displayPoints) ? displayPoints : parseFloat(displayPoints.toFixed(3))}pts</div>
                             </div>
@@ -1993,7 +1998,16 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                     <div style="display: flex; gap: 8px; overflow-x: auto; justify-content: center;">
         `;
         
-        bench.forEach((player, index) => {
+        // Sort bench: goalkeeper first, then maintain original order
+        const sortedBench = [];
+        const benchGK = finalBench.find(p => p.position === 1);
+        if (benchGK) sortedBench.push(benchGK);
+        finalBench.filter(p => p.position !== 1).forEach(p => sortedBench.push(p));
+        
+        sortedBench.forEach((player, index) => {
+            // Check if player was subbed out
+            const wasSubbedOut = substitutions.some(s => s.out && s.out.id === player.id);
+            
             // Calculate bench player points (only with bench boost chip)
             let benchPoints = 0;
             if (submission.chip_used === 'bench_boost' && player.live_points !== undefined) {
@@ -2015,8 +2029,9 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                              style="width: 26px; height: 26px; object-fit: cover; border-radius: 50%; background: white;"
                              onerror="this.style.display='none'">
                     </div>
-                    <div style="font-size: 9px; font-weight: 600; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
+                    <div style="font-size: 9px; font-weight: 600; color: ${wasSubbedOut ? '#10b981' : '#374151'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${wasSubbedOut ? 'text-decoration: line-through;' : ''}">${player.web_name || player.name}</div>
                     <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${Number.isInteger(benchPoints) ? benchPoints : parseFloat(benchPoints.toFixed(3))}pts</div>
+                    ${wasSubbedOut ? '<div style="font-size: 7px; color: #10b981; font-weight: 600; margin-top: 1px;">IN</div>' : ''}
                 </div>
             `;
         });
@@ -2024,6 +2039,25 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
         html += `
                     </div>
                 </div>
+                
+                ${substitutions.length > 0 ? `
+                    <div style="background: #fef3c7; border: 1px solid #fbbf24; padding: 8px; border-radius: 6px; margin-top: 10px;">
+                        <div style="font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 4px;">AUTO SUBSTITUTIONS</div>
+                        ${substitutions.filter(s => s.type !== 'captain').map(sub => `
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #451a03; margin: 2px 0;">
+                                <span style="font-weight: 600;">${sub.out.web_name || sub.out.name}</span>
+                                <span>→</span>
+                                <span style="font-weight: 600; color: #059669;">${sub.in.web_name || sub.in.name}</span>
+                                <span style="color: #6b7280; font-size: 9px;">(${sub.in.minutes || 0} min)</span>
+                            </div>
+                        `).join('')}
+                        ${substitutions.find(s => s.type === 'captain') ? `
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #451a03; margin: 4px 0 2px; padding-top: 4px; border-top: 1px solid #fde68a;">
+                                <span style="font-weight: 600;">Captain didn't play - Vice Captain gets 2x points</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
             </div>
         `;
         
@@ -2425,9 +2459,51 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
             if (player) bench.push(player);
         });
         
-        // Group starting 11 by position
+        // Apply automatic substitutions if gameweek has started and we have minutes data
+        let substitutions = [];
+        let finalStarting11 = [...starting11];
+        let finalBench = [...bench];
+        let effectiveCaptainId = submission.captain_id;
+        let captainSubstituted = false;
+        
+        // Check if we have minutes data (gameweek has started)
+        const hasMinutesData = players.some(p => p.minutes !== undefined);
+        
+        if (hasMinutesData) {
+            // Check captain/vice-captain substitution first
+            const captain = players.find(p => p.id === submission.captain_id);
+            const viceCaptain = players.find(p => p.id === submission.vice_captain_id);
+            
+            if (captain && captain.minutes === 0 && viceCaptain) {
+                // Captain didn't play, vice-captain becomes effective captain
+                effectiveCaptainId = submission.vice_captain_id;
+                captainSubstituted = true;
+            }
+            
+            // Apply automatic substitutions
+            const result = this.applyAutomaticSubstitutions(
+                finalStarting11, 
+                finalBench,
+                submission.chip_used === 'bench_boost'
+            );
+            
+            finalStarting11 = result.starting11;
+            finalBench = result.bench;
+            substitutions = result.substitutions;
+            
+            // Add captain substitution info if applicable
+            if (captainSubstituted) {
+                substitutions.push({
+                    type: 'captain',
+                    originalCaptain: captain,
+                    newCaptain: viceCaptain
+                });
+            }
+        }
+        
+        // Group final starting 11 by position (after substitutions)
         const positions = { 1: [], 2: [], 3: [], 4: [] };
-        starting11.forEach(player => {
+        finalStarting11.forEach(player => {
             if (positions[player.position]) {
                 positions[player.position].push(player);
             }
@@ -2490,8 +2566,12 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
             if (posPlayers.length > 0) {
                 html += `<div style="display: flex; justify-content: center; gap: 3px; margin-bottom: 15px; flex-wrap: wrap;">`;
                 posPlayers.forEach(player => {
-                    const isCaptain = player.id === submission.captain_id;
-                    const isViceCaptain = player.id === submission.vice_captain_id;
+                    // Check if player was substituted in
+                    const wasSubbedIn = substitutions.some(s => s.in && s.in.id === player.id);
+                    
+                    // Use effective captain ID after substitution
+                    const isCaptain = player.id === effectiveCaptainId;
+                    const isViceCaptain = !captainSubstituted && player.id === submission.vice_captain_id;
                     
                     // Calculate points with multipliers
                     let displayPoints = 0;
@@ -2539,8 +2619,9 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                                      onerror="this.style.display='none'">
                                 ${isCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #fbbf24;">C</div>' : ''}
                                 ${isViceCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #a78bfa;">V</div>' : ''}
+                                ${wasSubbedIn ? '<div style="position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3);">↑</div>' : ''}
                             </div>
-                            <div style="background: white; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                            <div style="background: ${wasSubbedIn ? '#10b98110' : 'white'}; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); ${wasSubbedIn ? 'border: 1px solid #10b981;' : ''}">
                                 <div style="font-size: 9px; font-weight: 700; color: #1f2937; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
                                 <div style="font-size: ${displayPoints > 0 ? '10px' : '9px'}; color: ${displayPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${Number.isInteger(displayPoints) ? displayPoints : parseFloat(displayPoints.toFixed(3))}pts</div>
                             </div>
@@ -2560,7 +2641,16 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                     <div style="display: flex; gap: 8px; overflow-x: auto; justify-content: center;">
         `;
         
-        bench.forEach((player, index) => {
+        // Sort bench: goalkeeper first, then maintain original order
+        const sortedBench = [];
+        const benchGK = finalBench.find(p => p.position === 1);
+        if (benchGK) sortedBench.push(benchGK);
+        finalBench.filter(p => p.position !== 1).forEach(p => sortedBench.push(p));
+        
+        sortedBench.forEach((player, index) => {
+            // Check if player was subbed out
+            const wasSubbedOut = substitutions.some(s => s.out && s.out.id === player.id);
+            
             // Calculate bench player points (only with bench boost chip)
             let benchPoints = 0;
             if (submission.chip_used === 'bench_boost' && player.live_points !== undefined) {
@@ -2582,8 +2672,9 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                              style="width: 26px; height: 26px; object-fit: cover; border-radius: 50%; background: white;"
                              onerror="this.style.display='none'">
                     </div>
-                    <div style="font-size: 9px; font-weight: 600; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
+                    <div style="font-size: 9px; font-weight: 600; color: ${wasSubbedOut ? '#10b981' : '#374151'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${wasSubbedOut ? 'text-decoration: line-through;' : ''}">${player.web_name || player.name}</div>
                     <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${Number.isInteger(benchPoints) ? benchPoints : parseFloat(benchPoints.toFixed(3))}pts</div>
+                    ${wasSubbedOut ? '<div style="font-size: 7px; color: #10b981; font-weight: 600; margin-top: 1px;">IN</div>' : ''}
                 </div>
             `;
         });
@@ -2591,6 +2682,25 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         html += `
                     </div>
                 </div>
+                
+                ${substitutions.length > 0 ? `
+                    <div style="background: #fef3c7; border: 1px solid #fbbf24; padding: 8px; border-radius: 6px; margin-top: 10px;">
+                        <div style="font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 4px;">AUTO SUBSTITUTIONS</div>
+                        ${substitutions.filter(s => s.type !== 'captain').map(sub => `
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #451a03; margin: 2px 0;">
+                                <span style="font-weight: 600;">${sub.out.web_name || sub.out.name}</span>
+                                <span>→</span>
+                                <span style="font-weight: 600; color: #059669;">${sub.in.web_name || sub.in.name}</span>
+                                <span style="color: #6b7280; font-size: 9px;">(${sub.in.minutes || 0} min)</span>
+                            </div>
+                        `).join('')}
+                        ${substitutions.find(s => s.type === 'captain') ? `
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #451a03; margin: 4px 0 2px; padding-top: 4px; border-top: 1px solid #fde68a;">
+                                <span style="font-weight: 600;">Captain didn't play - Vice Captain gets 2x points</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
             </div>
         `;
         
@@ -2603,6 +2713,109 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         const modal = document.querySelector('.modal');
         if (modal) modal.remove();
     }
+};
+
+MobileApp.prototype.applyAutomaticSubstitutions = function(starting11, bench, isBenchBoost = false) {
+    // Don't apply substitutions if bench boost is active
+    if (isBenchBoost) {
+        return { starting11, bench, substitutions: [] };
+    }
+    
+    const substitutions = [];
+    let finalStarting11 = [...starting11];
+    let finalBench = [...bench];
+    
+    // Check each starting player
+    for (let i = 0; i < finalStarting11.length; i++) {
+        const player = finalStarting11[i];
+        
+        // Check if player didn't play (0 minutes)
+        if (player.minutes === 0) {
+            // Try to substitute this player
+            let substituted = false;
+            
+            // If goalkeeper, can only substitute with bench goalkeeper
+            if (player.position === 1) {
+                const benchGK = finalBench.find(p => p.position === 1 && p.minutes > 0);
+                if (benchGK) {
+                    substitutions.push({
+                        out: player,
+                        in: benchGK,
+                        reason: 'Goalkeeper didn\'t play'
+                    });
+                    
+                    // Swap players
+                    finalStarting11[i] = benchGK;
+                    const benchIndex = finalBench.indexOf(benchGK);
+                    finalBench[benchIndex] = player;
+                    substituted = true;
+                }
+            } else {
+                // For outfield players, check bench in order
+                for (let j = 0; j < finalBench.length; j++) {
+                    const benchPlayer = finalBench[j];
+                    
+                    // Skip if bench player is a goalkeeper or didn't play
+                    if (benchPlayer.position === 1 || benchPlayer.minutes === 0) {
+                        continue;
+                    }
+                    
+                    // Check if substitution maintains valid formation
+                    const testStarting11 = [...finalStarting11];
+                    testStarting11[i] = benchPlayer;
+                    
+                    if (this.isValidFormation(testStarting11)) {
+                        substitutions.push({
+                            out: player,
+                            in: benchPlayer,
+                            reason: `Player didn't play (${player.minutes} min)`
+                        });
+                        
+                        // Swap players
+                        finalStarting11[i] = benchPlayer;
+                        finalBench[j] = player;
+                        substituted = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    return {
+        starting11: finalStarting11,
+        bench: finalBench,
+        substitutions
+    };
+};
+
+MobileApp.prototype.isValidFormation = function(players) {
+    // Count positions
+    const positionCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    players.forEach(player => {
+        if (player.position >= 1 && player.position <= 4) {
+            positionCounts[player.position]++;
+        }
+    });
+    
+    // Check formation rules
+    // Must have exactly 1 GKP
+    if (positionCounts[1] !== 1) return false;
+    
+    // Must have at least 3 DEF
+    if (positionCounts[2] < 3) return false;
+    
+    // Must have at least 2 MID  
+    if (positionCounts[3] < 2) return false;
+    
+    // Must have at least 1 FWD
+    if (positionCounts[4] < 1) return false;
+    
+    // Total should be 11
+    const total = positionCounts[1] + positionCounts[2] + positionCounts[3] + positionCounts[4];
+    if (total !== 11) return false;
+    
+    return true;
 };
 
 MobileApp.prototype.getPositionName = function(position) {
