@@ -443,7 +443,7 @@ class MobileApp {
                 const teamName = draftState.current_team_name || 'Unknown';
                 
                 if (isMyTurn) {
-                    currentTurnEl.innerHTML = `<span style="color: #10b981; font-weight: 700;">Your Turn!</span>`;
+                    currentTurnEl.innerHTML = `<span style="color: #3b82f6; font-weight: 700;">Your Turn!</span>`;
                 } else {
                     currentTurnEl.textContent = teamName;
                 }
@@ -460,7 +460,7 @@ class MobileApp {
                     const isMyNextTurn = this.currentUser && nextTurnInfo.teamId === this.currentUser.id;
                     
                     if (isMyNextTurn) {
-                        nextTurnEl.innerHTML = `<span style="color: #10b981; font-weight: 700;">You!</span>`;
+                        nextTurnEl.innerHTML = `<span style="color: #3b82f6; font-weight: 700;">You!</span>`;
                     } else {
                         nextTurnEl.textContent = nextTurnInfo.teamName;
                     }
@@ -831,7 +831,7 @@ class MobileApp {
 
         // Create club color mapping
         const clubColors = [
-            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', 
+            '#3b82f6', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', 
             '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
         ];
         const clubColorMap = new Map();
@@ -1044,7 +1044,7 @@ class MobileApp {
         container.innerHTML = messagesToShow.map(msg => {
             // Handle system messages
             if (msg.isSystem) {
-                const color = msg.systemType === 'connect' ? '#10b981' : msg.systemType === 'disconnect' ? '#ef4444' : '#6b7280';
+                const color = msg.systemType === 'connect' ? '#3b82f6' : msg.systemType === 'disconnect' ? '#ef4444' : '#6b7280';
                 const arrow = msg.systemType === 'connect' ? '→' : msg.systemType === 'disconnect' ? '←' : '';
                 return `
                     <div style="text-align: center; padding: 4px 0;">
@@ -1087,7 +1087,7 @@ class MobileApp {
                         </div>
                         <div style="
                             display: inline-block; 
-                            background-color: #10b981; 
+                            background-color: #3b82f6; 
                             color: white; 
                             padding: 6px 10px; 
                             border-radius: 12px 12px 0 12px; 
@@ -1402,7 +1402,7 @@ class MobileApp {
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 16px; font-weight: 600; color: #10b981;">
+                        <div style="font-size: 16px; font-weight: 600; color: #3b82f6;">
                             ${formatCurrency(item.price_paid || item.bidAmount || 0)}
                         </div>
                         <div style="font-size: 10px; color: #9ca3af;">
@@ -1757,7 +1757,7 @@ MobileApp.prototype.showSubmissionHistory = async function() {
                 const submitTime = new Date(submission.submitted_at);
                 const deadlineStatus = submission.deadline_status || 'on_time';
                 const statusClass = deadlineStatus === 'late' ? 'late' : deadlineStatus === 'grace_period' ? 'grace' : 'on-time';
-                const statusColor = deadlineStatus === 'late' ? '#ef4444' : deadlineStatus === 'grace_period' ? '#f59e0b' : '#10b981';
+                const statusColor = deadlineStatus === 'late' ? '#ef4444' : deadlineStatus === 'grace_period' ? '#f59e0b' : '#3b82f6';
                 
                 // Store submission data in window for access
                 const submissionId = `submission_${gw}_${submission.submission_version || Date.now()}`;
@@ -1907,13 +1907,13 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                     ${clubMultiplier ? `
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
                             <span style="font-weight: 600; color: #1f2937; font-size: 12px;">Club Multiplier:</span>
-                            <span style="background: #10b98120; color: #059669; padding: 2px 5px; border-radius: 3px; font-size: 11px; font-weight: 600;">${clubMultiplier.name} (1.5x)</span>
+                            <span style="background: #3b82f620; color: #059669; padding: 2px 5px; border-radius: 3px; font-size: 11px; font-weight: 600;">${clubMultiplier.name} (1.5x)</span>
                         </div>
                     ` : ''}
                 </div>
                 
                 <!-- Pitch View -->
-                <div style="background: linear-gradient(to bottom, #10b981 0%, #059669 50%, #047857 100%); border-radius: 10px; padding: 12px 3px; position: relative; min-height: 340px;">
+                <div style="background: linear-gradient(to bottom, #3b82f6 0%, #059669 50%, #047857 100%); border-radius: 10px; padding: 12px 3px; position: relative; min-height: 340px;">
         `;
         
         // Render each position row
@@ -1976,9 +1976,9 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                                      onerror="this.style.display='none'">
                                 ${isCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #fbbf24;">C</div>' : ''}
                                 ${isViceCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #a78bfa;">V</div>' : ''}
-                                ${wasSubbedIn ? '<div style="position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3);">↑</div>' : ''}
+                                ${wasSubbedIn ? '<div style="position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); background: #3b82f6; color: white; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3);">↑</div>' : ''}
                             </div>
-                            <div style="background: ${wasSubbedIn ? '#10b98110' : 'white'}; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); ${wasSubbedIn ? 'border: 1px solid #10b981;' : ''}">
+                            <div style="background: ${wasSubbedIn ? '#dbeafe' : 'white'}; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); ${wasSubbedIn ? 'border: 1px solid #3b82f6;' : ''}">
                                 <div style="font-size: 9px; font-weight: 700; color: #1f2937; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
                                 <div style="font-size: ${displayPoints > 0 ? '10px' : '9px'}; color: ${displayPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${Number.isInteger(displayPoints) ? displayPoints : parseFloat(displayPoints.toFixed(3))}pts</div>
                             </div>
@@ -2029,9 +2029,9 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                              style="width: 26px; height: 26px; object-fit: cover; border-radius: 50%; background: white;"
                              onerror="this.style.display='none'">
                     </div>
-                    <div style="font-size: 9px; font-weight: 600; color: ${wasSubbedOut ? '#10b981' : '#374151'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${wasSubbedOut ? 'text-decoration: line-through;' : ''}">${player.web_name || player.name}</div>
+                    <div style="font-size: 9px; font-weight: 600; color: ${wasSubbedOut ? '#3b82f6' : '#374151'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${wasSubbedOut ? 'text-decoration: line-through;' : ''}">${player.web_name || player.name}</div>
                     <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${Number.isInteger(benchPoints) ? benchPoints : parseFloat(benchPoints.toFixed(3))}pts</div>
-                    ${wasSubbedOut ? '<div style="font-size: 7px; color: #10b981; font-weight: 600; margin-top: 1px;">IN</div>' : ''}
+                    ${wasSubbedOut ? '<div style="font-size: 7px; color: #3b82f6; font-weight: 600; margin-top: 1px;">IN</div>' : ''}
                 </div>
             `;
         });
@@ -2164,7 +2164,7 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
                 return `
                     <div style="display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap;">
                         ${allChips.map((chip, idx) => {
-                            let bgColor = '#10b981'; // Green - available
+                            let bgColor = '#3b82f6'; // Green - available
                             let opacity = '0.7';
                             let statusText = 'Available';
                             
@@ -2550,13 +2550,13 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                     ${clubMultiplier ? `
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
                             <span style="font-weight: 600; color: #1f2937; font-size: 12px;">Club Multiplier:</span>
-                            <span style="background: #10b98120; color: #059669; padding: 2px 5px; border-radius: 3px; font-size: 11px; font-weight: 600;">${clubMultiplier.name} (1.5x)</span>
+                            <span style="background: #3b82f620; color: #059669; padding: 2px 5px; border-radius: 3px; font-size: 11px; font-weight: 600;">${clubMultiplier.name} (1.5x)</span>
                         </div>
                     ` : ''}
                 </div>
                 
                 <!-- Pitch View -->
-                <div style="background: linear-gradient(to bottom, #10b981 0%, #059669 50%, #047857 100%); border-radius: 10px; padding: 12px 3px; position: relative; min-height: 340px;">
+                <div style="background: linear-gradient(to bottom, #3b82f6 0%, #059669 50%, #047857 100%); border-radius: 10px; padding: 12px 3px; position: relative; min-height: 340px;">
         `;
         
         // Render each position row
@@ -2619,9 +2619,9 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                                      onerror="this.style.display='none'">
                                 ${isCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #fbbf24;">C</div>' : ''}
                                 ${isViceCaptain ? '<div style="position: absolute; top: -5px; right: -5px; background: white; color: #1f2937; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3); border: 1.5px solid #a78bfa;">V</div>' : ''}
-                                ${wasSubbedIn ? '<div style="position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3);">↑</div>' : ''}
+                                ${wasSubbedIn ? '<div style="position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); background: #3b82f6; color: white; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.3);">↑</div>' : ''}
                             </div>
-                            <div style="background: ${wasSubbedIn ? '#10b98110' : 'white'}; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); ${wasSubbedIn ? 'border: 1px solid #10b981;' : ''}">
+                            <div style="background: ${wasSubbedIn ? '#dbeafe' : 'white'}; border-radius: 3px; padding: 1px 2px; margin-top: 2px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); ${wasSubbedIn ? 'border: 1px solid #3b82f6;' : ''}">
                                 <div style="font-size: 9px; font-weight: 700; color: #1f2937; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${player.web_name || player.name}</div>
                                 <div style="font-size: ${displayPoints > 0 ? '10px' : '9px'}; color: ${displayPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${displayPoints > 0 ? '700' : '600'}; margin-top: 1px;">${Number.isInteger(displayPoints) ? displayPoints : parseFloat(displayPoints.toFixed(3))}pts</div>
                             </div>
@@ -2672,9 +2672,9 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                              style="width: 26px; height: 26px; object-fit: cover; border-radius: 50%; background: white;"
                              onerror="this.style.display='none'">
                     </div>
-                    <div style="font-size: 9px; font-weight: 600; color: ${wasSubbedOut ? '#10b981' : '#374151'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${wasSubbedOut ? 'text-decoration: line-through;' : ''}">${player.web_name || player.name}</div>
+                    <div style="font-size: 9px; font-weight: 600; color: ${wasSubbedOut ? '#3b82f6' : '#374151'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${wasSubbedOut ? 'text-decoration: line-through;' : ''}">${player.web_name || player.name}</div>
                     <div style="font-size: 8px; color: ${benchPoints > 0 ? '#059669' : '#6b7280'}; font-weight: ${benchPoints > 0 ? '700' : '400'};">${Number.isInteger(benchPoints) ? benchPoints : parseFloat(benchPoints.toFixed(3))}pts</div>
-                    ${wasSubbedOut ? '<div style="font-size: 7px; color: #10b981; font-weight: 600; margin-top: 1px;">IN</div>' : ''}
+                    ${wasSubbedOut ? '<div style="font-size: 7px; color: #3b82f6; font-weight: 600; margin-top: 1px;">IN</div>' : ''}
                 </div>
             `;
         });

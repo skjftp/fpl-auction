@@ -3,6 +3,7 @@ const router = express.Router();
 const { collections } = require('../models/database');
 const { getActiveDraftId } = require('../utils/draft');
 const axios = require('axios');
+const { applyAutomaticSubstitutions } = require('../utils/substitutions');
 
 // Cache for current gameweek info (5 minutes)
 let gameweekCache = null;
@@ -173,45 +174,68 @@ router.get('/gameweek/:gameweek/standings', async (req, res) => {
       // Calculate total points
       let totalPoints = 0;
       let playerPoints = {};
+      let substitutions = [];
       
-      // Calculate points for starting 11
-      if (submission.starting_11 && Array.isArray(submission.starting_11)) {
-        for (const playerId of submission.starting_11) {
+      // First, get all player data for this submission
+      const allPlayerIds = [...(submission.starting_11 || []), ...(submission.bench || [])];
+      const playerDataMap = {};
+      
+      for (const playerId of allPlayerIds) {
+        const playerDoc = await collections.fplPlayers.doc(playerId.toString()).get();
+        if (playerDoc.exists) {
+          playerDataMap[playerId] = playerDoc.data();
+        }
+      }
+      
+      // Apply automatic substitutions
+      const subsResult = applyAutomaticSubstitutions(
+        submission.starting_11 || [],
+        submission.bench || [],
+        livePoints,
+        playerDataMap,
+        submission.chip_used === 'bench_boost'
+      );
+      
+      const finalStarting11 = subsResult.finalStarting11;
+      const finalBench = subsResult.finalBench;
+      substitutions = subsResult.substitutions;
+      
+      // Check for captain/vice-captain substitution
+      let effectiveCaptainId = submission.captain_id;
+      const captainLive = livePoints[submission.captain_id];
+      if (captainLive && captainLive.stats.minutes === 0 && submission.vice_captain_id) {
+        effectiveCaptainId = submission.vice_captain_id;
+      }
+      
+      // Calculate points for final starting 11 (after substitutions)
+      if (finalStarting11.length > 0) {
+        for (const playerId of finalStarting11) {
           const playerLive = livePoints[playerId];
           if (playerLive) {
             let points = playerLive.stats.total_points || 0;
             
-            // Apply captain multiplier
-            if (playerId === submission.captain_id) {
+            // Apply captain multiplier (using effective captain)
+            if (playerId === effectiveCaptainId) {
               points *= submission.chip_used === 'triple_captain' ? 3 : 2;
             }
-            // Apply vice-captain multiplier (only if captain didn't play)
-            else if (playerId === submission.vice_captain_id) {
-              const captainLive = livePoints[submission.captain_id];
-              if (captainLive && captainLive.stats.minutes === 0) {
+            // Apply vice-captain multiplier (1.25x during active gameweek if still VC)
+            else if (playerId === submission.vice_captain_id && effectiveCaptainId === submission.captain_id) {
+              points *= 1.25;
+            }
+            
+            // Apply chip effects
+            const player = playerDataMap[playerId];
+            if (player) {
+              if (submission.chip_used === 'attack_chip' && (player.position === 3 || player.position === 4)) {
+                points *= 2;
+              } else if (submission.chip_used === 'park_the_bus' && (player.position === 1 || player.position === 2)) {
                 points *= 2;
               }
             }
             
-            // Apply chip effects
-            if (submission.chip_used === 'attack_chip') {
-              // Double points for MID and FWD
-              const playerData = await collections.fplPlayers.doc(playerId.toString()).get();
-              if (playerData.exists) {
-                const player = playerData.data();
-                if (player.position === 3 || player.position === 4) {
-                  points *= 2;
-                }
-              }
-            } else if (submission.chip_used === 'park_the_bus') {
-              // Double points for GKP and DEF
-              const playerData = await collections.fplPlayers.doc(playerId.toString()).get();
-              if (playerData.exists) {
-                const player = playerData.data();
-                if (player.position === 1 || player.position === 2) {
-                  points *= 2;
-                }
-              }
+            // Apply club multiplier
+            if (submission.club_multiplier_id && player && player.team === submission.club_multiplier_id) {
+              points *= 1.5;
             }
             
             playerPoints[playerId] = points;
@@ -221,11 +245,18 @@ router.get('/gameweek/:gameweek/standings', async (req, res) => {
       }
       
       // Add bench points if bench boost is active
-      if (submission.chip_used === 'bench_boost' && submission.bench && Array.isArray(submission.bench)) {
-        for (const playerId of submission.bench) {
+      if (submission.chip_used === 'bench_boost' && finalBench.length > 0) {
+        for (const playerId of finalBench) {
           const playerLive = livePoints[playerId];
           if (playerLive) {
-            const points = playerLive.stats.total_points || 0;
+            let points = playerLive.stats.total_points || 0;
+            
+            // Apply club multiplier for bench players too
+            const player = playerDataMap[playerId];
+            if (submission.club_multiplier_id && player && player.team === submission.club_multiplier_id) {
+              points *= 1.5;
+            }
+            
             playerPoints[playerId] = points;
             totalPoints += points;
           }
@@ -246,7 +277,10 @@ router.get('/gameweek/:gameweek/standings', async (req, res) => {
         player_points: playerPoints,
         chip_used: submission.chip_used,
         captain_id: submission.captain_id,
-        vice_captain_id: submission.vice_captain_id
+        vice_captain_id: submission.vice_captain_id,
+        effective_captain_id: effectiveCaptainId,
+        substitutions: substitutions.length,
+        auto_subs_applied: substitutions.length > 0
       });
     }
     
