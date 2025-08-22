@@ -80,16 +80,8 @@ class MobileLeague {
 
     async loadChipData() {
         try {
-            console.log('Loading chip data...');
             this.allChipsData = await window.mobileAPI.getAllTeamsChipStatus();
-            console.log('Chip data loaded:', this.allChipsData);
-            
-            // Debug: Show team 10's chip data specifically
-            if (this.allChipsData && this.allChipsData.teams && this.allChipsData.teams[10]) {
-                console.log('Team 10 chip data:', this.allChipsData.teams[10]);
-                console.log('Team 10 used chips:', this.allChipsData.teams[10].chips_used);
-                console.log('Team 10 current GW chip:', this.allChipsData.teams[10].chip_current_gw);
-            }
+            console.log('Chip data loaded successfully');
         } catch (error) {
             console.error('Error loading chip data:', error);
             this.allChipsData = null;
@@ -445,27 +437,16 @@ class MobileLeague {
 
     renderChipIcons(teamId) {
         if (!this.allChipsData || !this.allChipsData.teams) {
-            console.log('No chip data available for rendering');
             return '';
         }
         
         const teamChipData = this.allChipsData.teams[teamId];
         if (!teamChipData) {
-            console.log(`No chip data found for team ${teamId}`);
             return '';
         }
         
         const currentGameweek = this.allChipsData.current_gameweek || this.currentGameweek;
         const allChips = this.allChipsData.all_chips || [];
-        
-        // Debug for team 10
-        if (teamId === 10) {
-            console.log(`Rendering chips for team ${teamId}:`);
-            console.log('Team chip data:', teamChipData);
-            console.log('Used chips:', teamChipData.chips_used);
-            console.log('Current GW chip:', teamChipData.chip_current_gw);
-            console.log('All chips to check:', allChips);
-        }
         
         return allChips.map(chipId => {
             const chipConfig = this.chipConfig[chipId];
@@ -477,18 +458,8 @@ class MobileLeague {
             // Check if chip is being played in current gameweek
             const isCurrentlyPlaying = teamChipData.chip_current_gw === chipId;
             
-            // Debug for team 10 and negative_chip
-            if (teamId === 10 && chipId === 'negative_chip') {
-                console.log(`Team 10 negative_chip: isUsed=${isUsed}, isCurrentlyPlaying=${isCurrentlyPlaying}`);
-                console.log('chips_used array:', teamChipData.chips_used);
-                console.log('chip_current_gw:', teamChipData.chip_current_gw);
-            }
-            
             // Don't show used chips
             if (isUsed) {
-                if (teamId === 10 && chipId === 'negative_chip') {
-                    console.log('Team 10 negative_chip marked as used, hiding it');
-                }
                 return '';
             }
             
