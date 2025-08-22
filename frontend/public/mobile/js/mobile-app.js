@@ -2164,18 +2164,19 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
                 return `
                     <div style="display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap;">
                         ${allChips.map((chip, idx) => {
-                            let bgColor = '#3b82f6'; // Green - available
-                            let opacity = '0.7';
+                            // Don't show used chips at all
+                            if (teamChipData.chips_used.includes(chip)) {
+                                return ''; // Hide used chips completely
+                            }
+                            
+                            let bgColor = '#60a5fa'; // Light blue - available
+                            let opacity = '0.9';
                             let statusText = 'Available';
                             
-                            if (teamChipData.chips_used.includes(chip)) {
-                                bgColor = '#ef4444'; // Red - used in previous gameweeks
+                            if (teamChipData.chip_current_gw === chip) {
+                                bgColor = '#22c55e'; // Bright green - currently playing
                                 opacity = '1';
-                                statusText = 'Used';
-                            } else if (teamChipData.chip_current_gw === chip) {
-                                bgColor = '#3b82f6'; // Blue - used in current gameweek
-                                opacity = '1';
-                                statusText = 'Current GW';
+                                statusText = 'Playing This GW';
                             }
                             
                             const chipId = `chip_${teamId}_${idx}`;
@@ -2206,7 +2207,7 @@ MobileApp.prototype.loadLeaderboard = async function(gameweek = 'overall') {
                                     ${chipEmojis[chip] || chip.substring(0, 2).toUpperCase()}
                                 </span>
                             `;
-                        }).join('')}
+                        }).filter(chip => chip !== '').join('')}
                     </div>
                 `;
             };
