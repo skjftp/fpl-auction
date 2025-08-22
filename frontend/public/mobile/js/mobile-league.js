@@ -467,8 +467,10 @@ class MobileLeague {
             let chipClass = 'chip-icon';
             if (isCurrentlyPlaying) {
                 chipClass += ' chip-playing'; // Green for currently playing
+                console.log(`Team ${teamId} ${chipId}: PLAYING - class: ${chipClass}`);
             } else {
                 chipClass += ' chip-available'; // Blue for available
+                console.log(`Team ${teamId} ${chipId}: AVAILABLE - class: ${chipClass}`);
             }
             
             return `

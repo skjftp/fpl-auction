@@ -19,17 +19,31 @@
     text-align: center;
 }
 
-.chip-icon.chip-available {
-    background: #60a5fa;
-    color: white;
-    box-shadow: 0 1px 3px rgba(96, 165, 250, 0.4);
+/* League chip icons - higher specificity */
+.leaderboard-row .chip-icons .chip-icon.chip-available {
+    background: #60a5fa !important;
+    color: white !important;
+    box-shadow: 0 1px 3px rgba(96, 165, 250, 0.4) !important;
+    border: 1px solid #3b82f6;
 }
 
-.chip-icon.chip-playing {
-    background: #22c55e;
-    color: white;
-    box-shadow: 0 1px 3px rgba(34, 197, 94, 0.4);
+.leaderboard-row .chip-icons .chip-icon.chip-playing {
+    background: #22c55e !important;
+    color: white !important;
+    box-shadow: 0 1px 3px rgba(34, 197, 94, 0.4) !important;
     animation: pulse-green 2s infinite;
+    border: 1px solid #16a34a;
+}
+
+/* Fallback with less specificity */
+.chip-icons .chip-icon.chip-available {
+    background: #60a5fa !important;
+    color: white !important;
+}
+
+.chip-icons .chip-icon.chip-playing {
+    background: #22c55e !important;
+    color: white !important;
 }
 
 .chip-icon:hover {
