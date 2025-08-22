@@ -70,10 +70,16 @@ class MobileLeague {
         this.render();
         
         // Load chip data and leaderboard
-        await Promise.all([
-            this.loadChipData(),
-            this.loadLeaderboard()
-        ]);
+        console.log('League: Starting to load chip data and leaderboard...');
+        try {
+            await Promise.all([
+                this.loadChipData(),
+                this.loadLeaderboard()
+            ]);
+            console.log('League: Chip data and leaderboard loaded successfully');
+        } catch (error) {
+            console.error('League: Error loading data:', error);
+        }
         
         this.initialized = true;
     }
