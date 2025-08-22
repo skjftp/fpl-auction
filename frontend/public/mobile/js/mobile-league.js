@@ -108,27 +108,58 @@ class MobileLeague {
             const teams = await window.mobileAPI.getAllTeams();
             this.teams = teams;
             
-            // Try to get live standings with calculated points
-            try {
-                const response = await fetch(`${window.API_BASE_URL}/api/submissions/gameweek/${this.currentGameweek}/standings`);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.standings && data.standings.length > 0) {
-                        // Use live standings if available
-                        this.leaderboardData = data.standings.map(standing => ({
-                            team_id: standing.team_id,
-                            team_name: standing.team_name,
-                            gameweek_points: standing.gameweek_points,
-                            total_points: standing.total_points || 0,
-                            chip_used: standing.chip_used,
-                            rank: standing.rank
-                        }));
-                        this.renderLeaderboard();
-                        return;
+            // Get current gameweek leaderboard data
+            const response = await window.mobileAPI.getLeaderboard(this.currentGameweek);
+            
+            if (response && response.length > 0) {
+                // Calculate total points by fetching all previous gameweeks
+                const totalPointsMap = {};
+                
+                // Get points for all gameweeks up to current
+                for (let gw = 1; gw <= this.currentGameweek; gw++) {
+                    try {
+                        const gwResponse = await window.mobileAPI.getLeaderboard(gw);
+                        if (gwResponse && gwResponse.length > 0) {
+                            gwResponse.forEach(team => {
+                                if (!totalPointsMap[team.team_id]) {
+                                    totalPointsMap[team.team_id] = {
+                                        team_name: team.team_name,
+                                        total: 0,
+                                        current_gw: 0,
+                                        chip_used: null
+                                    };
+                                }
+                                totalPointsMap[team.team_id].total += (team.gameweek_points || 0);
+                                if (gw === this.currentGameweek) {
+                                    totalPointsMap[team.team_id].current_gw = team.gameweek_points || 0;
+                                    totalPointsMap[team.team_id].chip_used = team.chip_used;
+                                }
+                            });
+                        }
+                    } catch (err) {
+                        console.error(`Error fetching GW${gw} points:`, err);
                     }
                 }
-            } catch (error) {
-                console.log('Live standings not available yet');
+                
+                // Create leaderboard data with totals
+                this.leaderboardData = Object.keys(totalPointsMap).map(teamId => ({
+                    team_id: parseInt(teamId),
+                    team_name: totalPointsMap[teamId].team_name,
+                    gameweek_points: totalPointsMap[teamId].current_gw,
+                    total_points: totalPointsMap[teamId].total,
+                    chip_used: totalPointsMap[teamId].chip_used
+                }));
+                
+                // Sort by total points descending
+                this.leaderboardData.sort((a, b) => b.total_points - a.total_points);
+                
+                // Add ranks
+                this.leaderboardData.forEach((team, index) => {
+                    team.rank = index + 1;
+                });
+                
+                this.renderLeaderboard();
+                return;
             }
             
             // Fallback to regular leaderboard
