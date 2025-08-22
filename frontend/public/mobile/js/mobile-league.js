@@ -7,7 +7,47 @@ class MobileLeague {
         this.leaderboardData = [];
         this.selectedTeamId = null;
         this.gameweekPoints = {};
+        this.allChipsData = null;
         this.initialized = false;
+        
+        // Chip configuration with icons and names
+        this.chipConfig = {
+            'brahmashtra': {
+                name: 'Brahmashtra',
+                icon: '🏹',
+                description: 'Auto-picks best 11'
+            },
+            'triple_captain': {
+                name: 'Triple Captain',
+                icon: '👑',
+                description: '3x points for Captain'
+            },
+            'attack_chip': {
+                name: 'Attack Chip',
+                icon: '⚔️',
+                description: '2x for MID & FWD in playing 11'
+            },
+            'negative_chip': {
+                name: 'Negative Chip',
+                icon: '➗',
+                description: 'Points divided by 2'
+            },
+            'double_up': {
+                name: 'Double Up',
+                icon: '✖️',
+                description: 'Points multiplied by 2'
+            },
+            'bench_boost': {
+                name: 'Bench Boost',
+                icon: '💪',
+                description: 'All 15 players count'
+            },
+            'park_the_bus': {
+                name: 'Park the Bus',
+                icon: '🚌',
+                description: '2x for GKP & DEF'
+            }
+        };
     }
 
     async initialize() {
@@ -29,12 +69,25 @@ class MobileLeague {
         // Render the UI
         this.render();
         
-        // Load leaderboard data
-        await this.loadLeaderboard();
+        // Load chip data and leaderboard
+        await Promise.all([
+            this.loadChipData(),
+            this.loadLeaderboard()
+        ]);
         
         this.initialized = true;
     }
 
+    async loadChipData() {
+        try {
+            this.allChipsData = await window.mobileAPI.getAllTeamsChipStatus();
+            console.log('Chip data loaded:', this.allChipsData);
+        } catch (error) {
+            console.error('Error loading chip data:', error);
+            this.allChipsData = null;
+        }
+    }
+    
     async loadLeaderboard() {
         try {
             // Get all teams
@@ -180,7 +233,9 @@ class MobileLeague {
                 </div>
                 <div class="team-col">
                     <div class="team-name">${team.team_name || `Team ${team.team_id}`}</div>
-                    ${team.chip_used ? `<span class="chip-indicator">${this.getChipName(team.chip_used)}</span>` : ''}
+                    <div class="chip-icons">
+                        ${this.renderChipIcons(team.team_id)}
+                    </div>
                 </div>
                 <div class="points-col">
                     <span class="points-value">${points}</span>
@@ -380,15 +435,67 @@ class MobileLeague {
         `;
     }
 
+    renderChipIcons(teamId) {
+        if (!this.allChipsData || !this.allChipsData.teams) {
+            return '';
+        }
+        
+        const teamChipData = this.allChipsData.teams[teamId];
+        if (!teamChipData) {
+            return '';
+        }
+        
+        const currentGameweek = this.allChipsData.current_gameweek || this.currentGameweek;
+        const allChips = this.allChipsData.all_chips || [];
+        
+        return allChips.map(chipId => {
+            const chipConfig = this.chipConfig[chipId];
+            if (!chipConfig) return '';
+            
+            // Check if chip is already used (permanently)
+            const isUsed = teamChipData.chips_used.includes(chipId);
+            
+            // Check if chip is being played in current gameweek
+            const isCurrentlyPlaying = teamChipData.chip_current_gw === chipId;
+            
+            // Don't show used chips
+            if (isUsed) {
+                return '';
+            }
+            
+            // Determine the class and color
+            let chipClass = 'chip-icon';
+            if (isCurrentlyPlaying) {
+                chipClass += ' chip-playing'; // Green for currently playing
+            } else {
+                chipClass += ' chip-available'; // Blue for available
+            }
+            
+            return `
+                <span class="${chipClass}" 
+                      title="${chipConfig.name}: ${chipConfig.description}${isCurrentlyPlaying ? ' (Playing this GW)' : ' (Available)'}" 
+                      onclick="mobileLeague.showChipTooltip(event, '${chipId}', ${isCurrentlyPlaying})">
+                    ${chipConfig.icon}
+                </span>
+            `;
+        }).join('');
+    }
+    
+    showChipTooltip(event, chipId, isPlaying) {
+        event.stopPropagation();
+        const chipConfig = this.chipConfig[chipId];
+        if (!chipConfig) return;
+        
+        const status = isPlaying ? 'Playing this Gameweek' : 'Available';
+        const message = `${chipConfig.name}\n${chipConfig.description}\nStatus: ${status}`;
+        
+        // For mobile, show alert for now (can be enhanced with custom tooltip later)
+        alert(message);
+    }
+    
     getChipName(chipId) {
-        const chips = {
-            'brahmashtra': '🏹 Brahmashtra',
-            'wildcard': '♻️ Wildcard',
-            'free_hit': '🎲 Free Hit',
-            'bench_boost': '📈 Bench Boost',
-            'triple_captain': '👑 Triple Captain'
-        };
-        return chips[chipId] || chipId;
+        const chipConfig = this.chipConfig[chipId];
+        return chipConfig ? `${chipConfig.icon} ${chipConfig.name}` : chipId;
     }
 
     async changeGameweek(direction) {
@@ -406,7 +513,10 @@ class MobileLeague {
         }
         
         this.render();
-        await this.loadLeaderboard();
+        await Promise.all([
+            this.loadChipData(),
+            this.loadLeaderboard()
+        ]);
     }
 
     togglePointsView(type) {

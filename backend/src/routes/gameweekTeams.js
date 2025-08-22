@@ -127,24 +127,43 @@ router.get('/submission/:gameweek', authenticateToken, async (req, res) => {
                 const prevDoc = await db.collection('gameweekTeams').doc(prevDocId).get();
                 
                 if (prevDoc.exists) {
-                    // Auto-copy previous gameweek's team
-                    const prevData = prevDoc.data();
-                    const newSubmission = {
-                        ...prevData,
-                        gameweek: gameweek,
-                        chip_used: null, // Reset chip for new gameweek
-                        submitted_at: admin.firestore.FieldValue.serverTimestamp(),
-                        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                        auto_copied: true,
-                        copied_from_gw: prevGameweek,
-                        deadline_status: 'on_time' // Reset deadline status for new gameweek
-                    };
+                    // Check if we should auto-copy (deadline passed for previous gameweek)
+                    let shouldAutoCopy = true;
                     
-                    // Save the auto-copied submission
-                    await db.collection('gameweekTeams').doc(docId).set(newSubmission);
+                    // Check if previous gameweek deadline has passed
+                    const prevGwDoc = await db.collection('gameweekInfo').doc(`gw_${prevGameweek}`).get();
+                    if (prevGwDoc.exists) {
+                        const prevGwData = prevGwDoc.data();
+                        const prevDeadline = new Date(prevGwData.deadline);
+                        const now = new Date();
+                        const oneHourAfterDeadline = new Date(prevDeadline.getTime() + (60 * 60 * 1000));
+                        
+                        // Only auto-copy if previous gameweek deadline + 1 hour has passed
+                        shouldAutoCopy = now > oneHourAfterDeadline;
+                        
+                        console.log(`Previous GW${prevGameweek} deadline: ${prevDeadline}, now: ${now}, shouldAutoCopy: ${shouldAutoCopy}`);
+                    }
                     
-                    console.log(`Auto-copied team ${teamId} from GW${prevGameweek} to GW${gameweek}`);
-                    return res.json(newSubmission);
+                    if (shouldAutoCopy) {
+                        // Auto-copy previous gameweek's team
+                        const prevData = prevDoc.data();
+                        const newSubmission = {
+                            ...prevData,
+                            gameweek: gameweek,
+                            chip_used: null, // Reset chip for new gameweek
+                            submitted_at: admin.firestore.FieldValue.serverTimestamp(),
+                            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+                            auto_copied: true,
+                            copied_from_gw: prevGameweek,
+                            deadline_status: 'on_time' // Reset deadline status for new gameweek
+                        };
+                        
+                        // Save the auto-copied submission
+                        await db.collection('gameweekTeams').doc(docId).set(newSubmission);
+                        
+                        console.log(`Auto-copied team ${teamId} from GW${prevGameweek} to GW${gameweek}`);
+                        return res.json(newSubmission);
+                    }
                 }
             }
             

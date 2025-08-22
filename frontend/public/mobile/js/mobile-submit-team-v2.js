@@ -245,6 +245,19 @@ class MobileSubmitTeamManagerV2 {
                     deadline: this.deadline,
                     type: this.gameweekType
                 });
+                
+                // Check if deadline has passed and clear cache if so
+                const now = new Date();
+                const oneHourAfterDeadline = new Date(this.deadline.getTime() + (60 * 60 * 1000));
+                
+                if (now > oneHourAfterDeadline) {
+                    console.log('Deadline + 1 hour has passed, clearing squad cache to get fresh fixtures');
+                    const currentUser = window.mobileAPI.getCurrentUser();
+                    if (currentUser && currentUser.id) {
+                        const cacheKey = `fpl_squad_cache_${currentUser.id}`;
+                        localStorage.removeItem(cacheKey);
+                    }
+                }
             }
         } catch (error) {
             console.error('Error loading gameweek info:', error);
@@ -1437,8 +1450,12 @@ class MobileSubmitTeamManagerV2 {
                 return;
             }
 
+            // Determine the effective gameweek
+            const oneHourAfterDeadline = new Date(this.deadline.getTime() + (60 * 60 * 1000));
+            const effectiveGameweek = now > oneHourAfterDeadline ? this.currentGameweek + 1 : this.currentGameweek;
+            
             const submission = {
-                gameweek: deadlinePassed ? this.currentGameweek + 1 : this.currentGameweek,
+                gameweek: effectiveGameweek,
                 starting_11: this.starting11,
                 bench: this.bench,
                 captain_id: this.captainId,

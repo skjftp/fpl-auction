@@ -680,6 +680,10 @@ class MobileAPI {
     async getGameweekFixtures(gameweek) {
         return this.makeRequest(`/gameweek-info/fixtures/${gameweek}`);
     }
+    
+    async getAllTeamsChipStatus() {
+        return this.makeRequest('/gameweek-teams/chips/all-teams');
+    }
 }
 
 // Global API instance
