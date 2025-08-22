@@ -1450,8 +1450,7 @@ class MobileSubmitTeamManagerV2 {
                 return;
             }
 
-            // Determine the effective gameweek
-            const oneHourAfterDeadline = new Date(this.deadline.getTime() + (60 * 60 * 1000));
+            // Determine the effective gameweek (reuse the already declared variable)
             const effectiveGameweek = now > oneHourAfterDeadline ? this.currentGameweek + 1 : this.currentGameweek;
             
             const submission = {
