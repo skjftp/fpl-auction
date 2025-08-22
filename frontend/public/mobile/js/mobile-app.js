@@ -668,8 +668,13 @@ class MobileApp {
                 }
                 break;
             case 'leaderboard':
-                // Load leaderboard data
-                await this.loadLeaderboard();
+                // Use the mobile-league implementation for proper GW2 points
+                if (!window.mobileLeague.initialized) {
+                    await window.mobileLeague.initialize();
+                } else {
+                    // Reload data when switching back to tab
+                    await window.mobileLeague.loadLeaderboard();
+                }
                 break;
             case 'more':
                 // More tab stays on current content, just shows menu
