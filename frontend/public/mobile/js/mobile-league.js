@@ -53,23 +53,31 @@ class MobileLeague {
     async initialize() {
         console.log('League tab initialize called');
         
-        // League tab should show the currently PLAYING gameweek, not the submission gameweek
-        // Since GW1 has started playing, show GW1 until GW2 starts playing
+        // Get the current playing gameweek from gameweek info API
         try {
-            // For now, hardcode to GW1 since that's what's playing
-            // TODO: Get this from FPL API's current event flag
-            this.currentGameweek = 1; // Show GW1 since it's currently being played
-            this.deadlinePassed = true; // GW1 deadline has passed
-            console.log('League showing playing gameweek:', this.currentGameweek);
+            const gwInfo = await window.mobileAPI.getCurrentGameweek();
+            if (gwInfo && gwInfo.gameweek) {
+                // The API returns the submission gameweek (GW3)
+                // For league standings, we want the PLAYING gameweek (GW2)
+                // Playing gameweek = submission gameweek - 1 (unless it's GW1)
+                const submissionGw = gwInfo.gameweek;
+                this.currentGameweek = Math.max(1, submissionGw - 1);
+                console.log(`League: Submission GW${submissionGw}, showing playing GW${this.currentGameweek}`);
+            } else {
+                // Default to GW2 as fallback
+                this.currentGameweek = 2;
+                console.log('Using default playing gameweek:', this.currentGameweek);
+            }
+            this.deadlinePassed = true; // Playing gameweek deadline has passed
         } catch (error) {
             console.error('Error loading gameweek info:', error);
-            this.currentGameweek = 1;
+            this.currentGameweek = 2; // Default to GW2
         }
         
-        // Render the UI
+        // Render the UI with correct gameweek
         this.render();
         
-        // Load chip data and leaderboard
+        // Load chip data and leaderboard in parallel
         console.log('League: Starting to load chip data and leaderboard...');
         try {
             await Promise.all([
@@ -258,10 +266,11 @@ class MobileLeague {
     }
 
     async viewTeam(teamId) {
-        // Always show the submission for the playing gameweek (GW1)
+        // Show the submission for the current playing gameweek
         // Use mobileApp's viewTeamSubmission which shows the nice pitch view
         if (window.mobileApp && window.mobileApp.viewTeamSubmission) {
-            // Pass the current playing gameweek (1) explicitly
+            // Pass the current playing gameweek explicitly
+            console.log(`Viewing team ${teamId} for GW${this.currentGameweek}`);
             window.mobileApp.viewTeamSubmission(teamId, this.currentGameweek);
         } else if (window.mobileTeamViewer) {
             window.mobileTeamViewer.show(teamId, this.currentGameweek);

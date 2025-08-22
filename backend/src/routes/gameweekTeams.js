@@ -451,16 +451,46 @@ router.get('/chips/all-teams', authenticateToken, async (req, res) => {
             };
         });
         
-        // Get current gameweek
-        const currentGwDoc = await db.collection('gameweekInfo').where('is_current', '==', true).limit(1).get();
-        let currentGameweek = 1;
-        if (!currentGwDoc.empty) {
-            currentGameweek = currentGwDoc.docs[0].data().gameweek;
+        // For chips display, we need the PLAYING gameweek, not submission gameweek
+        // Playing gameweek = the gameweek whose matches are currently happening
+        // Submission gameweek = the gameweek for which teams are submitting (usually next)
+        let playingGameweek = 2; // Default to GW2 as currently playing
+        let submissionGameweek = 3; // Default to GW3 for submissions
+        
+        try {
+            const axios = require('axios');
+            const fplResponse = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
+            const currentEvent = fplResponse.data.events.find(event => event.is_current);
+            const nextEvent = fplResponse.data.events.find(event => event.is_next);
+            
+            if (currentEvent && nextEvent) {
+                const currentDeadline = new Date(currentEvent.deadline_time);
+                const now = new Date();
+                const oneHourAfterDeadline = new Date(currentDeadline.getTime() + (60 * 60 * 1000));
+                
+                if (now <= currentDeadline) {
+                    // Before deadline: current GW is for submission, previous is playing
+                    submissionGameweek = currentEvent.id;
+                    playingGameweek = Math.max(1, currentEvent.id - 1);
+                } else if (now <= oneHourAfterDeadline) {
+                    // Grace period: current GW is playing, next is for submission
+                    playingGameweek = currentEvent.id;
+                    submissionGameweek = nextEvent.id;
+                } else {
+                    // After grace period: next GW is for submission, current is playing
+                    playingGameweek = currentEvent.id;
+                    submissionGameweek = nextEvent.id;
+                }
+            }
+        } catch (error) {
+            console.error('Error getting gameweeks for chips:', error);
         }
         
-        // Get all historical chip usage (from past gameweeks)
+        console.log(`Chips API: Playing GW${playingGameweek}, Submission GW${submissionGameweek}`);
+        
+        // Get all historical chip usage (from completed gameweeks)
         const historicalChipsSnapshot = await db.collection('gameweekTeams')
-            .where('gameweek', '<', currentGameweek)
+            .where('gameweek', '<', playingGameweek)
             .get();
             
         historicalChipsSnapshot.forEach(doc => {
@@ -470,12 +500,12 @@ router.get('/chips/all-teams', authenticateToken, async (req, res) => {
             }
         });
         
-        // Get current gameweek chip usage
-        const currentGwSnapshot = await db.collection('gameweekTeams')
-            .where('gameweek', '==', currentGameweek)
+        // Get currently playing gameweek chip usage
+        const playingGwSnapshot = await db.collection('gameweekTeams')
+            .where('gameweek', '==', playingGameweek)
             .get();
             
-        currentGwSnapshot.forEach(doc => {
+        playingGwSnapshot.forEach(doc => {
             const data = doc.data();
             if (data.chip_used && teams[data.team_id]) {
                 teams[data.team_id].chip_current_gw = data.chip_used;
@@ -484,7 +514,9 @@ router.get('/chips/all-teams', authenticateToken, async (req, res) => {
         
         res.json({
             teams: teams,
-            current_gameweek: currentGameweek,
+            playing_gameweek: playingGameweek,
+            submission_gameweek: submissionGameweek,
+            current_gameweek: playingGameweek, // For backward compatibility
             all_chips: [
                 'triple_captain',
                 'bench_boost',

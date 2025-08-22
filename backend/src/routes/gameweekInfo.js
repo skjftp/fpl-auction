@@ -185,6 +185,52 @@ router.post('/update-deadlines', async (req, res) => {
     }
 });
 
+// Get the currently PLAYING gameweek (for league standings)
+// This is different from the submission gameweek
+router.get('/playing', async (req, res) => {
+    try {
+        const fplData = await fetchFPLData();
+        
+        // Find current and next gameweeks from FPL
+        const currentEvent = fplData.events.find(event => event.is_current);
+        const nextEvent = fplData.events.find(event => event.is_next);
+        
+        let playingGameweek = 1; // Default
+        let submissionGameweek = 1;
+        
+        if (currentEvent && currentEvent.deadline_time) {
+            const deadline = new Date(currentEvent.deadline_time);
+            const oneHourAfterDeadline = new Date(deadline.getTime() + (60 * 60 * 1000));
+            const now = new Date();
+            
+            if (now > oneHourAfterDeadline && nextEvent) {
+                // After grace period: current event is playing, next is for submission
+                playingGameweek = currentEvent.id;
+                submissionGameweek = nextEvent.id;
+                console.log(`Playing GW${playingGameweek}, Submission GW${submissionGameweek}`);
+            } else if (now > deadline) {
+                // During grace period: current event is playing
+                playingGameweek = currentEvent.id;
+                submissionGameweek = nextEvent ? nextEvent.id : currentEvent.id;
+            } else {
+                // Before deadline: previous event is playing, current is for submission
+                playingGameweek = Math.max(1, currentEvent.id - 1);
+                submissionGameweek = currentEvent.id;
+            }
+        }
+
+        res.json({
+            playing_gameweek: playingGameweek,
+            submission_gameweek: submissionGameweek,
+            is_playing: true,
+            description: `GW${playingGameweek} matches are being played`
+        });
+    } catch (error) {
+        console.error('Error fetching playing gameweek:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get specific gameweek info
 router.get('/:gameweek', async (req, res) => {
     try {
@@ -317,6 +363,52 @@ router.get('/fixtures/:gameweek', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching fixtures:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get the currently PLAYING gameweek (for league standings)
+// This is different from the submission gameweek
+router.get('/playing', async (req, res) => {
+    try {
+        const fplData = await fetchFPLData();
+        
+        // Find current and next gameweeks from FPL
+        const currentEvent = fplData.events.find(event => event.is_current);
+        const nextEvent = fplData.events.find(event => event.is_next);
+        
+        let playingGameweek = 1; // Default
+        let submissionGameweek = 1;
+        
+        if (currentEvent && currentEvent.deadline_time) {
+            const deadline = new Date(currentEvent.deadline_time);
+            const oneHourAfterDeadline = new Date(deadline.getTime() + (60 * 60 * 1000));
+            const now = new Date();
+            
+            if (now > oneHourAfterDeadline && nextEvent) {
+                // After grace period: current event is playing, next is for submission
+                playingGameweek = currentEvent.id;
+                submissionGameweek = nextEvent.id;
+                console.log(`Playing GW${playingGameweek}, Submission GW${submissionGameweek}`);
+            } else if (now > deadline) {
+                // During grace period: current event is playing
+                playingGameweek = currentEvent.id;
+                submissionGameweek = nextEvent ? nextEvent.id : currentEvent.id;
+            } else {
+                // Before deadline: previous event is playing, current is for submission
+                playingGameweek = Math.max(1, currentEvent.id - 1);
+                submissionGameweek = currentEvent.id;
+            }
+        }
+
+        res.json({
+            playing_gameweek: playingGameweek,
+            submission_gameweek: submissionGameweek,
+            is_playing: true,
+            description: `GW${playingGameweek} matches are being played`
+        });
+    } catch (error) {
+        console.error('Error fetching playing gameweek:', error);
         res.status(500).json({ error: error.message });
     }
 });
