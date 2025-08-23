@@ -102,6 +102,9 @@ class MobileLeague {
     }
     
     async loadLeaderboard() {
+        // Show loading state
+        this.showLoading();
+        
         try {
             // Get all teams
             const teams = await window.mobileAPI.getAllTeams();
@@ -172,6 +175,18 @@ class MobileLeague {
         } catch (error) {
             console.error('Error loading leaderboard:', error);
             this.renderError('Failed to load leaderboard');
+        }
+    }
+    
+    showLoading() {
+        const container = document.getElementById('leaderboardContainer') || document.getElementById('leaderboardContent');
+        if (container) {
+            container.innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Loading standings...</p>
+                </div>
+            `;
         }
     }
 
