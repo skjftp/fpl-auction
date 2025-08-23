@@ -51,8 +51,6 @@ class MobileLeague {
     }
 
     async initialize() {
-        console.log('League tab initialize called');
-        console.log('Container check:', document.getElementById('leaderboardContent'));
         
         // Get the current playing gameweek from gameweek info API
         try {
@@ -104,17 +102,13 @@ class MobileLeague {
     }
     
     async loadLeaderboard() {
-        console.log('loadLeaderboard called, current GW:', this.currentGameweek);
         try {
             // Get all teams
             const teams = await window.mobileAPI.getAllTeams();
             this.teams = teams;
-            console.log('Teams loaded:', teams.length);
             
             // Get current gameweek leaderboard data
-            console.log('Fetching leaderboard for GW:', this.currentGameweek);
             const response = await window.mobileAPI.getLeaderboard(this.currentGameweek);
-            console.log('Leaderboard response:', response);
             
             if (response && response.length > 0) {
                 // Calculate total points by fetching all previous gameweeks
