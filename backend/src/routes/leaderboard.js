@@ -25,8 +25,8 @@ async function calculateSubmissionPoints(submission, livePointsData) {
             if (doc.exists) {
                 const player = doc.data();
                 // Store team_id, position, and add minutes from live data
-                // Use FPL ID to look up live data
-                const fplId = player.fpl_id || player.id;
+                // Our player.id IS the FPL ID (fpl_id field is null for most players)
+                const fplId = player.id;  // Use player.id directly as it's the FPL element ID
                 playerDetails[player.id] = {
                     team_id: player.team_id,
                     position: player.position,
@@ -214,11 +214,12 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 } else {
                     const response = await axios.get(`https://fantasy.premierleague.com/api/event/${currentGameweek}/live/`);
                     if (response.data && response.data.elements) {
-                        // FPL API returns elements as an array, not an object
-                        response.data.elements.forEach(playerData => {
+                        // FPL API returns elements as an array where each element has an 'id' field
+                        response.data.elements.forEach((playerData, index) => {
                             if (playerData && playerData.stats) {
-                                // Use player ID as key
-                                livePointsData[playerData.id] = {
+                                // Use the id from the playerData
+                                const playerId = playerData.id || (index + 1);
+                                livePointsData[playerId] = {
                                     points: playerData.stats.total_points || 0,
                                     minutes: playerData.stats.minutes || 0
                                 };
@@ -308,10 +309,14 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
             const gwNumber = parseInt(gameweek);
             const leaderboard = [];
             
-            // Check if this is the playing gameweek (not submission gameweek)
-            // Get playing gameweek from the new endpoint
-            let playingGameweek = 1;
+            // Check if we should calculate live points for this gameweek
+            // We calculate live points if:
+            // 1. It's the currently playing gameweek, OR
+            // 2. It's a finished gameweek (for accurate historical data)
+            let shouldCalculateLive = false;
             let isPlayingGw = false;
+            
+            // Check if this is the playing gameweek
             try {
                 const axios = require('axios');
                 const baseURL = process.env.NODE_ENV === 'production' 
@@ -319,23 +324,31 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                     : 'http://localhost:5000';
                 const playingResponse = await axios.get(`${baseURL}/api/gameweek-info/playing`);
                 if (playingResponse.data && playingResponse.data.playing_gameweek) {
-                    playingGameweek = playingResponse.data.playing_gameweek;
-                    isPlayingGw = (gwNumber === playingGameweek);
-                    console.log(`Checking GW${gwNumber}: Playing GW is ${playingGameweek}, isPlayingGw=${isPlayingGw}`);
+                    isPlayingGw = (gwNumber === playingResponse.data.playing_gameweek);
+                    console.log(`GW${gwNumber}: isPlayingGw=${isPlayingGw}`);
                 }
             } catch (error) {
-                console.log('Could not determine playing gameweek, falling back to is_current');
-                // Fallback to is_current if /playing endpoint fails
-                const currentGwDoc = await collections.gameweekInfo.where('is_current', '==', true).limit(1).get();
-                if (!currentGwDoc.empty) {
-                    playingGameweek = currentGwDoc.docs[0].data().gameweek;
-                    isPlayingGw = (gwNumber === playingGameweek);
-                }
+                console.log('Could not determine playing gameweek');
             }
             
-            // Fetch live points if this is the playing gameweek
+            // Check if gameweek is finished/data_checked
+            let gwFinished = false;
+            try {
+                const fplBootstrapResponse = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
+                const gameweekData = fplBootstrapResponse.data.events.find(e => e.id === gwNumber);
+                if (gameweekData) {
+                    gwFinished = gameweekData.finished === true || gameweekData.data_checked === true;
+                }
+            } catch (error) {
+                console.log('Could not check gameweek finished status');
+            }
+            
+            // Calculate live if playing or finished
+            shouldCalculateLive = isPlayingGw || gwFinished;
+            
+            // Fetch live points if we should calculate
             let livePointsData = {};
-            if (isPlayingGw) {
+            if (shouldCalculateLive) {
                 try {
                     const cacheKey = `live_points_gw${gwNumber}`;
                     const cached = global.livePointsCache && global.livePointsCache[cacheKey];
@@ -345,16 +358,19 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                     } else {
                         const response = await axios.get(`https://fantasy.premierleague.com/api/event/${gwNumber}/live/`);
                         if (response.data && response.data.elements) {
-                            // FPL API returns elements as an array, not an object
-                            response.data.elements.forEach(playerData => {
+                            // FPL API returns elements as an array where index = id - 1
+                            // But each element also has an 'id' field we should use
+                            response.data.elements.forEach((playerData, index) => {
                                 if (playerData && playerData.stats) {
-                                    // Use player ID as key
-                                    livePointsData[playerData.id] = {
+                                    // Use the id from the playerData, not the array index
+                                    const playerId = playerData.id || (index + 1);
+                                    livePointsData[playerId] = {
                                         points: playerData.stats.total_points || 0,
                                         minutes: playerData.stats.minutes || 0
                                     };
                                 }
                             });
+                            console.log(`Loaded live points for GW${gwNumber}:`, Object.keys(livePointsData).length, 'players');
                             
                             // Cache it
                             if (!global.livePointsCache) {
@@ -375,8 +391,8 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 let gwPoints = 0;
                 let chipUsed = null;
                 
-                if (isPlayingGw && Object.keys(livePointsData).length > 0) {
-                    // Calculate live points for playing gameweek
+                if (shouldCalculateLive && Object.keys(livePointsData).length > 0) {
+                    // Calculate live points
                     const submissionDoc = await collections.gameweekTeams
                         .doc(`${team.id}_gw${gwNumber}`)
                         .get();
