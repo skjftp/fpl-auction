@@ -25,10 +25,13 @@ async function calculateSubmissionPoints(submission, livePointsData) {
             if (doc.exists) {
                 const player = doc.data();
                 // Store team_id, position, and add minutes from live data
+                // Use FPL ID to look up live data
+                const fplId = player.fpl_id || player.id;
                 playerDetails[player.id] = {
                     team_id: player.team_id,
                     position: player.position,
-                    minutes: livePointsData[player.id]?.minutes || 0
+                    fpl_id: fplId,
+                    minutes: livePointsData[fplId]?.minutes || 0
                 };
             }
         });
@@ -37,30 +40,63 @@ async function calculateSubmissionPoints(submission, livePointsData) {
         }
     }
     
-    // Apply automatic substitutions
-    const subsResult = applyAutomaticSubstitutions(
-        submission.starting_11 || [],
-        submission.bench || [],
-        livePointsData,
-        playerDetails,
-        submission.chip_used === 'bench_boost'
-    );
+    // Only apply automatic substitutions if gameweek data is checked (fully complete)
+    let finalStarting11 = submission.starting_11 || [];
+    let finalBench = submission.bench || [];
+    let dataChecked = false;
     
-    const finalStarting11 = subsResult.finalStarting11;
-    const finalBench = subsResult.finalBench;
+    // Check if gameweek data is checked (fully complete) from FPL API
+    try {
+        const fplBootstrapResponse = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
+        const gameweekData = fplBootstrapResponse.data.events.find(e => e.id === submission.gameweek);
+        if (gameweekData) {
+            dataChecked = gameweekData.data_checked === true;
+            console.log(`GW${submission.gameweek} data_checked: ${dataChecked}, finished: ${gameweekData.finished}`);
+        }
+    } catch (error) {
+        console.log('Could not check gameweek data_checked status from FPL:', error.message);
+        // Fallback to checking Firestore
+        try {
+            const gwDoc = await collections.gameweekInfo.doc(`gw_${submission.gameweek}`).get();
+            if (gwDoc.exists) {
+                dataChecked = gwDoc.data().data_checked === true || gwDoc.data().finished === true;
+            }
+        } catch (err) {
+            console.log('Could not check gameweek status from Firestore:', err.message);
+        }
+    }
     
-    // Check for captain/vice-captain substitution
+    if (dataChecked) {
+        // Apply automatic substitutions only if gameweek data is fully checked
+        const subsResult = applyAutomaticSubstitutions(
+            submission.starting_11 || [],
+            submission.bench || [],
+            livePointsData,
+            playerDetails,
+            submission.chip_used === 'bench_boost'
+        );
+        
+        finalStarting11 = subsResult.finalStarting11;
+        finalBench = subsResult.finalBench;
+    }
+    
+    // Check for captain/vice-captain substitution only if gameweek data is checked
     let effectiveCaptainId = submission.captain_id;
-    const captainMinutes = livePointsData[submission.captain_id]?.minutes || 0;
-    if (captainMinutes === 0 && submission.vice_captain_id) {
-        effectiveCaptainId = submission.vice_captain_id;
+    if (dataChecked && submission.captain_id && submission.vice_captain_id) {
+        const captainData = playerDetails[submission.captain_id];
+        const captainFplId = captainData?.fpl_id || submission.captain_id;
+        const captainMinutes = livePointsData[captainFplId]?.minutes || 0;
+        if (captainMinutes === 0) {
+            effectiveCaptainId = submission.vice_captain_id;
+        }
     }
     
     // Calculate starting 11 points (after substitutions)
     for (const playerId of finalStarting11) {
-        const playerPoints = livePointsData[playerId]?.points || 0;
-        let finalPoints = playerPoints;
         const playerData = playerDetails[playerId] || {};
+        const fplId = playerData.fpl_id || playerId;
+        const playerPoints = livePointsData[fplId]?.points || 0;
+        let finalPoints = playerPoints;
         
         // Apply captain/vice-captain multiplier using effective captain
         if (playerId == effectiveCaptainId) {
@@ -92,9 +128,10 @@ async function calculateSubmissionPoints(submission, livePointsData) {
     // Calculate bench points if bench boost is active
     if (submission.chip_used === 'bench_boost') {
         for (const playerId of finalBench) {
-            const playerPoints = livePointsData[playerId]?.points || 0;
-            let finalPoints = playerPoints;
             const playerData = playerDetails[playerId] || {};
+            const fplId = playerData.fpl_id || playerId;
+            const playerPoints = livePointsData[fplId]?.points || 0;
+            let finalPoints = playerPoints;
             
             // Apply club multiplier to bench players too - use loose equality for type coercion
             if (submission.club_multiplier_id && playerData.team_id && playerData.team_id == submission.club_multiplier_id) {

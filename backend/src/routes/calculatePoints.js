@@ -17,12 +17,29 @@ router.post('/calculate/:gameweek', authenticateToken, async (req, res) => {
         const fplResponse = await axios.get(`${FPL_API_BASE}/event/${gameweek}/live/`);
         const elementStats = fplResponse.data.elements;
         
-        // Get gameweek deadline
+        // Check if gameweek data is checked (fully complete) from FPL API
+        let dataChecked = false;
+        try {
+            const fplBootstrapResponse = await axios.get(`${FPL_API_BASE}/bootstrap-static/`);
+            const gameweekData = fplBootstrapResponse.data.events.find(e => e.id === gameweek);
+            if (gameweekData) {
+                dataChecked = gameweekData.data_checked === true;
+                console.log(`Gameweek ${gameweek} data_checked: ${dataChecked}, finished: ${gameweekData.finished}`);
+            }
+        } catch (error) {
+            console.log('Could not fetch FPL bootstrap data:', error.message);
+        }
+        
+        // Get gameweek deadline from Firestore
         const gwDoc = await collections.gameweekInfo.doc(`gw_${gameweek}`).get();
         let deadline = null;
         if (gwDoc.exists) {
             deadline = new Date(gwDoc.data().deadline);
-            console.log(`Gameweek ${gameweek} deadline: ${deadline}`);
+            // If FPL data_checked is not available, fallback to Firestore
+            if (!dataChecked) {
+                dataChecked = gwDoc.data().data_checked === true || gwDoc.data().finished === true;
+            }
+            console.log(`Gameweek ${gameweek} deadline: ${deadline}, data_checked: ${dataChecked}`);
         }
         
         // Get all team submissions for this gameweek
@@ -51,8 +68,8 @@ router.post('/calculate/:gameweek', authenticateToken, async (req, res) => {
             console.log(`Processing team ${teamId} for gameweek ${gameweek}...`);
             
             try {
-                // Calculate points for this team
-                const teamPoints = await calculateTeamPoints(submission, elementStats);
+                // Calculate points for this team (pass dataChecked flag)
+                const teamPoints = await calculateTeamPoints(submission, elementStats, dataChecked);
                 
                 // Save to gameweekPoints collection
                 await collections.gameweekPoints.doc(`${teamId}_gw${gameweek}`).set({
@@ -105,7 +122,7 @@ router.post('/calculate/:gameweek', authenticateToken, async (req, res) => {
 });
 
 // Calculate points for a single team
-async function calculateTeamPoints(submission, elementStats) {
+async function calculateTeamPoints(submission, elementStats, dataChecked = false) {
     const playerPoints = [];
     let baseTotal = 0;
     let autoSubsMade = [];
@@ -140,11 +157,11 @@ async function calculateTeamPoints(submission, elementStats) {
         }
     }
     
-    // Auto-substitution logic
+    // Auto-substitution logic - ONLY if gameweek data is checked (fully complete)
     let finalStarting11 = [...submission.starting_11];
     let finalBench = [...submission.bench];
     
-    if (nonPlayingStarters.length > 0) {
+    if (dataChecked && nonPlayingStarters.length > 0) {
         // Try to substitute non-playing players
         for (const nonPlayer of nonPlayingStarters) {
             const substitute = findValidSubstitute(
@@ -197,14 +214,16 @@ async function calculateTeamPoints(submission, elementStats) {
                 bonusTypes.push('Captain');
             }
         } else if (playerId === submission.vice_captain_id) {
-            // Check if captain didn't play
-            const captainPlayer = playersData[submission.captain_id];
-            if (captainPlayer) {
-                const captainFplId = captainPlayer.fpl_id || captainPlayer.id;
-                const captainStats = elementStats[captainFplId];
-                if (!captainStats || (captainStats.stats.minutes || 0) === 0) {
-                    multiplier = 2;
-                    bonusTypes.push('Vice Captain (Active)');
+            // Check if captain didn't play - only if data is checked
+            if (dataChecked) {
+                const captainPlayer = playersData[submission.captain_id];
+                if (captainPlayer) {
+                    const captainFplId = captainPlayer.fpl_id || captainPlayer.id;
+                    const captainStats = elementStats[captainFplId];
+                    if (!captainStats || (captainStats.stats.minutes || 0) === 0) {
+                        multiplier = 2;
+                        bonusTypes.push('Vice Captain (Active)');
+                    }
                 }
             }
         }

@@ -19,21 +19,23 @@ function applyAutomaticSubstitutions(starting11, bench, livePoints, playerData, 
     
     // Handle both data formats: 
     // From submissions.js: livePoints[playerId].stats.minutes
-    // From leaderboard.js: livePoints[playerId].minutes or playerData[playerId].minutes
+    // From leaderboard.js: livePoints[fplId].minutes with playerData[playerId].fpl_id
     let playerMinutes = 0;
-    if (livePoints[playerId]) {
-      if (livePoints[playerId].stats !== undefined) {
-        playerMinutes = livePoints[playerId].stats.minutes || 0;
+    const player = playerData[playerId];
+    const lookupId = player?.fpl_id || playerId; // Use FPL ID if available
+    
+    if (livePoints[lookupId]) {
+      if (livePoints[lookupId].stats !== undefined) {
+        playerMinutes = livePoints[lookupId].stats.minutes || 0;
       } else {
-        playerMinutes = livePoints[playerId].minutes || 0;
+        playerMinutes = livePoints[lookupId].minutes || 0;
       }
-    } else if (playerData[playerId]) {
-      playerMinutes = playerData[playerId].minutes || 0;
+    } else if (player) {
+      playerMinutes = player.minutes || 0;
     }
     
     // Check if player didn't play (0 minutes)
     if (playerMinutes === 0) {
-      const player = playerData[playerId];
       if (!player) continue;
       
       // Try to substitute this player
@@ -47,11 +49,13 @@ function applyAutomaticSubstitutions(starting11, bench, livePoints, playerData, 
           
           // Get bench player minutes
           let benchMinutes = 0;
-          if (livePoints[benchPlayerId]) {
-            if (livePoints[benchPlayerId].stats !== undefined) {
-              benchMinutes = livePoints[benchPlayerId].stats.minutes || 0;
+          const benchLookupId = benchPlayer?.fpl_id || benchPlayerId; // Use FPL ID if available
+          
+          if (livePoints[benchLookupId]) {
+            if (livePoints[benchLookupId].stats !== undefined) {
+              benchMinutes = livePoints[benchLookupId].stats.minutes || 0;
             } else {
-              benchMinutes = livePoints[benchPlayerId].minutes || 0;
+              benchMinutes = livePoints[benchLookupId].minutes || 0;
             }
           } else if (benchPlayer) {
             benchMinutes = benchPlayer.minutes || 0;
@@ -79,11 +83,13 @@ function applyAutomaticSubstitutions(starting11, bench, livePoints, playerData, 
           
           // Get bench player minutes
           let benchMinutes = 0;
-          if (livePoints[benchPlayerId]) {
-            if (livePoints[benchPlayerId].stats !== undefined) {
-              benchMinutes = livePoints[benchPlayerId].stats.minutes || 0;
+          const benchLookupId = benchPlayer?.fpl_id || benchPlayerId; // Use FPL ID if available
+          
+          if (livePoints[benchLookupId]) {
+            if (livePoints[benchLookupId].stats !== undefined) {
+              benchMinutes = livePoints[benchLookupId].stats.minutes || 0;
             } else {
-              benchMinutes = livePoints[benchPlayerId].minutes || 0;
+              benchMinutes = livePoints[benchLookupId].minutes || 0;
             }
           } else if (benchPlayer) {
             benchMinutes = benchPlayer.minutes || 0;
