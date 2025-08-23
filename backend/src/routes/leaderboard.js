@@ -146,11 +146,24 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
             // Calculate overall points with fresh live data for current gameweek
             const leaderboard = [];
             
-            // Get current gameweek
-            const currentGwDoc = await collections.gameweekInfo.where('is_current', '==', true).limit(1).get();
+            // Get playing gameweek (not submission gameweek)
             let currentGameweek = 1;
-            if (!currentGwDoc.empty) {
-                currentGameweek = currentGwDoc.docs[0].data().gameweek;
+            try {
+                const baseURL = process.env.NODE_ENV === 'production' 
+                    ? 'https://fpl-auction-backend-945963649649.us-central1.run.app'
+                    : 'http://localhost:5000';
+                const playingResponse = await axios.get(`${baseURL}/api/gameweek-info/playing`);
+                if (playingResponse.data && playingResponse.data.playing_gameweek) {
+                    currentGameweek = playingResponse.data.playing_gameweek;
+                    console.log(`Overall leaderboard: Using playing GW${currentGameweek}`);
+                }
+            } catch (error) {
+                console.log('Could not determine playing gameweek for overall, falling back to is_current');
+                // Fallback to is_current if /playing endpoint fails
+                const currentGwDoc = await collections.gameweekInfo.where('is_current', '==', true).limit(1).get();
+                if (!currentGwDoc.empty) {
+                    currentGameweek = currentGwDoc.docs[0].data().gameweek;
+                }
             }
             
             // Fetch live points for current gameweek
@@ -258,18 +271,34 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
             const gwNumber = parseInt(gameweek);
             const leaderboard = [];
             
-            // Check if this is the current gameweek
-            const currentGwDoc = await collections.gameweekInfo.where('is_current', '==', true).limit(1).get();
-            let currentGameweek = 1;
-            let isCurrentGw = false;
-            if (!currentGwDoc.empty) {
-                currentGameweek = currentGwDoc.docs[0].data().gameweek;
-                isCurrentGw = (gwNumber === currentGameweek);
+            // Check if this is the playing gameweek (not submission gameweek)
+            // Get playing gameweek from the new endpoint
+            let playingGameweek = 1;
+            let isPlayingGw = false;
+            try {
+                const axios = require('axios');
+                const baseURL = process.env.NODE_ENV === 'production' 
+                    ? 'https://fpl-auction-backend-945963649649.us-central1.run.app'
+                    : 'http://localhost:5000';
+                const playingResponse = await axios.get(`${baseURL}/api/gameweek-info/playing`);
+                if (playingResponse.data && playingResponse.data.playing_gameweek) {
+                    playingGameweek = playingResponse.data.playing_gameweek;
+                    isPlayingGw = (gwNumber === playingGameweek);
+                    console.log(`Checking GW${gwNumber}: Playing GW is ${playingGameweek}, isPlayingGw=${isPlayingGw}`);
+                }
+            } catch (error) {
+                console.log('Could not determine playing gameweek, falling back to is_current');
+                // Fallback to is_current if /playing endpoint fails
+                const currentGwDoc = await collections.gameweekInfo.where('is_current', '==', true).limit(1).get();
+                if (!currentGwDoc.empty) {
+                    playingGameweek = currentGwDoc.docs[0].data().gameweek;
+                    isPlayingGw = (gwNumber === playingGameweek);
+                }
             }
             
-            // Fetch live points if this is the current gameweek
+            // Fetch live points if this is the playing gameweek
             let livePointsData = {};
-            if (isCurrentGw) {
+            if (isPlayingGw) {
                 try {
                     const cacheKey = `live_points_gw${gwNumber}`;
                     const cached = global.livePointsCache && global.livePointsCache[cacheKey];
@@ -309,8 +338,8 @@ router.get('/:gameweek', authenticateToken, async (req, res) => {
                 let gwPoints = 0;
                 let chipUsed = null;
                 
-                if (isCurrentGw && Object.keys(livePointsData).length > 0) {
-                    // Calculate live points for current gameweek
+                if (isPlayingGw && Object.keys(livePointsData).length > 0) {
+                    // Calculate live points for playing gameweek
                     const submissionDoc = await collections.gameweekTeams
                         .doc(`${team.id}_gw${gwNumber}`)
                         .get();

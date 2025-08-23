@@ -209,7 +209,6 @@ class MobileLeague {
                 <div id="leaderboardContainer" class="leaderboard-container">
                     <div class="loading-spinner">
                         <div class="spinner"></div>
-                        <p>Loading standings...</p>
                     </div>
                 </div>
                 
