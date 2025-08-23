@@ -1917,6 +1917,13 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                     ` : ''}
                 </div>
                 
+                ${!dataChecked && hasMinutesData ? `
+                    <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; color: #92400e;">
+                        <strong>⚠️ Gameweek In Progress</strong><br>
+                        Substitutions and vice-captain activation will be applied after all matches are complete.
+                    </div>
+                ` : ''}
+                
                 <!-- Pitch View -->
                 <div style="background: linear-gradient(to bottom, #3b82f6 0%, #059669 50%, #047857 100%); border-radius: 10px; padding: 12px 3px; position: relative; min-height: 340px;">
         `;
@@ -2472,10 +2479,28 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         let effectiveCaptainId = submission.captain_id;
         let captainSubstituted = false;
         
+        // Check if gameweek data is checked (fully complete) before applying substitutions
+        let dataChecked = false;
+        try {
+            // Fetch FPL data to check if gameweek is complete
+            const fplResponse = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/');
+            if (fplResponse.ok) {
+                const fplData = await fplResponse.json();
+                const gameweekData = fplData.events.find(e => e.id === submission.gameweek);
+                if (gameweekData) {
+                    dataChecked = gameweekData.data_checked === true;
+                    console.log(`GW${submission.gameweek} data_checked: ${dataChecked}`);
+                }
+            }
+        } catch (error) {
+            console.log('Could not check gameweek data_checked status:', error);
+        }
+        
         // Check if we have minutes data (gameweek has started)
         const hasMinutesData = players.some(p => p.minutes !== undefined);
         
-        if (hasMinutesData) {
+        // Only apply substitutions if data is checked (gameweek fully complete)
+        if (hasMinutesData && dataChecked) {
             // Check captain/vice-captain substitution first
             const captain = players.find(p => p.id === submission.captain_id);
             const viceCaptain = players.find(p => p.id === submission.vice_captain_id);
@@ -2560,6 +2585,13 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                         </div>
                     ` : ''}
                 </div>
+                
+                ${!dataChecked && hasMinutesData ? `
+                    <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 12px; color: #92400e;">
+                        <strong>⚠️ Gameweek In Progress</strong><br>
+                        Substitutions and vice-captain activation will be applied after all matches are complete.
+                    </div>
+                ` : ''}
                 
                 <!-- Pitch View -->
                 <div style="background: linear-gradient(to bottom, #3b82f6 0%, #059669 50%, #047857 100%); border-radius: 10px; padding: 12px 3px; position: relative; min-height: 340px;">
