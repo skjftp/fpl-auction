@@ -1950,18 +1950,27 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                         let basePoints = player.live_points || 0;
                         displayPoints = basePoints;
                         
-                        // Apply captain/vice-captain multiplier
+                        // Check if player has club multiplier
+                        const hasClubMultiplier = submission.club_multiplier_id && player.team_id == submission.club_multiplier_id;
+                        
+                        // Apply captain/vice-captain/club multiplier according to rules
                         if (isCaptain) {
+                            // Captain gets captain multiplier ONLY (no club multiplier on top)
                             const captainMultiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
                             displayPoints = basePoints * captainMultiplier;
                         } else if (isViceCaptain) {
-                            // For now, always give VC 1.25x during active gameweek
-                            // TODO: After gameweek is complete, check if captain played
-                            // and give VC 2x if captain didn't play
-                            displayPoints = basePoints * 1.25;
+                            // VC: if has club multiplier, only 1.5x applies (not both 1.25x and 1.5x)
+                            if (hasClubMultiplier) {
+                                displayPoints = basePoints * 1.5; // Only club multiplier
+                            } else {
+                                displayPoints = basePoints * 1.25; // Only VC multiplier
+                            }
+                        } else if (hasClubMultiplier) {
+                            // Regular player with club multiplier gets 1.5x
+                            displayPoints = basePoints * 1.5;
                         }
                         
-                        // Apply chip multipliers
+                        // Apply chip multipliers (these stack on top)
                         if (submission.chip_used === 'attack_chip' && (player.position === 3 || player.position === 4)) {
                             displayPoints = displayPoints * 2;
                         } else if (submission.chip_used === 'park_the_bus' && (player.position === 1 || player.position === 2)) {
@@ -1970,11 +1979,6 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                             displayPoints = displayPoints * 2;
                         } else if (submission.chip_used === 'negative_chip') {
                             displayPoints = displayPoints / 2;
-                        }
-                        
-                        // Apply club multiplier (use loose equality to handle string/number mismatch)
-                        if (submission.club_multiplier_id && player.team_id == submission.club_multiplier_id) {
-                            displayPoints = displayPoints * 1.5;
                         }
                         
                         // Round to 3 decimal places if needed
@@ -2582,18 +2586,27 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                         let basePoints = player.live_points || 0;
                         displayPoints = basePoints;
                         
-                        // Apply captain/vice-captain multiplier
+                        // Check if player has club multiplier
+                        const hasClubMultiplier = submission.club_multiplier_id && player.team_id == submission.club_multiplier_id;
+                        
+                        // Apply captain/vice-captain/club multiplier according to rules
                         if (isCaptain) {
+                            // Captain gets captain multiplier ONLY (no club multiplier on top)
                             const captainMultiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
                             displayPoints = basePoints * captainMultiplier;
                         } else if (isViceCaptain) {
-                            // For now, always give VC 1.25x during active gameweek
-                            // TODO: After gameweek is complete, check if captain played
-                            // and give VC 2x if captain didn't play
-                            displayPoints = basePoints * 1.25;
+                            // VC: if has club multiplier, only 1.5x applies (not both 1.25x and 1.5x)
+                            if (hasClubMultiplier) {
+                                displayPoints = basePoints * 1.5; // Only club multiplier
+                            } else {
+                                displayPoints = basePoints * 1.25; // Only VC multiplier
+                            }
+                        } else if (hasClubMultiplier) {
+                            // Regular player with club multiplier gets 1.5x
+                            displayPoints = basePoints * 1.5;
                         }
                         
-                        // Apply chip multipliers
+                        // Apply chip multipliers (these stack on top)
                         if (submission.chip_used === 'attack_chip' && (player.position === 3 || player.position === 4)) {
                             displayPoints = displayPoints * 2;
                         } else if (submission.chip_used === 'park_the_bus' && (player.position === 1 || player.position === 2)) {
@@ -2602,11 +2615,6 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                             displayPoints = displayPoints * 2;
                         } else if (submission.chip_used === 'negative_chip') {
                             displayPoints = displayPoints / 2;
-                        }
-                        
-                        // Apply club multiplier (use loose equality to handle string/number mismatch)
-                        if (submission.club_multiplier_id && player.team_id == submission.club_multiplier_id) {
-                            displayPoints = displayPoints * 1.5;
                         }
                         
                         // Round to 3 decimal places if needed
