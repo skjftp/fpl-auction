@@ -2482,18 +2482,15 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
         // Check if gameweek data is checked (fully complete) before applying substitutions
         let dataChecked = false;
         try {
-            // Fetch FPL data to check if gameweek is complete
-            const fplResponse = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/');
-            if (fplResponse.ok) {
-                const fplData = await fplResponse.json();
-                const gameweekData = fplData.events.find(e => e.id === submission.gameweek);
-                if (gameweekData) {
-                    dataChecked = gameweekData.data_checked === true;
-                    console.log(`GW${submission.gameweek} data_checked: ${dataChecked}`);
-                }
+            // Fetch gameweek status from backend to check if data is complete
+            const statusResponse = await fetch(`${window.API_BASE_URL}/api/gameweek-info/status/${submission.gameweek}`);
+            if (statusResponse.ok) {
+                const statusData = await statusResponse.json();
+                dataChecked = statusData.data_checked === true;
+                console.log(`GW${submission.gameweek} data_checked: ${dataChecked}, finished: ${statusData.finished}`);
             }
         } catch (error) {
-            console.log('Could not check gameweek data_checked status:', error);
+            console.log('Could not check gameweek data_checked status from backend:', error);
         }
         
         // Check if we have minutes data (gameweek has started)

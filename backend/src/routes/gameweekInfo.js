@@ -415,4 +415,31 @@ router.get('/playing', async (req, res) => {
     }
 });
 
+// Get data_checked status for a specific gameweek
+router.get('/status/:gameweek', async (req, res) => {
+    try {
+        const gameweek = parseInt(req.params.gameweek);
+        
+        // Fetch fresh FPL data to get current status
+        const response = await axios.get(FPL_API_URL);
+        const gameweekData = response.data.events.find(e => e.id === gameweek);
+        
+        if (!gameweekData) {
+            return res.status(404).json({ error: 'Gameweek not found' });
+        }
+        
+        res.json({
+            gameweek: gameweekData.id,
+            data_checked: gameweekData.data_checked || false,
+            finished: gameweekData.finished || false,
+            is_current: gameweekData.is_current || false,
+            is_next: gameweekData.is_next || false,
+            deadline_time: gameweekData.deadline_time
+        });
+    } catch (error) {
+        console.error('Error fetching gameweek status:', error);
+        res.status(500).json({ error: 'Failed to fetch gameweek status' });
+    }
+});
+
 module.exports = router;
