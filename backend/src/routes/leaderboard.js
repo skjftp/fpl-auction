@@ -67,6 +67,10 @@ async function calculateSubmissionPoints(submission, livePointsData) {
     }
     
     if (dataChecked) {
+        console.log(`GW${submission.gameweek}: Applying substitutions for team ${submission.team_id}`);
+        console.log('Starting 11 before subs:', submission.starting_11);
+        console.log('Bench before subs:', submission.bench);
+        
         // Apply automatic substitutions only if gameweek data is fully checked
         const subsResult = applyAutomaticSubstitutions(
             submission.starting_11 || [],
@@ -78,6 +82,14 @@ async function calculateSubmissionPoints(submission, livePointsData) {
         
         finalStarting11 = subsResult.finalStarting11;
         finalBench = subsResult.finalBench;
+        
+        if (subsResult.substitutions && subsResult.substitutions.length > 0) {
+            console.log(`Made ${subsResult.substitutions.length} substitution(s):`, subsResult.substitutions);
+        } else {
+            console.log('No substitutions made');
+        }
+    } else {
+        console.log(`GW${submission.gameweek}: Not applying substitutions - data_checked is false`);
     }
     
     // Check for captain/vice-captain substitution only if gameweek data is checked
@@ -98,25 +110,31 @@ async function calculateSubmissionPoints(submission, livePointsData) {
         const playerPoints = livePointsData[fplId]?.points || 0;
         let finalPoints = playerPoints;
         
-        // Apply captain/vice-captain multiplier using effective captain
+        // Check if player has club multiplier
+        const hasClubMultiplier = submission.club_multiplier_id && playerData.team_id && playerData.team_id == submission.club_multiplier_id;
+        
+        // Apply captain/vice-captain/club multiplier logic
         if (playerId == effectiveCaptainId) {
+            // Captain gets captain multiplier ONLY (no club multiplier on top)
             const multiplier = submission.chip_used === 'triple_captain' ? 3 : 2;
             finalPoints = playerPoints * multiplier;
         } else if (playerId == submission.vice_captain_id && effectiveCaptainId === submission.captain_id) {
-            // VC gets 1.25x only if captain played and VC is still VC
-            finalPoints = playerPoints * 1.25;
+            // VC logic: if has club multiplier, only 1.5x applies (not both 1.25x and 1.5x)
+            if (hasClubMultiplier) {
+                finalPoints = playerPoints * 1.5; // Only club multiplier
+            } else {
+                finalPoints = playerPoints * 1.25; // Only VC multiplier
+            }
+        } else if (hasClubMultiplier) {
+            // Regular player with club multiplier gets 1.5x
+            finalPoints = playerPoints * 1.5;
         }
         
-        // Apply position-specific chip bonuses
+        // Apply position-specific chip bonuses (these stack on top)
         if (submission.chip_used === 'attack_chip' && playerData.position && (playerData.position === 3 || playerData.position === 4)) {
             finalPoints = finalPoints * 2;
         } else if (submission.chip_used === 'park_the_bus' && playerData.position && (playerData.position === 1 || playerData.position === 2)) {
             finalPoints = finalPoints * 2;
-        }
-        
-        // Apply club multiplier (1.5x for players from selected club) - use loose equality for type coercion
-        if (submission.club_multiplier_id && playerData.team_id && playerData.team_id == submission.club_multiplier_id) {
-            finalPoints = finalPoints * 1.5;
         }
         
         // Keep 3 decimal places for precision

@@ -1,5 +1,8 @@
 // FPL Auto-substitution logic
 function applyAutomaticSubstitutions(starting11, bench, livePoints, playerData, isBenchBoost = false) {
+  console.log('=== Starting substitution check ===');
+  console.log('Bench boost active:', isBenchBoost);
+  
   // Don't apply substitutions if bench boost is active
   if (isBenchBoost) {
     return { 
@@ -13,6 +16,9 @@ function applyAutomaticSubstitutions(starting11, bench, livePoints, playerData, 
   let finalStarting11 = [...starting11];
   let finalBench = [...bench];
   
+  console.log('Checking starting 11 players:', finalStarting11.length);
+  console.log('Available bench players:', finalBench.length);
+  
   // Check each starting player
   for (let i = 0; i < finalStarting11.length; i++) {
     const playerId = finalStarting11[i];
@@ -24,19 +30,29 @@ function applyAutomaticSubstitutions(starting11, bench, livePoints, playerData, 
     const player = playerData[playerId];
     const lookupId = player?.fpl_id || playerId; // Use FPL ID if available
     
+    console.log(`Checking player ${playerId} (FPL ID: ${lookupId})`);
+    
     if (livePoints[lookupId]) {
       if (livePoints[lookupId].stats !== undefined) {
         playerMinutes = livePoints[lookupId].stats.minutes || 0;
       } else {
         playerMinutes = livePoints[lookupId].minutes || 0;
       }
+      console.log(`  - Found live data, minutes: ${playerMinutes}`);
     } else if (player) {
       playerMinutes = player.minutes || 0;
+      console.log(`  - Using player data minutes: ${playerMinutes}`);
+    } else {
+      console.log(`  - No data found for player ${playerId}`);
     }
     
     // Check if player didn't play (0 minutes)
     if (playerMinutes === 0) {
-      if (!player) continue;
+      console.log(`  - Player has 0 minutes, looking for substitute`);
+      if (!player) {
+        console.log(`  - No player data found, skipping`);
+        continue;
+      }
       
       // Try to substitute this player
       let substituted = false;

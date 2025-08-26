@@ -161,7 +161,10 @@ async function calculateTeamPoints(submission, elementStats, dataChecked = false
     let finalStarting11 = [...submission.starting_11];
     let finalBench = [...submission.bench];
     
+    console.log(`GW${gameweek}: dataChecked=${dataChecked}, nonPlayingStarters=${nonPlayingStarters.length}`);
+    
     if (dataChecked && nonPlayingStarters.length > 0) {
+        console.log(`Attempting substitutions for ${nonPlayingStarters.length} non-playing starters`);
         // Try to substitute non-playing players
         for (const nonPlayer of nonPlayingStarters) {
             const substitute = findValidSubstitute(
@@ -203,9 +206,31 @@ async function calculateTeamPoints(submission, elementStats, dataChecked = false
         let multiplier = 1;
         let bonusTypes = [];
         
-        // Captain/Vice captain bonus
+        // Check if player has club multiplier
+        const hasClubMultiplier = submission.club_multiplier_id && player.team_id === submission.club_multiplier_id;
+        
+        // Determine effective captain (may change if captain didn't play)
+        let isEffectiveCaptain = false;
+        let isViceCaptain = playerId === submission.vice_captain_id;
+        
         if (playerId === submission.captain_id) {
-            // Check for Triple Captain chip
+            isEffectiveCaptain = true;
+        } else if (isViceCaptain && dataChecked) {
+            // Check if captain didn't play
+            const captainPlayer = playersData[submission.captain_id];
+            if (captainPlayer) {
+                const captainFplId = captainPlayer.fpl_id || captainPlayer.id;
+                const captainStats = elementStats[captainFplId];
+                if (!captainStats || (captainStats.stats.minutes || 0) === 0) {
+                    isEffectiveCaptain = true; // VC becomes captain
+                    isViceCaptain = false;
+                }
+            }
+        }
+        
+        // Apply captain/vice-captain/club multiplier according to new rules
+        if (isEffectiveCaptain) {
+            // Captain gets captain multiplier ONLY (no club multiplier on top)
             if (submission.chip_used === 'triple_captain') {
                 multiplier = 3;
                 bonusTypes.push('Triple Captain');
@@ -213,24 +238,18 @@ async function calculateTeamPoints(submission, elementStats, dataChecked = false
                 multiplier = 2;
                 bonusTypes.push('Captain');
             }
-        } else if (playerId === submission.vice_captain_id) {
-            // Check if captain didn't play - only if data is checked
-            if (dataChecked) {
-                const captainPlayer = playersData[submission.captain_id];
-                if (captainPlayer) {
-                    const captainFplId = captainPlayer.fpl_id || captainPlayer.id;
-                    const captainStats = elementStats[captainFplId];
-                    if (!captainStats || (captainStats.stats.minutes || 0) === 0) {
-                        multiplier = 2;
-                        bonusTypes.push('Vice Captain (Active)');
-                    }
-                }
+        } else if (isViceCaptain) {
+            // VC: if has club multiplier, only 1.5x applies
+            if (hasClubMultiplier) {
+                multiplier = 1.5;
+                bonusTypes.push('Club 1.5x');
+            } else {
+                multiplier = 1.25;
+                bonusTypes.push('Vice Captain 1.25x');
             }
-        }
-        
-        // Club multiplier
-        if (submission.club_multiplier_id && player.team_id === submission.club_multiplier_id) {
-            multiplier *= 1.5;
+        } else if (hasClubMultiplier) {
+            // Regular player with club multiplier
+            multiplier = 1.5;
             bonusTypes.push('Club 1.5x');
         }
         
