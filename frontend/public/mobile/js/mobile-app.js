@@ -1935,12 +1935,13 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
             if (posPlayers.length > 0) {
                 html += `<div style="display: flex; justify-content: center; gap: 3px; margin-bottom: 15px; flex-wrap: wrap;">`;
                 posPlayers.forEach(player => {
-                    // Check if player was substituted in
-                    const wasSubbedIn = substitutions.some(s => s.in && s.in.id === player.id);
+                    // Use flags from backend if available
+                    const wasSubbedIn = player.subbed_in || substitutions.some(s => s.in === player.id);
+                    const wasSubbedOut = player.subbed_out || false;
                     
                     // Use effective captain ID after substitution
-                    const isCaptain = player.id === effectiveCaptainId;
-                    const isViceCaptain = !captainSubstituted && player.id === submission.vice_captain_id;
+                    const isCaptain = player.is_effective_captain || player.id === effectiveCaptainId;
+                    const isViceCaptain = player.is_vice_captain || (!captainSubstituted && player.id === submission.vice_captain_id);
                     
                     // Calculate points with multipliers
                     let displayPoints = 0;
@@ -2055,17 +2056,23 @@ MobileApp.prototype.showSubmissionDetail = async function(submissionId) {
                 ${substitutions.length > 0 ? `
                     <div style="background: #fef3c7; border: 1px solid #fbbf24; padding: 8px; border-radius: 6px; margin-top: 10px;">
                         <div style="font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 4px;">AUTO SUBSTITUTIONS</div>
-                        ${substitutions.filter(s => s.type !== 'captain').map(sub => `
+                        ${substitutions.filter(s => s.type !== 'captain').map(sub => {
+                            // Get player details from submission.player_details or players array
+                            const outPlayer = submission.player_details?.[sub.out] || players.find(p => p.id === sub.out) || {};
+                            const inPlayer = submission.player_details?.[sub.in] || players.find(p => p.id === sub.in) || {};
+                            return `
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #451a03; margin: 2px 0;">
-                                <span style="font-weight: 600;">${sub.out.web_name || sub.out.name}</span>
+                                <span style="font-weight: 600;">${outPlayer.web_name || outPlayer.name || 'Player'}</span>
                                 <span>→</span>
-                                <span style="font-weight: 600; color: #059669;">${sub.in.web_name || sub.in.name}</span>
-                                <span style="color: #6b7280; font-size: 9px;">(${sub.in.minutes || 0} min)</span>
+                                <span style="font-weight: 600; color: #059669;">${inPlayer.web_name || inPlayer.name || 'Player'}</span>
+                                <span style="color: #6b7280; font-size: 9px;">(${inPlayer.minutes || 0} min)</span>
+                                ${sub.reason ? `<span style="color: #6b7280; font-size: 9px;">${sub.reason}</span>` : ''}
                             </div>
-                        `).join('')}
-                        ${substitutions.find(s => s.type === 'captain') ? `
+                            `;
+                        }).join('')}
+                        ${captainSubstituted ? `
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #451a03; margin: 4px 0 2px; padding-top: 4px; border-top: 1px solid #fde68a;">
-                                <span style="font-weight: 600;">Captain didn't play - Vice Captain gets 2x points</span>
+                                <span style="font-weight: 600;">Captain didn't play - Vice Captain activated (2x points)</span>
                             </div>
                         ` : ''}
                     </div>
@@ -2458,76 +2465,35 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
             }
         }
         
-        // Separate starting 11 and bench
+        // Use final lineups from backend if available (after substitutions)
+        // Backend already handles all substitution logic
+        const finalStarting11Ids = submission.final_starting_11 || submission.starting_11 || [];
+        const finalBenchIds = submission.final_bench || submission.bench || [];
+        const effectiveCaptainId = submission.effective_captain_id || submission.captain_id;
+        const substitutions = submission.substitutions || [];
+        const dataChecked = submission.data_checked || false;
+        
+        // Separate starting 11 and bench using the final lineups
         const starting11 = [];
         const bench = [];
         
-        submission.starting_11.forEach(id => {
-            const player = players.find(p => p.id === id);
+        finalStarting11Ids.forEach(id => {
+            const player = submission.player_details?.[id] || players.find(p => p.id === id);
             if (player) starting11.push(player);
         });
         
-        submission.bench.forEach(id => {
-            const player = players.find(p => p.id === id);
+        finalBenchIds.forEach(id => {
+            const player = submission.player_details?.[id] || players.find(p => p.id === id);
             if (player) bench.push(player);
         });
         
-        // Apply automatic substitutions if gameweek has started and we have minutes data
-        let substitutions = [];
+        // No need to apply substitutions here - backend already did it
         let finalStarting11 = [...starting11];
         let finalBench = [...bench];
-        let effectiveCaptainId = submission.captain_id;
-        let captainSubstituted = false;
+        let captainSubstituted = effectiveCaptainId !== submission.captain_id;
         
-        // Check if gameweek data is checked (fully complete) before applying substitutions
-        let dataChecked = false;
-        try {
-            // Fetch gameweek status from backend to check if data is complete
-            const statusResponse = await fetch(`${window.API_BASE_URL}/api/gameweek-info/status/${submission.gameweek}`);
-            if (statusResponse.ok) {
-                const statusData = await statusResponse.json();
-                dataChecked = statusData.data_checked === true;
-                console.log(`GW${submission.gameweek} data_checked: ${dataChecked}, finished: ${statusData.finished}`);
-            }
-        } catch (error) {
-            console.log('Could not check gameweek data_checked status from backend:', error);
-        }
-        
-        // Check if we have minutes data (gameweek has started)
+        // Backend already provides all substitution info, no need to recalculate
         const hasMinutesData = players.some(p => p.minutes !== undefined);
-        
-        // Only apply substitutions if data is checked (gameweek fully complete)
-        if (hasMinutesData && dataChecked) {
-            // Check captain/vice-captain substitution first
-            const captain = players.find(p => p.id === submission.captain_id);
-            const viceCaptain = players.find(p => p.id === submission.vice_captain_id);
-            
-            if (captain && captain.minutes === 0 && viceCaptain) {
-                // Captain didn't play, vice-captain becomes effective captain
-                effectiveCaptainId = submission.vice_captain_id;
-                captainSubstituted = true;
-            }
-            
-            // Apply automatic substitutions
-            const result = this.applyAutomaticSubstitutions(
-                finalStarting11, 
-                finalBench,
-                submission.chip_used === 'bench_boost'
-            );
-            
-            finalStarting11 = result.starting11;
-            finalBench = result.bench;
-            substitutions = result.substitutions;
-            
-            // Add captain substitution info if applicable
-            if (captainSubstituted) {
-                substitutions.push({
-                    type: 'captain',
-                    originalCaptain: captain,
-                    newCaptain: viceCaptain
-                });
-            }
-        }
         
         // Group final starting 11 by position (after substitutions)
         const positions = { 1: [], 2: [], 3: [], 4: [] };
@@ -2601,12 +2567,13 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
             if (posPlayers.length > 0) {
                 html += `<div style="display: flex; justify-content: center; gap: 3px; margin-bottom: 15px; flex-wrap: wrap;">`;
                 posPlayers.forEach(player => {
-                    // Check if player was substituted in
-                    const wasSubbedIn = substitutions.some(s => s.in && s.in.id === player.id);
+                    // Use flags from backend if available
+                    const wasSubbedIn = player.subbed_in || substitutions.some(s => s.in === player.id);
+                    const wasSubbedOut = player.subbed_out || false;
                     
                     // Use effective captain ID after substitution
-                    const isCaptain = player.id === effectiveCaptainId;
-                    const isViceCaptain = !captainSubstituted && player.id === submission.vice_captain_id;
+                    const isCaptain = player.is_effective_captain || player.id === effectiveCaptainId;
+                    const isViceCaptain = player.is_vice_captain || (!captainSubstituted && player.id === submission.vice_captain_id);
                     
                     // Calculate points with multipliers
                     let displayPoints = 0;
@@ -2721,17 +2688,23 @@ MobileApp.prototype.showTeamSubmissionDetail = async function(submission, teamNa
                 ${substitutions.length > 0 ? `
                     <div style="background: #fef3c7; border: 1px solid #fbbf24; padding: 8px; border-radius: 6px; margin-top: 10px;">
                         <div style="font-size: 11px; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 4px;">AUTO SUBSTITUTIONS</div>
-                        ${substitutions.filter(s => s.type !== 'captain').map(sub => `
+                        ${substitutions.filter(s => s.type !== 'captain').map(sub => {
+                            // Get player details from submission.player_details or players array
+                            const outPlayer = submission.player_details?.[sub.out] || players.find(p => p.id === sub.out) || {};
+                            const inPlayer = submission.player_details?.[sub.in] || players.find(p => p.id === sub.in) || {};
+                            return `
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #451a03; margin: 2px 0;">
-                                <span style="font-weight: 600;">${sub.out.web_name || sub.out.name}</span>
+                                <span style="font-weight: 600;">${outPlayer.web_name || outPlayer.name || 'Player'}</span>
                                 <span>→</span>
-                                <span style="font-weight: 600; color: #059669;">${sub.in.web_name || sub.in.name}</span>
-                                <span style="color: #6b7280; font-size: 9px;">(${sub.in.minutes || 0} min)</span>
+                                <span style="font-weight: 600; color: #059669;">${inPlayer.web_name || inPlayer.name || 'Player'}</span>
+                                <span style="color: #6b7280; font-size: 9px;">(${inPlayer.minutes || 0} min)</span>
+                                ${sub.reason ? `<span style="color: #6b7280; font-size: 9px;">${sub.reason}</span>` : ''}
                             </div>
-                        `).join('')}
-                        ${substitutions.find(s => s.type === 'captain') ? `
+                            `;
+                        }).join('')}
+                        ${captainSubstituted ? `
                             <div style="display: flex; align-items: center; gap: 8px; font-size: 10px; color: #451a03; margin: 4px 0 2px; padding-top: 4px; border-top: 1px solid #fde68a;">
-                                <span style="font-weight: 600;">Captain didn't play - Vice Captain gets 2x points</span>
+                                <span style="font-weight: 600;">Captain didn't play - Vice Captain activated (2x points)</span>
                             </div>
                         ` : ''}
                     </div>
