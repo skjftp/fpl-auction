@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { db, admin } = require('../config/firebase');
 const { authenticateToken } = require('../middleware/auth');
+const { applyAutomaticSubstitutions } = require('../utils/substitutions');
+const axios = require('axios');
 
 // Save team submission for a gameweek
 router.post('/submit', authenticateToken, async (req, res) => {
@@ -242,6 +244,7 @@ router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) 
                 // Only send necessary fields to minimize payload
                 playerDetails[player.id] = {
                     id: player.id,
+                    fpl_id: player.fpl_id || player.id, // Include FPL ID for live points mapping
                     web_name: player.web_name,
                     first_name: player.first_name,
                     second_name: player.second_name,
@@ -257,10 +260,24 @@ router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) 
             }
         });
         
+        // Check if gameweek data is checked (fully complete) from FPL API
+        let dataChecked = false;
+        let gameweekFinished = false;
+        try {
+            const fplBootstrapResponse = await axios.get('https://fantasy.premierleague.com/api/bootstrap-static/');
+            const gameweekData = fplBootstrapResponse.data.events.find(e => e.id === gameweek);
+            if (gameweekData) {
+                dataChecked = gameweekData.data_checked === true;
+                gameweekFinished = gameweekData.finished === true;
+                console.log(`GW${gameweek} data_checked: ${dataChecked}, finished: ${gameweekFinished}`);
+            }
+        } catch (error) {
+            console.log('Could not check gameweek data_checked status from FPL:', error.message);
+        }
+        
         // Fetch live points if available
         let livePoints = {};
         try {
-            const axios = require('axios');
             const cacheKey = `live_points_gw${gameweek}`;
             const cached = global.livePointsCache && global.livePointsCache[cacheKey];
             
@@ -293,12 +310,20 @@ router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) 
                 }
             }
             
-            // Add live points to player details
+            // Add live points to player details using FPL ID mapping
             Object.keys(playerDetails).forEach(playerId => {
-                if (livePoints[playerId]) {
-                    playerDetails[playerId].live_points = livePoints[playerId].points;
-                    playerDetails[playerId].minutes = livePoints[playerId].minutes;
-                    playerDetails[playerId].bonus = livePoints[playerId].bonus;
+                const player = playerDetails[playerId];
+                // Get FPL ID from player data or use playerId as fallback
+                const fplId = player.fpl_id || playerId;
+                if (livePoints[fplId]) {
+                    player.live_points = livePoints[fplId].points;
+                    player.minutes = livePoints[fplId].minutes;
+                    player.bonus = livePoints[fplId].bonus;
+                } else if (livePoints[playerId]) {
+                    // Fallback to direct playerId lookup
+                    player.live_points = livePoints[playerId].points;
+                    player.minutes = livePoints[playerId].minutes;
+                    player.bonus = livePoints[playerId].bonus;
                 }
             });
         } catch (error) {
@@ -343,12 +368,86 @@ router.get('/submission/:gameweek/:teamId', authenticateToken, async (req, res) 
             }
         }
         
+        // Apply substitution logic if gameweek data is checked
+        let finalStarting11 = data.starting_11 || [];
+        let finalBench = data.bench || [];
+        let substitutions = [];
+        let effectiveCaptainId = data.captain_id;
+        
+        if (dataChecked) {
+            console.log(`Applying substitutions for team ${targetTeamId} GW${gameweek}`);
+            
+            // Apply automatic substitutions
+            const subsResult = applyAutomaticSubstitutions(
+                data.starting_11 || [],
+                data.bench || [],
+                livePoints,
+                playerDetails,
+                data.chip_used === 'bench_boost'
+            );
+            
+            finalStarting11 = subsResult.finalStarting11;
+            finalBench = subsResult.finalBench;
+            substitutions = subsResult.substitutions || [];
+            
+            // Check for captain substitution
+            if (data.captain_id && data.vice_captain_id) {
+                const captainData = playerDetails[data.captain_id];
+                const captainFplId = captainData?.fpl_id || data.captain_id;
+                const captainMinutes = livePoints[captainFplId]?.minutes || 0;
+                if (captainMinutes === 0) {
+                    effectiveCaptainId = data.vice_captain_id;
+                    console.log(`Captain didn't play, VC ${data.vice_captain_id} becomes effective captain`);
+                }
+            }
+        }
+        
+        // Add flags to player details
+        const subbedOutPlayers = new Set();
+        const subbedInPlayers = new Set();
+        
+        // Track substituted players
+        substitutions.forEach(sub => {
+            subbedOutPlayers.add(sub.out.toString());
+            subbedInPlayers.add(sub.in.toString());
+        });
+        
+        // Update player details with flags
+        Object.keys(playerDetails).forEach(playerId => {
+            const player = playerDetails[playerId];
+            
+            // Add substitution flags
+            player.subbed_out = subbedOutPlayers.has(playerId.toString());
+            player.subbed_in = subbedInPlayers.has(playerId.toString());
+            
+            // Add captain/vice-captain flags
+            player.is_captain = playerId == data.captain_id;
+            player.is_vice_captain = playerId == data.vice_captain_id;
+            player.is_effective_captain = playerId == effectiveCaptainId;
+            
+            // Add multiplier info
+            player.has_club_multiplier = data.club_multiplier_id && 
+                                        player.team_id == data.club_multiplier_id;
+            
+            // Add position in final lineup
+            player.in_starting_11 = finalStarting11.includes(parseInt(playerId)) || 
+                                   finalStarting11.includes(playerId.toString());
+            player.on_bench = finalBench.includes(parseInt(playerId)) || 
+                            finalBench.includes(playerId.toString());
+        });
+        
         // Return submission with player and club details
         res.json({
             ...data,
             player_details: playerDetails,
             club_details: clubDetailsMap,
-            club_multiplier_details: clubMultiplierDetails
+            club_multiplier_details: clubMultiplierDetails,
+            substitutions: substitutions,
+            effective_captain_id: effectiveCaptainId,
+            final_starting_11: finalStarting11,
+            final_bench: finalBench,
+            data_checked: dataChecked,
+            gameweek_finished: gameweekFinished
         });
     } catch (error) {
         console.error('Error fetching team submission:', error);

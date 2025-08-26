@@ -240,6 +240,43 @@ class MobileTeamViewer {
                     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                     position: relative;
                     min-width: 70px;
+                    transition: all 0.3s;
+                }
+                
+                .player-card.subbed-in {
+                    background: #d4f1d4;
+                    border: 2px solid #28a745;
+                }
+                
+                .player-card.subbed-out {
+                    background: #ffe4e4;
+                    opacity: 0.7;
+                }
+                
+                .sub-indicator {
+                    position: absolute;
+                    top: -8px;
+                    left: -8px;
+                    background: #28a745;
+                    color: white;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 14px;
+                    font-weight: bold;
+                }
+                
+                .sub-indicator.out {
+                    background: #dc3545;
+                }
+                
+                .captain-badge.effective {
+                    background: #ffc107;
+                    color: #000;
+                    border: 2px solid #ff6b6b;
                 }
                 
                 .player-photo {
@@ -437,25 +474,31 @@ class MobileTeamViewer {
         
         title.textContent = `${this.teamName} - GW${this.currentGameweek}`;
         
+        // Use final lineups from backend (after substitutions) if available
+        const starting11 = this.submission.final_starting_11 || this.submission.starting_11 || [];
+        const bench = this.submission.final_bench || this.submission.bench || [];
+        
         // Group players by position
         const positions = { 1: [], 2: [], 3: [], 4: [] };
         const benchPlayers = [];
         
-        if (this.submission.starting_11) {
-            this.submission.starting_11.forEach(playerId => {
-                const player = this.playerData.get(playerId) || { id: playerId };
-                const pos = player.position || player.element_type || 1;
-                positions[pos] = positions[pos] || [];
-                positions[pos].push(player);
-            });
-        }
+        starting11.forEach(playerId => {
+            const playerIdStr = playerId.toString();
+            const player = this.submission.player_details?.[playerIdStr] || 
+                          this.playerData.get(playerId) || 
+                          { id: playerId };
+            const pos = player.position || player.element_type || 1;
+            positions[pos] = positions[pos] || [];
+            positions[pos].push(player);
+        });
         
-        if (this.submission.bench) {
-            this.submission.bench.forEach(playerId => {
-                const player = this.playerData.get(playerId) || { id: playerId };
-                benchPlayers.push(player);
-            });
-        }
+        bench.forEach(playerId => {
+            const playerIdStr = playerId.toString();
+            const player = this.submission.player_details?.[playerIdStr] || 
+                          this.playerData.get(playerId) || 
+                          { id: playerId };
+            benchPlayers.push(player);
+        });
         
         const totalPoints = this.calculateTotalPoints();
         
@@ -510,13 +553,27 @@ class MobileTeamViewer {
     renderPlayer(player, isBench = false) {
         const points = isBench && this.submission.chip_used !== 'bench_boost' ? 
                       '-' : this.calculatePlayerPoints(player.id);
-        const isCaptain = player.id === this.submission.captain_id;
-        const isViceCaptain = player.id === this.submission.vice_captain_id;
+        
+        // Use flags from backend if available
+        const isEffectiveCaptain = player.is_effective_captain || 
+                                  (player.id == (this.submission.effective_captain_id || this.submission.captain_id));
+        const isCaptain = player.is_captain || player.id == this.submission.captain_id;
+        const isViceCaptain = player.is_vice_captain || player.id == this.submission.vice_captain_id;
+        const isSubbedIn = player.subbed_in || false;
+        const isSubbedOut = player.subbed_out || false;
+        
+        // Add CSS classes for styling
+        const cardClasses = ['player-card'];
+        if (isSubbedIn) cardClasses.push('subbed-in');
+        if (isSubbedOut) cardClasses.push('subbed-out');
         
         return `
-            <div class="player-card">
-                ${isCaptain ? '<div class="captain-badge">C</div>' : ''}
-                ${isViceCaptain ? '<div class="vice-badge">V</div>' : ''}
+            <div class="${cardClasses.join(' ')}">
+                ${isEffectiveCaptain ? '<div class="captain-badge effective">C</div>' : 
+                  isCaptain ? '<div class="captain-badge">C</div>' : ''}
+                ${isViceCaptain && !isEffectiveCaptain ? '<div class="vice-badge">V</div>' : ''}
+                ${isSubbedIn ? '<div class="sub-indicator in">↑</div>' : ''}
+                ${isSubbedOut ? '<div class="sub-indicator out">↓</div>' : ''}
                 <div class="player-photo">
                     ${player.photo ? 
                         `<img src="https://resources.premierleague.com/premierleague25/photos/players/110x140/${player.photo.replace('.jpg', '').replace('.png', '')}.png" 
