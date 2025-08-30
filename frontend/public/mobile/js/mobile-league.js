@@ -55,19 +55,22 @@ class MobileLeague {
         // Get the current playing gameweek from gameweek info API
         try {
             const gwInfo = await window.mobileAPI.getCurrentGameweek();
-            if (gwInfo && gwInfo.gameweek) {
-                // The API returns the submission gameweek (GW3)
-                // For league standings, we want the PLAYING gameweek (GW2)
-                // Playing gameweek = submission gameweek - 1 (unless it's GW1)
+            if (gwInfo && gwInfo.playing_gameweek) {
+                // Use the playing gameweek directly from the API
+                this.currentGameweek = gwInfo.playing_gameweek;
+                console.log(`League: Using playing GW${this.currentGameweek} from API (submission GW${gwInfo.gameweek})`);
+                this.deadlinePassed = true; // Playing gameweek deadline has passed
+            } else if (gwInfo && gwInfo.gameweek) {
+                // Fallback to old logic if playing_gameweek not available
                 const submissionGw = gwInfo.gameweek;
                 this.currentGameweek = Math.max(1, submissionGw - 1);
-                console.log(`League: Submission GW${submissionGw}, showing playing GW${this.currentGameweek}`);
+                console.log(`League: Fallback - Submission GW${submissionGw}, showing playing GW${this.currentGameweek}`);
+                this.deadlinePassed = true;
             } else {
                 // Default to GW2 as fallback
                 this.currentGameweek = 2;
                 console.log('Using default playing gameweek:', this.currentGameweek);
             }
-            this.deadlinePassed = true; // Playing gameweek deadline has passed
         } catch (error) {
             console.error('Error loading gameweek info:', error);
             this.currentGameweek = 2; // Default to GW2

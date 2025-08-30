@@ -74,21 +74,54 @@ router.get('/current', async (req, res) => {
     try {
         const fplData = await getFPLData();
         
-        // Find current or next gameweek
-        const currentEvent = fplData.events.find(event => event.is_current) || 
-                           fplData.events.find(event => event.is_next);
+        // Find current and next gameweek
+        const currentEvent = fplData.events.find(event => event.is_current);
+        const nextEvent = fplData.events.find(event => event.is_next);
         
-        if (!currentEvent) {
+        if (!currentEvent && !nextEvent) {
             return res.status(404).json({ error: 'No current gameweek found' });
+        }
+        
+        const now = new Date();
+        let activeEvent = currentEvent || nextEvent;
+        let submissionGameweek = activeEvent.id;
+        let playingGameweek = activeEvent.id;
+        
+        // If current gameweek exists and its deadline has passed by more than 1 hour,
+        // start accepting submissions for next gameweek
+        if (currentEvent && nextEvent) {
+            const currentDeadline = new Date(currentEvent.deadline_time);
+            const oneHourAfterDeadline = new Date(currentDeadline.getTime() + (60 * 60 * 1000));
+            
+            if (now > oneHourAfterDeadline) {
+                // More than 1 hour past current deadline - switch to next gameweek for submissions
+                submissionGameweek = nextEvent.id;
+                activeEvent = nextEvent;
+                console.log(`Deadline + 1 hour passed for GW${currentEvent.id}, switching submissions to GW${nextEvent.id}`);
+            }
+            
+            // Playing gameweek is the one currently being played (finished or in progress)
+            if (currentEvent.finished) {
+                playingGameweek = currentEvent.id;
+            } else if (now > currentDeadline) {
+                // Current gameweek deadline passed but not finished - still playing current
+                playingGameweek = currentEvent.id;
+            } else {
+                // Before current deadline - show previous gameweek if available
+                const previousGw = Math.max(1, currentEvent.id - 1);
+                playingGameweek = previousGw;
+            }
         }
 
         res.json({
-            gameweek: currentEvent.id,
-            name: currentEvent.name,
-            deadline_time: currentEvent.deadline_time,
-            finished: currentEvent.finished,
-            is_current: currentEvent.is_current,
-            is_next: currentEvent.is_next
+            gameweek: submissionGameweek, // For submissions
+            playing_gameweek: playingGameweek, // For league standings
+            name: activeEvent.name,
+            deadline_time: activeEvent.deadline_time,
+            finished: activeEvent.finished,
+            is_current: activeEvent.is_current,
+            is_next: activeEvent.is_next,
+            auto_advanced: submissionGameweek !== (currentEvent?.id || nextEvent?.id) // Flag if we auto-advanced
         });
     } catch (error) {
         console.error('Error getting current gameweek:', error);
@@ -140,10 +173,20 @@ router.post('/submit-team', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Invalid gameweek' });
         }
 
-        // Check deadline
+        // Check deadline with 1 hour grace period logic
         const deadline = new Date(gwEvent.deadline_time);
-        if (new Date() > deadline) {
-            return res.status(400).json({ error: 'Deadline has passed for this gameweek' });
+        const now = new Date();
+        const oneHourAfterDeadline = new Date(deadline.getTime() + (60 * 60 * 1000));
+        
+        // Allow submissions if:
+        // 1. Before deadline, OR
+        // 2. Within 1 hour after deadline (submissions go to next gameweek)
+        if (now > oneHourAfterDeadline) {
+            return res.status(400).json({ 
+                error: 'Submission window closed. Please wait for next gameweek.', 
+                deadline_passed: true,
+                grace_period_ended: true 
+            });
         }
 
         // Validate team composition
